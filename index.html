@@ -27,21 +27,25 @@
     --green:#43c67d;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%}
+  html,body{min-height:100%}
   body{
     background:
       radial-gradient(120% 80% at 50% -10%, #2a2138 0%, var(--bg) 60%);
+    background-attachment:fixed;
     color:var(--ink);
     font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
-    min-height:100%;
+    min-height:100vh;
+    min-height:100dvh;
     display:flex;
-    align-items:center;
+    align-items:flex-start;
     justify-content:center;
+    overflow-y:auto;
     padding:calc(24px + env(safe-area-inset-top)) calc(24px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) calc(24px + env(safe-area-inset-left));
   }
   .card{
     width:100%;
     max-width:460px;
+    margin:auto;
     background:var(--panel);
     border:1px solid var(--line);
     border-radius:20px;
