@@ -271,7 +271,7 @@
 
     <div class="field">
       <label for="start">Začátek směny</label>
-      <input type="time" id="start" value="07:39">
+      <input type="time" id="start">
     </div>
 
     <div class="field">
@@ -414,9 +414,37 @@
     calc();
   });
 
-  startEl.addEventListener('input', calc);
+  // --- uložení startu na 24 h ---
+  const STORE_KEY = 'kdyDomu.start';
+  const DAY_MS = 24 * 60 * 60 * 1000;
+
+  function saveStart(){
+    try{
+      if(startEl.value){
+        localStorage.setItem(STORE_KEY, JSON.stringify({ time: startEl.value, ts: Date.now() }));
+      } else {
+        localStorage.removeItem(STORE_KEY);
+      }
+    }catch(e){}
+  }
+
+  function loadStart(){
+    try{
+      const raw = localStorage.getItem(STORE_KEY);
+      if(!raw) return;
+      const { time, ts } = JSON.parse(raw);
+      if(time && (Date.now() - ts) < DAY_MS){
+        startEl.value = time;             // mladší 24 h → předvyplnit
+      } else {
+        localStorage.removeItem(STORE_KEY); // starší → zahodit, pole zůstane prázdné
+      }
+    }catch(e){}
+  }
+
+  startEl.addEventListener('input', () => { saveStart(); calc(); });
   brkInput.addEventListener('input', calc);
   paidEl.addEventListener('change', calc);
+  loadStart();
   syncSeg();
   calc();
   setInterval(updateNow, 1000);   // živá aktualizace každou vteřinu
