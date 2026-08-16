@@ -1,6 +1,6 @@
 {
   "name": "Kdy můžu domů?",
-  "short_name": "Domů?",
+  "short_name": "Domů",
   "description": "Výpočet konce směny včetně pauzy a přesčasu.",
   "lang": "cs",
   "start_url": "index.html",
