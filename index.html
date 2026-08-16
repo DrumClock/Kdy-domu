@@ -411,6 +411,7 @@
     if(!btn) return;
     workMin = Number(btn.dataset.min);
     syncSeg();
+    saveSettings();
     calc();
   });
 
@@ -441,10 +442,36 @@
     }catch(e){}
   }
 
+  // --- uložení pracovní doby a svačiny (trvalá předvolba) ---
+  const SET_KEY = 'kdyDomu.settings';
+  const WORK_OK = [360, 420, 450, 480];
+
+  function saveSettings(){
+    try{
+      localStorage.setItem(SET_KEY, JSON.stringify({
+        workMin: workMin,
+        brk: brkInput.value,
+        paid: paidEl.checked
+      }));
+    }catch(e){}
+  }
+
+  function loadSettings(){
+    try{
+      const raw = localStorage.getItem(SET_KEY);
+      if(!raw) return;
+      const s = JSON.parse(raw);
+      if(WORK_OK.includes(s.workMin)) workMin = s.workMin;
+      if(typeof s.brk === 'string' && /^\d{1,2}:\d{2}$/.test(s.brk)) brkInput.value = s.brk;
+      if(typeof s.paid === 'boolean') paidEl.checked = s.paid;
+    }catch(e){}
+  }
+
   startEl.addEventListener('input', () => { saveStart(); calc(); });
-  brkInput.addEventListener('input', calc);
-  paidEl.addEventListener('change', calc);
+  brkInput.addEventListener('input', () => { saveSettings(); calc(); });
+  paidEl.addEventListener('change', () => { saveSettings(); calc(); });
   loadStart();
+  loadSettings();
   syncSeg();
   calc();
   setInterval(updateNow, 1000);   // živá aktualizace každou vteřinu
