@@ -444,9 +444,9 @@
     calc();
   });
 
-  // --- uložení startu na 24 h ---
+  // --- uložení startu na 9 h ---
   const STORE_KEY = 'kdyDomu.start';
-  const DAY_MS = 24 * 60 * 60 * 1000;
+  const DAY_MS = 9 * 60 * 60 * 1000;
 
   function saveStart(){
     try{
@@ -464,7 +464,7 @@
       if(!raw) return;
       const { time, ts } = JSON.parse(raw);
       if(time && (Date.now() - ts) < DAY_MS){
-        startEl.value = time;             // mladší 24 h → předvyplnit
+        startEl.value = time;             // mladší 9 h → předvyplnit
       } else {
         localStorage.removeItem(STORE_KEY); // starší → zahodit, pole zůstane prázdné
       }
