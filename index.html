@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Kdy můžu domů?</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1c1726">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Domů?">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root{
+    --bg:#1c1726;
+    --panel:#251d33;
+    --line:#3a2f4d;
+    --ink:#efe9df;
+    --muted:#9a8fae;
+    --amber:#ffb020;
+    --amber-dim:#7a5410;
+    --glow:rgba(255,176,32,.28);
+    --red:#ff5c6c;
+    --green:#43c67d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:
+      radial-gradient(120% 80% at 50% -10%, #2a2138 0%, var(--bg) 60%);
+    color:var(--ink);
+    font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+    min-height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:calc(24px + env(safe-area-inset-top)) calc(24px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) calc(24px + env(safe-area-inset-left));
+  }
+  .card{
+    width:100%;
+    max-width:460px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:34px 30px 30px;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,.6);
+  }
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:.28em;
+    text-transform:uppercase;
+    color:var(--amber);
+    font-weight:600;
+    margin-bottom:6px;
+    text-align:center;
+  }
+  h1{
+    font-size:26px;
+    font-weight:700;
+    letter-spacing:-.01em;
+    margin-bottom:26px;
+    text-align:center;
+  }
+  label{
+    display:block;
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:9px;
+    letter-spacing:.02em;
+  }
+  .field{margin-bottom:22px}
+  input[type="time"]{
+    width:100%;
+    background:#161020;
+    border:1px solid var(--line);
+    border-radius:12px;
+    color:var(--ink);
+    font-size:22px;
+    font-family:"SFMono-Regular","Consolas",monospace;
+    padding:14px 16px;
+    letter-spacing:.06em;
+  }
+  input[type="time"]:focus,
+  .seg button:focus-visible,
+  input[type="time"]:focus-visible{
+    outline:2px solid var(--amber);
+    outline-offset:2px;
+  }
+  input[type="time"]::-webkit-calendar-picker-indicator{filter:invert(.7)}
+
+  .seg-group{display:flex;flex-direction:column;gap:14px}
+  .seg-cap{
+    display:block;
+    font-size:11px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:7px;
+  }
+  .seg{display:flex;gap:10px}
+  .seg button{
+    flex:1;
+    background:#161020;
+    border:1px solid var(--line);
+    border-radius:12px;
+    color:var(--muted);
+    font-size:16px;
+    font-weight:600;
+    padding:15px 0;
+    cursor:pointer;
+    transition:border-color .15s, color .15s, background .15s;
+  }
+  .seg button:hover{border-color:#5a4a76}
+  .seg button.active{
+    background:var(--amber);
+    border-color:var(--amber);
+    color:#1c1726;
+  }
+  .seg button .h{display:block;font-size:19px;line-height:1}
+  .seg button .t{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-top:4px;opacity:.75}
+
+  .row{display:flex;gap:14px;align-items:flex-end}
+  .row .field{flex:1;margin-bottom:0}
+
+  .check{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-top:16px;
+    cursor:pointer;
+    user-select:none;
+    font-size:14px;
+    color:var(--ink);
+  }
+  .check input{position:absolute;opacity:0;width:0;height:0}
+  .box{
+    width:44px;
+    height:26px;
+    border-radius:999px;
+    background:#161020;
+    border:1px solid var(--line);
+    position:relative;
+    flex:none;
+    transition:background .15s,border-color .15s;
+  }
+  .box::after{
+    content:"";
+    position:absolute;
+    top:3px;left:3px;
+    width:18px;height:18px;
+    border-radius:50%;
+    background:var(--muted);
+    transition:transform .15s,background .15s;
+  }
+  .check input:checked + .box{background:var(--amber);border-color:var(--amber)}
+  .check input:checked + .box::after{transform:translateX(18px);background:#1c1726}
+  .check input:focus-visible + .box{outline:2px solid var(--amber);outline-offset:2px}
+  .check .state{color:var(--muted);font-size:13px}
+
+  .display{
+    margin-top:26px;
+    background:#120d1c;
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px 20px 22px;
+    text-align:center;
+  }
+  .display .lbl{
+    font-size:12px;
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:10px;
+  }
+  .clock{
+    font-family:"SFMono-Regular","Consolas",monospace;
+    font-size:64px;
+    font-weight:700;
+    letter-spacing:.05em;
+    color:var(--amber);
+    text-shadow:0 0 22px var(--glow);
+    line-height:1;
+  }
+  .breakdown{
+    margin-top:18px;
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.7;
+  }
+  .breakdown b{color:var(--ink);font-weight:600}
+
+  .now-lbl{
+    margin-top:16px;
+    padding-top:16px;
+    border-top:1px solid var(--line);
+    font-size:12px;
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:center;
+    margin-bottom:8px;
+    min-height:15px;
+  }
+  .now{
+    text-align:center;
+    font-family:"SFMono-Regular","Consolas",monospace;
+    font-weight:700;
+    font-size:28px;
+    letter-spacing:.05em;
+    min-height:34px;
+  }
+  .now.over{ color:var(--green); }
+  .now.left{ color:var(--red); }
+  .foot{
+    margin-top:18px;
+    font-size:12px;
+    color:var(--muted);
+    text-align:center;
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .clock{transition:opacity .2s}
+  }
+</style>
+</head>
+<body>
+  <main class="card">
+    <h1>Kdy můžu domů?</h1>
+
+    <div class="field">
+      <label for="start">Začátek směny</label>
+      <input type="time" id="start" value="07:39">
+    </div>
+
+    <div class="field">
+      <label>Pracovní doba</label>
+      <div class="seg-group" id="seg" role="group" aria-label="Pracovní doba">
+        <div class="seg-block">
+          <span class="seg-cap">Zkrácená</span>
+          <div class="seg">
+            <button type="button" data-min="360"><span class="h">6</span><span class="t">hodin</span></button>
+          </div>
+        </div>
+        <div class="seg-block">
+          <span class="seg-cap">Klasická</span>
+          <div class="seg">
+            <button type="button" data-min="480"><span class="h">8</span><span class="t">ranní</span></button>
+            <button type="button" data-min="450"><span class="h">7:30</span><span class="t">odpolední</span></button>
+            <button type="button" data-min="420"><span class="h">7:00</span><span class="t">noční</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="brk">Svačina</label>
+      <input type="time" id="brk" value="00:30">
+      <label class="check" for="paid">
+        <input type="checkbox" id="paid">
+        <span class="box"></span>
+        <span>Placená pauza <span class="state" id="paidState">(neplacená → přičítá se)</span></span>
+      </label>
+    </div>
+
+    <div class="display">
+      <div class="lbl">Odchod domů</div>
+      <div class="clock" id="result" aria-live="polite">–:–</div>
+      <div class="breakdown" id="breakdown"></div>
+      <div class="now-lbl" id="nowLbl"></div>
+      <div class="now" id="now"></div>
+    </div>
+  </main>
+
+<script>
+  const startEl = document.getElementById('start');
+  const segEl   = document.getElementById('seg');
+  const brkInput= document.getElementById('brk');
+  const paidEl  = document.getElementById('paid');
+  const paidTxt = document.getElementById('paidState');
+  const resEl   = document.getElementById('result');
+  const brkEl   = document.getElementById('breakdown');
+  const nowEl   = document.getElementById('now');
+  const nowLbl  = document.getElementById('nowLbl');
+  let workMin = 480;   // ← výchozí doba v minutách (360=6h, 420=7:00, 450=7:30, 480=8h)
+  let startTotal = null;  // začátek v minutách od půlnoci
+  let endTotal   = null;  // odchod v minutách od půlnoci (může přesáhnout 1440)
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+
+  function syncSeg(){
+    segEl.querySelectorAll('button').forEach(b =>
+      b.classList.toggle('active', Number(b.dataset.min) === workMin));
+  }
+
+  function breakMinutes(){
+    const v = brkInput.value;
+    if(!v) return 0;
+    const [h, m] = v.split(':').map(Number);
+    return h*60 + m;
+  }
+
+  function calc(){
+    const v = startEl.value;
+    if(!v){
+      resEl.textContent = '–:–';
+      brkEl.textContent = '';
+      nowEl.textContent = '';
+      startTotal = endTotal = null;
+      return;
+    }
+
+    const [sh, sm] = v.split(':').map(Number);
+    const brk  = breakMinutes();
+    const paid = paidEl.checked;
+    // placená pauza se počítá jako práce → do odchodu se nepřičítá
+    const addBreak = paid ? 0 : brk;
+
+    startTotal = sh*60 + sm;
+    const total = startTotal + workMin + addBreak;   // minuty od půlnoci
+    endTotal = total;
+    const endMin = ((total % 1440) + 1440) % 1440;    // ošetření přes půlnoc
+    const eh = Math.floor(endMin / 60);
+    const em = endMin % 60;
+
+    const workLbl = pad(Math.floor(workMin/60)) + ':' + pad(workMin%60);
+    paidTxt.textContent = paid ? '(placená → nepřičítá se)' : '(neplacená → přičítá se)';
+
+    resEl.textContent = pad(eh) + ':' + pad(em);
+    brkEl.innerHTML =
+      'Začátek <b>' + pad(sh) + ':' + pad(sm) + '</b> + '
+      + '<b>' + workLbl + '</b> práce'
+      + (paid
+          ? ' <span style="opacity:.6">(pauza ' + pad(Math.floor(brk/60)) + ':' + pad(brk%60) + ' placená)</span>'
+          : ' + <b>' + pad(Math.floor(brk/60)) + ':' + pad(brk%60) + '</b> pauza')
+      + (total >= 1440 ? ' <b>(další den)</b>' : '');
+
+    updateNow();
+  }
+
+  function updateNow(){
+    if(endTotal === null){
+      nowEl.textContent = ''; nowEl.className = 'now';
+      nowLbl.textContent = '';
+      return;
+    }
+
+    const d = new Date();
+    let nowMin = d.getHours()*60 + d.getMinutes();
+    // pokud odchod přetéká přes půlnoc a je zrovna po půlnoci, posuň "teď" na další den
+    if(endTotal >= 1440 && nowMin < startTotal) nowMin += 1440;
+
+    const diff = nowMin - endTotal;          // >0 přesčas, <0 zbývá
+    const abs  = Math.abs(diff);
+    const hhmm = pad(Math.floor(abs/60)) + ':' + pad(abs%60);
+
+    if(diff < 0){                            // ještě pracuješ → zbývá, červeně
+      nowLbl.textContent = 'Zbývá';
+      nowEl.className = 'now left';
+      nowEl.textContent = '-' + hhmm;
+    } else {                                 // odchod nebo přesčas → zeleně
+      nowLbl.textContent = 'Přesčas';
+      nowEl.className = 'now over';
+      nowEl.textContent = '+' + hhmm;
+    }
+  }
+
+  segEl.addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    workMin = Number(btn.dataset.min);
+    syncSeg();
+    calc();
+  });
+
+  startEl.addEventListener('input', calc);
+  brkInput.addEventListener('input', calc);
+  paidEl.addEventListener('change', calc);
+  syncSeg();
+  calc();
+  setInterval(updateNow, 1000);   // živá aktualizace každou vteřinu
+
+  // offline režim (PWA)
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
