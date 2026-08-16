@@ -228,6 +228,24 @@
     .clock{transition:opacity .2s}
   }
 
+  .share-link{
+    position:fixed;
+    left:50%;
+    transform:translateX(-50%);
+    bottom:calc(env(safe-area-inset-bottom) + 10px);
+    font-size:12px;
+    letter-spacing:.04em;
+    color:var(--muted);
+    text-decoration:none;
+    padding:7px 14px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:rgba(22,15,32,.55);
+    backdrop-filter:blur(4px);
+    -webkit-backdrop-filter:blur(4px);
+  }
+  .share-link:active{color:var(--ink);border-color:#5a4a76}
+
   /* --- Mobil: celá obrazovka bez scrollování --- */
   @media (max-width:520px){
     body{
@@ -312,6 +330,8 @@
       <div class="now" id="now"></div>
     </div>
   </main>
+
+  <a class="share-link" href="sdilet.html">Sdílet appku · QR</a>
 
 <script>
   const startEl = document.getElementById('start');

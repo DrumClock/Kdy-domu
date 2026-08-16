@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Instalace – Kdy můžu domů?</title>
+<style>
+  :root{
+    --bg:#1c1726; --panel:#251d33; --line:#3a2f4d;
+    --ink:#efe9df; --muted:#9a8fae; --amber:#ffb020;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{min-height:100%}
+  body{
+    background:radial-gradient(120% 80% at 50% -10%, #2a2138 0%, var(--bg) 60%);
+    background-attachment:fixed;
+    color:var(--ink);
+    font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+    min-height:100vh; min-height:100dvh;
+    display:flex; align-items:center; justify-content:center;
+    padding:calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
+    text-align:center;
+  }
+  .wrap{width:100%; max-width:420px}
+  .eyebrow{
+    font-size:12px; letter-spacing:.28em; text-transform:uppercase;
+    color:var(--amber); font-weight:600; margin-bottom:8px;
+  }
+  h1{font-size:24px; font-weight:700; margin-bottom:6px}
+  .lead{color:var(--muted); font-size:14px; margin-bottom:22px; line-height:1.5}
+  .qr{
+    background:#fff; border-radius:20px; padding:18px;
+    display:inline-block; line-height:0;
+    box-shadow:0 24px 50px -18px rgba(0,0,0,.6);
+  }
+  .qr img{width:min(64vw,260px); height:auto; display:block}
+  .url{
+    margin-top:18px; font-family:"SFMono-Regular","Consolas",monospace;
+    font-size:13px; color:var(--ink); word-break:break-all;
+    background:#160f20; border:1px solid var(--line);
+    border-radius:10px; padding:10px 12px;
+  }
+  .steps{
+    margin-top:22px; text-align:left; color:var(--muted);
+    font-size:13px; line-height:1.7;
+    background:var(--panel); border:1px solid var(--line);
+    border-radius:14px; padding:16px 18px;
+  }
+  .steps b{color:var(--ink)}
+  .steps p{margin:0 0 8px}
+  .steps p:last-child{margin:0}
+  .back{
+    display:inline-block; margin-top:20px; color:var(--amber);
+    text-decoration:none; font-size:14px; font-weight:600;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="eyebrow">Naskenuj a nainstaluj</div>
+    <h1>Kdy můžu domů?</h1>
+    <p class="lead">Namiř foťák na kód — otevře se appka, kterou si přidáš na plochu.</p>
+
+    <div class="qr">
+      <img src="qr.png" alt="QR kód s adresou aplikace">
+    </div>
+
+    <div class="url">https://drumclock.github.io/Kdy-domu/</div>
+
+    <div class="steps">
+      <p><b>Android (Chrome):</b> naskenuj foťákem → otevři odkaz → menu ⋮ → <b>Přidat na plochu</b> / Nainstalovat.</p>
+      <p><b>iPhone (Safari):</b> naskenuj foťákem → otevři odkaz → tlačítko Sdílet → <b>Přidat na plochu</b>.</p>
+    </div>
+
+    <a class="back" href="index.html">← Zpět do aplikace</a>
+  </div>
+</body>
+</html>
