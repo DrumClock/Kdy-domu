@@ -1,5 +1,5 @@
 // Jednoduchý offline cache pro appku "Kdy můžu domů?"
-const CACHE = 'kdy-domu-v3';
+const CACHE = 'kdy-domu-v4';
 const ASSETS = [
   'index.html',
   'sdilet.html',
@@ -26,11 +26,11 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// nejdřív zkus síť, při výpadku vezmi z cache (aby appka fungovala offline)
+// nejdřív zkus síť (bez HTTP cache = vždy nejnovější), při výpadku vezmi z cache
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
-    fetch(e.request)
+    fetch(e.request, { cache: 'no-store' })
       .then(res => {
         const copy = res.clone();
         caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
