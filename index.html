@@ -229,10 +229,9 @@
     .clock{transition:opacity .2s}
   }
 
-  .share-link{
+  .corner-btn{
     position:absolute;
     top:calc(env(safe-area-inset-top) + 12px);
-    right:calc(env(safe-area-inset-right) + 14px);
     display:inline-flex;
     align-items:center;
     justify-content:center;
@@ -244,9 +243,34 @@
     background:rgba(22,15,32,.55);
     -webkit-backdrop-filter:blur(4px);
     backdrop-filter:blur(4px);
+    cursor:pointer;
     z-index:2;
   }
-  .share-link:active{color:var(--amber);border-color:#5a4a76}
+  .corner-btn:active{color:var(--amber);border-color:#5a4a76}
+  .corner-btn:disabled{opacity:.35;cursor:default}
+  .corner-btn:disabled:active{color:var(--muted);border-color:var(--line)}
+  .share-btn{right:calc(env(safe-area-inset-right) + 14px)}
+  .cal-btn{left:calc(env(safe-area-inset-left) + 14px)}
+
+  .field-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:9px;
+  }
+  .field-head label{margin-bottom:0}
+  .mini-btn{
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:.02em;
+    color:var(--amber);
+    background:transparent;
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:3px 13px;
+    cursor:pointer;
+  }
+  .mini-btn:active{background:rgba(255,176,32,.14);border-color:#5a4a76}
 
   /* --- Mobil: celá obrazovka bez scrollování --- */
   @media (max-width:520px){
@@ -287,10 +311,30 @@
 </head>
 <body>
   <main class="card">
+    <button class="corner-btn cal-btn" id="calBtn" type="button"
+            aria-label="Přidat připomínku do kalendáře" title="Připomínka v kalendáři">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M7 2h2v2h6V2h2v2h1a2 2 0 0 1 2 2v2H4V6a2 2 0 0 1 2-2h1V2z"/>
+        <path d="M4 10h16v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-9zm3 3v2h2v-2H7zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2z"/>
+      </svg>
+    </button>
+
+    <a class="corner-btn share-btn" href="sdilet.html" aria-label="Sdílet appku (QR kód)" title="Sdílet · QR">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M3 3h7v7H3V3zm2 2v3h3V5H5z"/>
+        <path d="M14 3h7v7h-7V3zm2 2v3h3V5h-3z"/>
+        <path d="M3 14h7v7H3v-7zm2 2v3h3v-3H5z"/>
+        <path d="M14 14h2v2h-2zM18 14h3v2h-3zM16 16h2v2h-2zM14 18h2v3h-2zM18 18h3v3h-3z"/>
+      </svg>
+    </a>
+
     <h1>Kdy můžu domů?</h1>
 
     <div class="field">
-      <label for="start">Začátek směny</label>
+      <div class="field-head">
+        <label for="start">Začátek směny</label>
+        <button type="button" class="mini-btn" id="nowBtn">Teď</button>
+      </div>
       <input type="time" id="start">
     </div>
 
@@ -333,15 +377,6 @@
     </div>
   </main>
 
-  <a class="share-link" href="sdilet.html" aria-label="Sdílet appku (QR kód)" title="Sdílet · QR">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M3 3h7v7H3V3zm2 2v3h3V5H5z"/>
-      <path d="M14 3h7v7h-7V3zm2 2v3h3V5h-3z"/>
-      <path d="M3 14h7v7H3v-7zm2 2v3h3v-3H5z"/>
-      <path d="M14 14h2v2h-2zM18 14h3v2h-3zM16 16h2v2h-2zM14 18h2v3h-2zM18 18h3v3h-3z"/>
-    </svg>
-  </a>
-
 <script>
   const startEl = document.getElementById('start');
   const segEl   = document.getElementById('seg');
@@ -352,6 +387,8 @@
   const brkEl   = document.getElementById('breakdown');
   const nowEl   = document.getElementById('now');
   const nowLbl  = document.getElementById('nowLbl');
+  const nowBtn  = document.getElementById('nowBtn');
+  const calBtn  = document.getElementById('calBtn');
   let workMin = 480;   // ← výchozí doba v minutách (360=6h, 420=7:00, 450=7:30, 480=8h)
   let startTotal = null;  // začátek v minutách od půlnoci
   let endTotal   = null;  // odchod v minutách od půlnoci (může přesáhnout 1440)
@@ -377,6 +414,7 @@
       brkEl.textContent = '';
       nowEl.textContent = '';
       startTotal = endTotal = null;
+      if(calBtn) calBtn.disabled = true;
       return;
     }
 
@@ -405,6 +443,7 @@
           : ' + <b>' + pad(Math.floor(brk/60)) + ':' + pad(brk%60) + '</b> pauza')
       + (total >= 1440 ? ' <b>(další den)</b>' : '');
 
+    if(calBtn) calBtn.disabled = false;
     updateNow();
   }
 
@@ -504,6 +543,66 @@
       if(typeof s.paid === 'boolean') paidEl.checked = s.paid;
     }catch(e){}
   }
+
+  // --- tlačítko "Teď": nastaví aktuální čas jako začátek ---
+  nowBtn.addEventListener('click', () => {
+    startEl.value = nowHHMM();
+    saveStart();
+    calc();
+  });
+
+  // --- připomínka do kalendáře (.ics) ---
+  function icsLocal(dt){
+    return dt.getFullYear() + pad(dt.getMonth()+1) + pad(dt.getDate())
+      + 'T' + pad(dt.getHours()) + pad(dt.getMinutes()) + '00';
+  }
+  function icsUTC(dt){
+    return dt.getUTCFullYear() + pad(dt.getUTCMonth()+1) + pad(dt.getUTCDate())
+      + 'T' + pad(dt.getUTCHours()) + pad(dt.getUTCMinutes()) + pad(dt.getUTCSeconds()) + 'Z';
+  }
+
+  function buildICS(){
+    // odchod jako reálné datum: dnešní půlnoc + endTotal minut (přeteče na další den samo)
+    const base = new Date();
+    const dep = new Date(base.getFullYear(), base.getMonth(), base.getDate(), 0, 0, 0, 0);
+    dep.setMinutes(endTotal);
+    const end = new Date(dep.getTime() + 15 * 60000);
+    const uid = 'kdydomu-' + dep.getTime() + '@drumclock.github.io';
+
+    return [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Kdy domu//CS',
+      'CALSCALE:GREGORIAN',
+      'BEGIN:VEVENT',
+      'UID:' + uid,
+      'DTSTAMP:' + icsUTC(new Date()),
+      'DTSTART:' + icsLocal(dep),
+      'DTEND:' + icsLocal(end),
+      'SUMMARY:Odchod domů 🏠',
+      'DESCRIPTION:Konec směny – můžeš jít domů.',
+      'BEGIN:VALARM',
+      'ACTION:DISPLAY',
+      'DESCRIPTION:Odchod domů',
+      'TRIGGER:PT0S',
+      'END:VALARM',
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].join('\r\n');
+  }
+
+  calBtn.addEventListener('click', () => {
+    if(endTotal === null) return;
+    const blob = new Blob([buildICS()], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'odchod-domu.ics';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  });
 
   startEl.addEventListener('input', () => { saveStart(); calc(); });
   brkInput.addEventListener('input', () => { saveSettings(); calc(); });
