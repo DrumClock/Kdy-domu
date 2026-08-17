@@ -15,9 +15,11 @@ Jednoduchá webová appka (PWA), která spočítá, kdy můžeš odejít z prác
 ## Co appka umí
 
 - **Výpočet odchodu** ze zadaného začátku směny.
+- **Tlačítko „Teď"** — jedním ťuknutím nastaví aktuální čas jako začátek směny.
 - **Pracovní doba** na jedno ťuknutí: 6 h (zkrácená) nebo klasická 8 h / 7:30 / 7:00 (ranní / odpolední / noční).
 - **Svačina** s nastavitelnou délkou a přepínačem **placená / neplacená** (placená se do odchodu nepřičítá).
 - **Živý odpočet** — kolik zbývá (červeně) nebo kolik je přesčas (zeleně), aktualizace každou vteřinu.
+- **Připomínka do kalendáře** — vytvoří v telefonu událost na čas odchodu s upozorněním (funguje i při zavřené appce a zamčeném telefonu).
 - **Zapamatování** — začátek směny se drží 9 h, délka směny a nastavení svačiny natrvalo.
 - **Automatické předvyplnění** aktuálního času při startu (dokud nemáš platný uložený začátek).
 - **Funguje offline** a jde nainstalovat na plochu jako běžná aplikace.
@@ -82,6 +84,18 @@ Placená pauza se počítá jako práce, takže odchod **neposouvá**. Když vý
 
 ---
 
+## Připomínka v kalendáři
+
+V rozích nahoře jsou dvě ikonky: **kalendář** (vlevo) a **QR** (vpravo). Kalendář vytvoří v telefonu událost „Odchod domů 🏠" na spočítaný čas s upozorněním — díky tomu tě telefon upozorní, i když je appka zavřená a obrazovka zamčená.
+
+- **Android:** stáhne se soubor `odchod-domu.ics` → otevřeš ho → kalendář nabídne přidání události.
+- **iPhone:** rovnou se nabídne přidání do kalendáře.
+- **PC:** `.ics` otevřeš v Google / Outlook / Apple kalendáři.
+
+Upozornění je v souboru nastavené **na čas události**. Pokud ti kalendář přidá vlastní výchozí připomínku (např. Google 30 min předem), vypni ji v nastavení kalendáře (výchozí připomínky účtu).
+
+---
+
 ## Technické detaily
 
 Appka je čistá **PWA** bez frameworků — jeden HTML soubor s vloženým CSS a JavaScriptem, plus manifest a service worker pro offline režim. Data se ukládají lokálně v prohlížeči (`localStorage`).
@@ -93,6 +107,7 @@ Appka je čistá **PWA** bez frameworků — jeden HTML soubor s vloženým CSS 
 | `sw.js` | Service worker — offline cache |
 | `sdilet.html` | Sdílecí stránka s QR kódem a návodem |
 | `qr.png` | QR kód s adresou aplikace |
+| `screenshot-app.png`, `screenshot-qr.png` | Náhledy do README |
 | `icon-192.png`, `icon-512.png`, `icon-maskable.png` | Ikony aplikace |
 
 ### Vlastní hosting (GitHub Pages)
@@ -106,7 +121,7 @@ Podmínka pro instalaci PWA je **https** — to GitHub Pages zajišťuje zdarma.
 
 ## Omezení
 
-Jako webová appka **neumí budík na pozadí** — signál v čase odchodu by zazněl jen při zapnuté appce s rozsvícenou obrazovkou. Na spolehlivé upozornění při zamčeném telefonu použij systémový budík (appka ti čas odchodu spočítá).
+Jako webová appka **sama neumí zvukový budík na pozadí** — pípnutí přímo v appce by zaznělo jen při zapnuté appce s rozsvícenou obrazovkou. Na spolehlivé upozornění při zamčeném telefonu proto slouží **připomínka v kalendáři** (viz výše), kterou zajistí systémový kalendář.
 
 ---
 
