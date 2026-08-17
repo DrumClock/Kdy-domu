@@ -607,11 +607,37 @@
     setTimeout(() => URL.revokeObjectURL(url), 1500);
   });
 
+  // --- parametry v URL (pro NFC tag) ---
+  // ?now           → nastaví aktuální čas
+  // ?start=HH:MM   → nastaví konkrétní čas
+  function handleURLParams(){
+    try{
+      const params = new URLSearchParams(location.search);
+      let changed = false;
+      if(params.has('start')){
+        const [h, m] = (params.get('start') || '').split(':').map(Number);
+        if(!isNaN(h) && !isNaN(m) && h <= 23 && m <= 59){
+          startEl.value = pad(h) + ':' + pad(m);
+          changed = true;
+        }
+      } else if(params.has('now')){
+        startEl.value = nowHHMM();
+        changed = true;
+      }
+      if(changed){
+        saveStart();
+        // vyčisti URL, ať se parametr znovu neuplatní při refreshi
+        if(history.replaceState) history.replaceState(null, '', location.pathname);
+      }
+    }catch(e){}
+  }
+
   startEl.addEventListener('input', () => { saveStart(); calc(); });
   brkInput.addEventListener('input', () => { saveSettings(); calc(); });
   paidEl.addEventListener('change', () => { saveSettings(); calc(); });
   loadStart();
   loadSettings();
+  handleURLParams();
   syncSeg();
   calc();
   setInterval(updateNow, 1000);   // živá aktualizace každou vteřinu

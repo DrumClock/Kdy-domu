@@ -24,6 +24,7 @@ Jednoduchá webová appka (PWA), která spočítá, kdy můžeš odejít z prác
 - **Automatické předvyplnění** aktuálního času při startu (dokud nemáš platný uložený začátek).
 - **Funguje offline** a jde nainstalovat na plochu jako běžná aplikace.
 - **QR kód** pro rychlé sdílení a instalaci na cizím telefonu.
+- **NFC** — přiložením telefonu k NFC štítku appka otevře a rovnou nastaví začátek směny.
 
 ---
 
@@ -93,6 +94,21 @@ V rozích nahoře jsou dvě ikonky: **kalendář** (vlevo) a **QR** (vpravo). Ka
 - **PC:** `.ics` otevřeš v Google / Outlook / Apple kalendáři.
 
 Upozornění je v souboru nastavené **na čas události**. Pokud ti kalendář přidá vlastní výchozí připomínku (např. Google 30 min předem), vypni ji v nastavení kalendáře (výchozí připomínky účtu).
+
+---
+
+## NFC štítek
+
+Appka rozumí parametrům v adrese, takže přiložením telefonu k NFC štítku může rovnou nastavit začátek směny:
+
+| URL na štítku | Co udělá |
+| --- | --- |
+| `https://drumclock.github.io/Kdy-domu/?now` | Nastaví **aktuální čas** jako začátek |
+| `https://drumclock.github.io/Kdy-domu/?start=06:00` | Nastaví **pevný čas** (zde 6:00) |
+
+Po otevření se čas nastaví, appka spočítá odchod a parametr se z adresy odstraní (refresh ho už nezopakuje).
+
+**Jak štítek zapsat:** pořiď si prázdný NFC tag a v appce jako **NFC Tools** (Android) zapiš na tag zvolenou URL jako záznam typu *URL/URI*. iPhone umí NFC URL číst sám; k zápisu použij podobnou appku. Štítek pak nalep třeba ke skříňce nebo píchačkám.
 
 ---
 
