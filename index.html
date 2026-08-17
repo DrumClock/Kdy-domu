@@ -219,6 +219,64 @@
   }
   .now.over{ color:var(--green); }
   .now.left{ color:var(--red); }
+
+  /* akční tlačítka pod výsledkem */
+  .actions{ display:flex; gap:10px; margin-top:2px; }
+  .act-btn{
+    flex:1;
+    padding:11px 10px;
+    border-radius:12px;
+    border:1px solid var(--line);
+    background:#161020;
+    color:var(--ink);
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .act-btn:active{ border-color:#5a4a76; }
+  .act-btn.primary{ background:var(--amber); border-color:var(--amber); color:#1c1726; }
+  .act-btn.danger{ color:var(--red); }
+
+  /* panel Historie */
+  .sheet{
+    position:fixed; inset:0; z-index:10;
+    background:rgba(12,9,18,.72);
+    -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);
+    display:flex; align-items:flex-end; justify-content:center;
+  }
+  .sheet[hidden]{ display:none; }
+  .sheet-inner{
+    width:100%; max-width:460px; max-height:86dvh; overflow-y:auto;
+    background:var(--panel); border:1px solid var(--line);
+    border-radius:20px 20px 0 0;
+    padding:20px 20px calc(env(safe-area-inset-bottom) + 20px);
+  }
+  .sheet-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .sheet-head h2{ font-size:18px; font-weight:700; }
+  .sheet-close{ background:transparent; border:none; color:var(--muted); font-size:18px; cursor:pointer; padding:4px 8px; }
+  .totals{ display:flex; gap:10px; margin-bottom:14px; }
+  .tot{ flex:1; background:#161020; border:1px solid var(--line); border-radius:12px; padding:12px; text-align:center; }
+  .tot .k{ font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+  .tot .v{ font-family:"SFMono-Regular","Consolas",monospace; font-size:20px; font-weight:700; margin-top:4px; }
+  .log{ display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+  .log-empty{ color:var(--muted); font-size:14px; text-align:center; padding:16px 0; }
+  .rec{ display:flex; align-items:center; justify-content:space-between; gap:8px;
+    background:#161020; border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+  .rec .d{ font-size:13px; color:var(--ink); font-weight:600; }
+  .rec .t{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .rec .df{ font-family:"SFMono-Regular","Consolas",monospace; font-weight:700; font-size:15px; }
+  .df.pos{ color:var(--green); } .df.neg{ color:var(--red); } .df.zero{ color:var(--muted); }
+  .rec-del{ background:transparent; border:none; color:var(--muted); cursor:pointer; font-size:14px; padding:2px 6px; }
+  .sheet-actions{ display:flex; gap:10px; }
+
+  .toast{
+    position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom) + 24px);
+    transform:translateX(-50%); z-index:20;
+    background:#161020; border:1px solid var(--line); border-radius:999px;
+    color:var(--ink); font-size:14px; font-weight:600; padding:10px 18px;
+    box-shadow:0 12px 30px -10px rgba(0,0,0,.6); max-width:90vw; text-align:center;
+  }
+  .toast[hidden]{ display:none; }
   .foot{
     margin-top:18px;
     font-size:12px;
@@ -378,7 +436,29 @@
       <div class="now-lbl" id="nowLbl"></div>
       <div class="now" id="now"></div>
     </div>
+
+    <div class="actions">
+      <button type="button" class="act-btn primary" id="leaveBtn">Zapsat odchod</button>
+      <button type="button" class="act-btn" id="histBtn">Historie</button>
+    </div>
   </main>
+
+  <div class="sheet" id="history" hidden>
+    <div class="sheet-inner">
+      <div class="sheet-head">
+        <h2>Historie</h2>
+        <button type="button" class="sheet-close" id="histClose" aria-label="Zavřít">✕</button>
+      </div>
+      <div class="totals" id="totals"></div>
+      <div class="log" id="logList"></div>
+      <div class="sheet-actions">
+        <button type="button" class="act-btn" id="csvBtn">Export CSV</button>
+        <button type="button" class="act-btn danger" id="clearBtn">Vymazat vše</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
 
 <script>
   const startEl = document.getElementById('start');
@@ -622,39 +702,138 @@
     setTimeout(() => URL.revokeObjectURL(url), 1500);
   });
 
-  // --- parametry v URL (pro NFC tag) ---
-  // ?now           → nastaví aktuální čas
-  // ?start=HH:MM   → nastaví konkrétní čas
-  function handleURLParams(){
-    try{
-      const params = new URLSearchParams(location.search);
-      let changed = false;
-      if(params.has('start')){
-        const [h, m] = (params.get('start') || '').split(':').map(Number);
-        if(!isNaN(h) && !isNaN(m) && h <= 23 && m <= 59){
-          startEl.value = pad(h) + ':' + pad(m);
-          changed = true;
-        }
-      } else if(params.has('now')){
-        startEl.value = nowHHMM();
-        changed = true;
-      }
-      if(changed){
-        saveStart();
-        // vyčisti URL, ať se parametr znovu neuplatní při refreshi
-        if(history.replaceState) history.replaceState(null, '', location.pathname);
-      }
-    }catch(e){}
+  // ===== Evidence přesčasů / dřívějších odchodů =====
+  const LOG_KEY = 'kdyDomu.log';
+  const leaveBtn = document.getElementById('leaveBtn');
+  const histBtn  = document.getElementById('histBtn');
+  const histEl   = document.getElementById('history');
+  const histClose= document.getElementById('histClose');
+  const totalsEl = document.getElementById('totals');
+  const logListEl= document.getElementById('logList');
+  const csvBtn   = document.getElementById('csvBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const toastEl  = document.getElementById('toast');
+
+  function ymd(d){ return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
+  function fmtDiff(min){ const a=Math.abs(min); return (min<0?'-':'+') + Math.floor(a/60) + ':' + pad(a%60); }
+  function diffClass(v){ return v>0 ? 'pos' : (v<0 ? 'neg' : 'zero'); }
+  function startOfWeek(d){ const x=new Date(d.getFullYear(),d.getMonth(),d.getDate()); x.setDate(x.getDate() - ((x.getDay()+6)%7)); return x; }
+
+  function loadLog(){ try{ return JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); }catch(e){ return []; } }
+  function saveLog(a){ try{ localStorage.setItem(LOG_KEY, JSON.stringify(a)); }catch(e){} }
+
+  let toastTimer;
+  function toast(msg){
+    toastEl.textContent = msg;
+    toastEl.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toastEl.hidden = true; }, 2600);
+  }
+
+  function recordDeparture(){
+    if(endTotal === null || !startEl.value){ toast('Nejdřív zadej začátek směny'); return; }
+    const base = new Date();
+    const planned = new Date(base.getFullYear(), base.getMonth(), base.getDate(), 0, 0, 0, 0);
+    planned.setMinutes(endTotal);
+    const now = new Date();
+    let diff = Math.round((now.getTime() - planned.getTime()) / 60000);
+    diff = ((diff % 1440) + 1440) % 1440;          // nejbližší rozdíl v rámci ±12 h
+    if(diff > 720) diff -= 1440;
+    const endMin = ((endTotal % 1440) + 1440) % 1440;
+
+    const rec = {
+      date: ymd(now),
+      start: startEl.value,
+      planned: pad(Math.floor(endMin/60)) + ':' + pad(endMin%60),
+      actual: pad(now.getHours()) + ':' + pad(now.getMinutes()),
+      diff: diff
+    };
+    const log = loadLog().filter(r => r.date !== rec.date);  // jeden záznam na den (poslední platí)
+    log.push(rec);
+    log.sort((a,b) => a.date < b.date ? 1 : -1);            // nejnovější nahoře
+    saveLog(log);
+    toast((diff >= 0 ? 'Přesčas ' : 'Dřívější odchod ') + fmtDiff(diff) + ' zapsáno');
+    renderHistory();
+  }
+
+  function renderHistory(){
+    const log = loadLog();
+    const now = new Date();
+    const wk = startOfWeek(now).getTime();
+    let wSum = 0, mSum = 0;
+    log.forEach(r => {
+      const d = new Date(r.date + 'T00:00:00');
+      if(d.getTime() >= wk && d.getTime() < wk + 7*86400000) wSum += r.diff;
+      if(d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()) mSum += r.diff;
+    });
+    totalsEl.innerHTML =
+      '<div class="tot"><div class="k">Tento týden</div><div class="v ' + diffClass(wSum) + '">' + fmtDiff(wSum) + '</div></div>' +
+      '<div class="tot"><div class="k">Tento měsíc</div><div class="v ' + diffClass(mSum) + '">' + fmtDiff(mSum) + '</div></div>';
+
+    if(!log.length){ logListEl.innerHTML = '<div class="log-empty">Zatím žádné záznamy.</div>'; return; }
+    logListEl.innerHTML = log.map(r => {
+      const dd = r.date.slice(8,10) + '.' + r.date.slice(5,7) + '.';
+      return '<div class="rec"><div><div class="d">' + dd + '</div>' +
+             '<div class="t">' + r.start + ' → ' + r.actual + ' (plán ' + r.planned + ')</div></div>' +
+             '<div style="display:flex;align-items:center;gap:6px">' +
+             '<span class="df ' + diffClass(r.diff) + '">' + fmtDiff(r.diff) + '</span>' +
+             '<button class="rec-del" data-date="' + r.date + '" aria-label="Smazat">✕</button></div></div>';
+    }).join('');
+  }
+
+  function exportCSV(){
+    const log = loadLog().slice().sort((a,b) => a.date < b.date ? -1 : 1);
+    if(!log.length){ toast('Žádné záznamy k exportu'); return; }
+    const head = ['Datum','Zacatek','Plan','Skutecnost','Rozdil_min','Rozdil'];
+    const rows = log.map(r => [r.date, r.start, r.planned, r.actual, r.diff, fmtDiff(r.diff)]);
+    const csv = '\uFEFF' + [head].concat(rows).map(r => r.join(';')).join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'prescasy.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }
+
+  leaveBtn.addEventListener('click', recordDeparture);
+  histBtn.addEventListener('click', () => { renderHistory(); histEl.hidden = false; });
+  histClose.addEventListener('click', () => { histEl.hidden = true; });
+  histEl.addEventListener('click', e => { if(e.target === histEl) histEl.hidden = true; });
+  csvBtn.addEventListener('click', exportCSV);
+  clearBtn.addEventListener('click', () => { if(confirm('Opravdu vymazat všechny záznamy?')){ saveLog([]); renderHistory(); } });
+  logListEl.addEventListener('click', e => {
+    const b = e.target.closest('.rec-del'); if(!b) return;
+    saveLog(loadLog().filter(r => r.date !== b.dataset.date));
+    renderHistory();
+  });
+
+  // ===== parametry v URL (pro NFC tag) =====
+  // ?now  → aktuální čas jako začátek
+  // ?start=HH:MM → konkrétní čas
+  // ?odchod → zapíše odchod (přesčas / dřívější)
+  function applyStartParams(params){
+    if(params.has('start')){
+      const [h, m] = (params.get('start') || '').split(':').map(Number);
+      if(!isNaN(h) && !isNaN(m) && h <= 23 && m <= 59){ startEl.value = pad(h) + ':' + pad(m); saveStart(); }
+    } else if(params.has('now')){
+      startEl.value = nowHHMM(); saveStart();
+    }
   }
 
   startEl.addEventListener('input', () => { saveStart(); calc(); });
   brkInput.addEventListener('input', () => { saveSettings(); calc(); });
   paidEl.addEventListener('change', () => { saveSettings(); calc(); });
+
   loadStart();
   loadSettings();
-  handleURLParams();
+  const params = new URLSearchParams(location.search);
+  applyStartParams(params);
   syncSeg();
   calc();
+  if(params.has('odchod')) recordDeparture();
+  if((params.has('now') || params.has('start') || params.has('odchod')) && history.replaceState){
+    history.replaceState(null, '', location.pathname);   // vyčisti URL
+  }
   setInterval(updateNow, 1000);   // živá aktualizace každou vteřinu
 
   // offline režim (PWA)
