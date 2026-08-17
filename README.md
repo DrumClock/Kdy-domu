@@ -1,4 +1,103 @@
-1. Otevři Chrome přímo z plochy (ne přes odkaz v Messengeru/e‑mailu — to je ta nejčastější příčina, proč volba chybí).
-2. Do adresního řádku vlož: https://drumclock.github.io/Kdy-domu/
-3. Počkej, až se appka načte (uvidíš „Kdy můžu domů?" a formulář).
-4. Menu ⋮ vpravo nahoře → Přidat na plochu / Nainstalovat aplikaci → potvrď.
+# Kdy můžu domů? ⏰
+
+Jednoduchá webová appka (PWA), která spočítá, kdy můžeš odejít z práce — podle začátku směny, délky pracovní doby a pauzy na svačinu. Ukazuje živě, kolik ti ještě **zbývá**, nebo kolik už máš **přesčas**.
+
+**▶️ Spustit appku: [drumclock.github.io/Kdy-domu](https://drumclock.github.io/Kdy-domu/)**
+
+<p align="center">
+  <img src="qr.png" alt="QR kód pro instalaci" width="200">
+  <br>
+  <sub>Naskenuj foťákem a nainstaluj do telefonu</sub>
+</p>
+
+---
+
+## Co appka umí
+
+- **Výpočet odchodu** ze zadaného začátku směny.
+- **Pracovní doba** na jedno ťuknutí: 6 h (zkrácená) nebo klasická 8 h / 7:30 / 7:00 (ranní / odpolední / noční).
+- **Svačina** s nastavitelnou délkou a přepínačem **placená / neplacená** (placená se do odchodu nepřičítá).
+- **Živý odpočet** — kolik zbývá (červeně) nebo kolik je přesčas (zeleně), aktualizace každou vteřinu.
+- **Zapamatování** — začátek směny se drží 9 h, délka směny a nastavení svačiny natrvalo.
+- **Automatické předvyplnění** aktuálního času při startu (dokud nemáš platný uložený začátek).
+- **Funguje offline** a jde nainstalovat na plochu jako běžná aplikace.
+- **QR kód** pro rychlé sdílení a instalaci na cizím telefonu.
+
+---
+
+## Instalace na mobil
+
+Otevři v prohlížeči adresu **https://drumclock.github.io/Kdy-domu/** (nebo naskenuj QR kód výše) a přidej si ji na plochu.
+
+### Android (Chrome)
+1. Otevři odkaz v **Chromu** (ne ve vestavěném prohlížeči jiné appky).
+2. Menu **⋮** vpravo nahoře → **Přidat na plochu** / **Nainstalovat aplikaci**.
+3. Potvrď. Appka se objeví na ploše s vlastní ikonou.
+
+> Tip: někdy je ikonka instalace přímo v adresním řádku.
+
+### iPhone / iPad (Safari)
+1. Otevři odkaz v **Safari**.
+2. Ťukni na tlačítko **Sdílet** (čtvereček se šipkou nahoru).
+3. Zvol **Přidat na plochu** → **Přidat**.
+
+---
+
+## Instalace na PC
+
+Funguje v **Chromu** a **Microsoft Edge** (Firefox a Safari na počítači instalaci PWA nepodporují).
+
+### Google Chrome
+1. Otevři **https://drumclock.github.io/Kdy-domu/**.
+2. V adresním řádku klikni na ikonu instalace (monitor se šipkou dolů) → **Nainstalovat**.
+3. Případně: menu **⋮** → **Odesílat, ukládat a sdílet** → **Nainstalovat stránku jako aplikaci**.
+
+### Microsoft Edge
+1. Otevři tu samou adresu.
+2. Menu **…** → **Aplikace** → **Nainstalovat tento web jako aplikaci**.
+
+Po instalaci se appka spustí ve vlastním okně bez adresního řádku a získá zástupce v nabídce Start / Launchpadu.
+
+---
+
+## Jak se počítá odchod
+
+```
+odchod = začátek + pracovní doba + neplacená pauza
+```
+
+Placená pauza se počítá jako práce, takže odchod **neposouvá**. Když výpočet přesáhne půlnoc, u rozpisu se zobrazí poznámka „(další den)".
+
+**Příklad:** začátek 7:39, směna 8 h, svačina 0:30 neplacená → odchod **16:09**.
+
+---
+
+## Technické detaily
+
+Appka je čistá **PWA** bez frameworků — jeden HTML soubor s vloženým CSS a JavaScriptem, plus manifest a service worker pro offline režim. Data se ukládají lokálně v prohlížeči (`localStorage`).
+
+| Soubor | Popis |
+| --- | --- |
+| `index.html` | Samotná aplikace (HTML + CSS + JS) |
+| `manifest.json` | Metadata PWA (název, ikony, barvy) |
+| `sw.js` | Service worker — offline cache |
+| `sdilet.html` | Sdílecí stránka s QR kódem a návodem |
+| `qr.png` | QR kód s adresou aplikace |
+| `icon-192.png`, `icon-512.png`, `icon-maskable.png` | Ikony aplikace |
+
+### Vlastní hosting (GitHub Pages)
+1. Nahraj soubory do kořene repozitáře.
+2. **Settings → Pages → Source: Deploy from a branch → main / (root)**.
+3. Za chvíli appka běží na `https://<uživatel>.github.io/<repo>/`.
+
+Podmínka pro instalaci PWA je **https** — to GitHub Pages zajišťuje zdarma.
+
+---
+
+## Omezení
+
+Jako webová appka **neumí budík na pozadí** — signál v čase odchodu by zazněl jen při zapnuté appce s rozsvícenou obrazovkou. Na spolehlivé upozornění při zamčeném telefonu použij systémový budík (appka ti čas odchodu spočítá).
+
+---
+
+<sub>Vytvořeno jako hobby projekt. 🙂</sub>
