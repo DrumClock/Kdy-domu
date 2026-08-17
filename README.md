@@ -99,7 +99,11 @@ Upozornění je v souboru nastavené **na čas události**. Pokud ti kalendář 
 
 ## NFC štítek
 
+<img src="nfc.png" alt="NFC" width="72" align="left">
+
 Appka rozumí parametrům v adrese, takže přiložením telefonu k NFC štítku může rovnou nastavit začátek směny:
+
+<br clear="left">
 
 | URL na štítku | Co udělá |
 | --- | --- |
@@ -123,6 +127,7 @@ Appka je čistá **PWA** bez frameworků — jeden HTML soubor s vloženým CSS 
 | `sw.js` | Service worker — offline cache |
 | `sdilet.html` | Sdílecí stránka s QR kódem a návodem |
 | `qr.png` | QR kód s adresou aplikace |
+| `nfc.png` | Ikonka NFC pro README |
 | `screenshot-app.png`, `screenshot-qr.png` | Náhledy do README |
 | `icon-192.png`, `icon-512.png`, `icon-maskable.png` | Ikony aplikace |
 
