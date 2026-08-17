@@ -338,7 +338,7 @@
     body{
       padding:0;
       align-items:stretch;
-      overflow:hidden;               /* obsah se vejde, scroll netřeba */
+      overflow-y:auto;               /* když se nevejde, radši doscrolluj než ořízni */
     }
     .card{
       max-width:none;
@@ -349,24 +349,29 @@
       box-shadow:none;
       display:flex;
       flex-direction:column;
-      justify-content:center;        /* vycentruj do plné výšky */
-      gap:clamp(10px,2.2vh,20px);
-      padding:calc(env(safe-area-inset-top) + 16px)
-              calc(env(safe-area-inset-right) + 22px)
-              calc(env(safe-area-inset-bottom) + 16px)
-              calc(env(safe-area-inset-left) + 22px);
+      justify-content:center;        /* vejde-li se, vycentruj; jinak karta naroste a scrolluje */
+      gap:clamp(7px,1.5vh,16px);
+      padding:calc(env(safe-area-inset-top) + 14px)
+              calc(env(safe-area-inset-right) + 20px)
+              calc(env(safe-area-inset-bottom) + 14px)
+              calc(env(safe-area-inset-left) + 20px);
     }
     /* zruš pevné spodní mezery – rozestupy řeší gap na kartě */
-    h1{margin-bottom:0;font-size:clamp(20px,5.5vw,26px)}
+    h1{margin-bottom:0;font-size:clamp(20px,5.2vw,26px)}
     .field{margin-bottom:0}
-    .seg-group{gap:clamp(8px,1.6vh,14px)}
-    input[type="time"]{padding:clamp(9px,1.4vh,14px) 16px;font-size:20px}
-    .seg button{padding:clamp(10px,1.6vh,15px) 0}
-    .check{margin-top:clamp(8px,1.4vh,16px)}
-    .display{margin-top:0;padding:clamp(14px,2.4vh,26px) 20px}
-    .clock{font-size:clamp(40px,13vw,64px)}
-    .now-lbl{margin-top:clamp(10px,1.6vh,16px);padding-top:clamp(10px,1.6vh,16px)}
-    .now{font-size:clamp(22px,7vw,28px)}
+    label{margin-bottom:6px}
+    .seg-group{gap:clamp(7px,1.3vh,14px)}
+    .seg-cap{margin-bottom:5px}
+    input[type="time"]{padding:clamp(8px,1.2vh,13px) 16px;font-size:19px}
+    .seg button{padding:clamp(8px,1.3vh,14px) 0}
+    .seg button .h{font-size:17px}
+    .now-btn{padding:0 20px;font-size:15px}
+    .check{margin-top:clamp(7px,1.2vh,14px)}
+    .display{margin-top:0;padding:clamp(12px,2vh,22px) 18px}
+    .clock{font-size:clamp(34px,11vw,58px)}
+    .now-lbl{margin-top:clamp(8px,1.3vh,14px);padding-top:clamp(8px,1.3vh,14px)}
+    .now{font-size:clamp(18px,6vw,26px)}
+    .act-btn{padding:10px 8px;font-size:13px}
   }
 </style>
 </head>
