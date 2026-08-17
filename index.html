@@ -252,25 +252,28 @@
   .share-btn{right:calc(env(safe-area-inset-right) + 14px)}
   .cal-btn{left:calc(env(safe-area-inset-left) + 14px)}
 
-  .field-head{
+  .start-row{
     display:flex;
-    align-items:center;
-    justify-content:space-between;
-    margin-bottom:9px;
+    gap:10px;
+    align-items:stretch;
   }
-  .field-head label{margin-bottom:0}
-  .mini-btn{
-    font-size:12px;
-    font-weight:600;
+  .start-row input[type="time"]{
+    flex:1;
+    min-width:0;
+  }
+  .now-btn{
+    flex:0 0 auto;
+    padding:0 24px;
+    border:none;
+    border-radius:12px;
+    background:var(--amber);
+    color:#1c1726;
+    font-size:16px;
+    font-weight:700;
     letter-spacing:.02em;
-    color:var(--amber);
-    background:transparent;
-    border:1px solid var(--line);
-    border-radius:999px;
-    padding:3px 13px;
     cursor:pointer;
   }
-  .mini-btn:active{background:rgba(255,176,32,.14);border-color:#5a4a76}
+  .now-btn:active{filter:brightness(.93)}
 
   /* --- Mobil: celá obrazovka bez scrollování --- */
   @media (max-width:520px){
@@ -331,11 +334,11 @@
     <h1>Kdy můžu domů?</h1>
 
     <div class="field">
-      <div class="field-head">
-        <label for="start">Začátek směny</label>
-        <button type="button" class="mini-btn" id="nowBtn">Teď</button>
+      <label for="start">Začátek směny</label>
+      <div class="start-row">
+        <input type="time" id="start">
+        <button type="button" class="now-btn" id="nowBtn">Teď</button>
       </div>
-      <input type="time" id="start">
     </div>
 
     <div class="field">
@@ -584,7 +587,7 @@
       'BEGIN:VALARM',
       'ACTION:DISPLAY',
       'DESCRIPTION:Odchod domů',
-      'TRIGGER:PT0S',
+      'TRIGGER;RELATED=START:PT0S',
       'END:VALARM',
       'END:VEVENT',
       'END:VCALENDAR'
