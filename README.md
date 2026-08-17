@@ -21,10 +21,13 @@ Jednoduchá webová appka (PWA), která spočítá, kdy můžeš odejít z prác
 - **Živý odpočet** — kolik zbývá (červeně) nebo kolik je přesčas (zeleně), aktualizace každou vteřinu.
 - **Připomínka do kalendáře** — vytvoří v telefonu událost na čas odchodu s upozorněním (funguje i při zavřené appce a zamčeném telefonu).
 - **Zapamatování** — začátek směny se drží 9 h, délka směny a nastavení svačiny natrvalo.
+- 
 - **Automatické předvyplnění** aktuálního času při startu (dokud nemáš platný uložený začátek).
+- **NFC** — přiložením telefonu k NFC štítku appka otevře a rovnou nastaví začátek směny.
+- 
 - **Funguje offline** a jde nainstalovat na plochu jako běžná aplikace.
 - **QR kód** pro rychlé sdílení a instalaci na cizím telefonu.
-- **NFC** — přiložením telefonu k NFC štítku appka otevře a rovnou nastaví začátek směny.
+
 
 ---
 
