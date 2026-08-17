@@ -25,6 +25,16 @@ Jednoduchá webová appka (PWA), která spočítá, kdy můžeš odejít z prác
 
 ---
 
+## Náhledy
+
+<p align="center">
+  <img src="screenshot-app.png" alt="Hlavní obrazovka aplikace" width="270">
+  &nbsp;&nbsp;&nbsp;
+  <img src="screenshot-qr.png" alt="Sdílecí stránka s QR kódem" width="270">
+</p>
+
+---
+
 ## Instalace na mobil
 
 Otevři v prohlížeči adresu **https://drumclock.github.io/Kdy-domu/** (nebo naskenuj QR kód výše) a přidej si ji na plochu.
