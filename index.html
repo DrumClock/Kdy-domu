@@ -458,17 +458,26 @@
     }catch(e){}
   }
 
+  function nowHHMM(){
+    const d = new Date();
+    return pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
+
   function loadStart(){
     try{
       const raw = localStorage.getItem(STORE_KEY);
-      if(!raw) return;
-      const { time, ts } = JSON.parse(raw);
-      if(time && (Date.now() - ts) < DAY_MS){
-        startEl.value = time;             // mladší 9 h → předvyplnit
-      } else {
-        localStorage.removeItem(STORE_KEY); // starší → zahodit, pole zůstane prázdné
+      if(raw){
+        const { time, ts } = JSON.parse(raw);
+        if(time && (Date.now() - ts) < DAY_MS){
+          startEl.value = time;               // mladší 9 h → předvyplnit uložený
+          return;
+        }
+        localStorage.removeItem(STORE_KEY);   // starší → zahodit
       }
     }catch(e){}
+    // není platný uložený start → předvyplň aktuální čas a ulož
+    startEl.value = nowHHMM();
+    saveStart();
   }
 
   // --- uložení pracovní doby a svačiny (trvalá předvolba) ---
