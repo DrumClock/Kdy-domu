@@ -564,21 +564,36 @@
       + 'T' + pad(dt.getUTCHours()) + pad(dt.getUTCMinutes()) + pad(dt.getUTCSeconds()) + 'Z';
   }
 
+  // stálé ID události + verze (SEQUENCE) → kalendář událost přepíše místo duplikace
+  function eventMeta(){
+    let meta = null;
+    try{ meta = JSON.parse(localStorage.getItem('kdyDomu.evt') || 'null'); }catch(e){}
+    if(!meta || !meta.uid){
+      meta = { uid: 'kdydomu-' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '@drumclock.github.io', seq: 0 };
+    } else {
+      meta.seq = (meta.seq | 0) + 1;   // každý další export = vyšší verze
+    }
+    try{ localStorage.setItem('kdyDomu.evt', JSON.stringify(meta)); }catch(e){}
+    return meta;
+  }
+
   function buildICS(){
     // odchod jako reálné datum: dnešní půlnoc + endTotal minut (přeteče na další den samo)
     const base = new Date();
     const dep = new Date(base.getFullYear(), base.getMonth(), base.getDate(), 0, 0, 0, 0);
     dep.setMinutes(endTotal);
     const end = new Date(dep.getTime() + 15 * 60000);
-    const uid = 'kdydomu-' + dep.getTime() + '@drumclock.github.io';
+    const meta = eventMeta();
 
     return [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
       'PRODID:-//Kdy domu//CS',
       'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
       'BEGIN:VEVENT',
-      'UID:' + uid,
+      'UID:' + meta.uid,
+      'SEQUENCE:' + meta.seq,
       'DTSTAMP:' + icsUTC(new Date()),
       'DTSTART:' + icsLocal(dep),
       'DTEND:' + icsLocal(end),
