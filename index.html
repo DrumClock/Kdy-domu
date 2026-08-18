@@ -309,6 +309,9 @@
   .edit-row .edit-time{ flex:1; min-width:0; padding:9px 10px; font-size:16px; }
   .row-del{ flex:none; background:transparent; border:1px solid var(--line); border-radius:8px;
     color:var(--muted); font-size:14px; cursor:pointer; padding:6px 9px; }
+  .para-toggle{ flex:none; background:transparent; border:1px solid var(--line); border-radius:8px;
+    color:var(--muted); font-weight:700; font-size:15px; cursor:pointer; padding:6px 11px; }
+  .para-toggle.on{ background:var(--green); border-color:var(--green); color:#1c1726; }
   .add-punch{ margin-top:4px; }
   .sheet-actions{ display:flex; gap:10px; }
   .sheet-actions[hidden]{ display:none; }
@@ -809,8 +812,14 @@
     const kinds = arr.map(p => p.k);
     const open = kinds[kinds.length-1] === 'in';
     const start = mins[0];
-    let breaks = 0;
-    for(let i=0;i<arr.length-1;i++){ if(kinds[i]==='out' && kinds[i+1]==='in') breaks += mins[i+1]-mins[i]; }
+    let breaks = 0, paidBreaks = 0;
+    for(let i=0;i<arr.length-1;i++){
+      if(kinds[i]==='out' && kinds[i+1]==='in'){
+        const g = mins[i+1]-mins[i];
+        if(arr[i].paid) paidBreaks += g;   // placený paragraf → počítá se jako práce
+        else breaks += g;                  // běžné přerušení → odečítá se
+      }
+    }
     let end;
     if(open){ let n=nowMin(); while(n < mins[mins.length-1]) n += 1440; end = n; }
     else end = mins[mins.length-1];
@@ -820,7 +829,7 @@
     const snack = isPaid ? 0 : snackMin;                       // neplacená svačina
     const worked = Math.max(0, end - start - breaks - snack);
     const over = plan != null ? worked - plan : null;
-    return { start, end: open?null:mins[mins.length-1], worked, breaks, snack, open, plan, over, punches: arr };
+    return { start, end: open?null:mins[mins.length-1], worked, breaks, paidBreaks, snack, open, plan, over, punches: arr };
   }
 
   // klíč aktivní směny (i přes půlnoc); null = žádná aktivní
@@ -912,7 +921,7 @@
     logListEl.innerHTML = items.map(({k,s}) => {
       const range = hhmm(s.start) + ' → ' + (s.open ? '<span class="live">běží</span>' : hhmm(s.end));
       const off = s.breaks + s.snack;
-      const brk = off ? ' · pauza ' + dur(off) : '';
+      const brk = (off ? ' · pauza ' + dur(off) : '') + (s.paidBreaks ? ' · §' + dur(s.paidBreaks) : '');
       const over = s.over != null ? '<span class="df ' + diffClass(s.over) + '">' + sdur(s.over) + '</span>' : '<span class="df zero">–</span>';
       return '<div class="rec"><div><div class="d">' + fmtDate(k) + '  ' + range + '</div>' +
              '<div class="t">odpracováno ' + dur(s.worked) + brk + '</div></div>' +
@@ -929,13 +938,16 @@
     totalsEl.style.display = 'none';
     viewActions.hidden = true; editActions.hidden = false;
     addDayBtn.hidden = true;
-    const rows = editArr.map((p,i) =>
-      '<div class="edit-row" data-idx="' + i + '">' +
+    const rows = editArr.map((p,i) => {
+      const isBreakOut = p.k==='out' && editArr[i+1] && editArr[i+1].k==='in';
+      return '<div class="edit-row" data-idx="' + i + '">' +
         '<button type="button" class="type-toggle ' + (p.k==='in'?'in':'out') + '" data-idx="' + i + '">' +
           (p.k==='in' ? 'Příchod' : 'Odchod') + '</button>' +
         '<input type="time" class="edit-time" data-idx="' + i + '" value="' + p.t + '">' +
+        (isBreakOut ? '<button type="button" class="para-toggle ' + (p.paid?'on':'') + '" data-idx="' + i + '" title="Placený paragraf">§</button>' : '') +
         '<button type="button" class="row-del" data-idx="' + i + '" aria-label="Smazat">✕</button>' +
-      '</div>').join('');
+      '</div>';
+    }).join('');
     logListEl.innerHTML =
       '<div class="edit-lbl">Datum</div>' +
       '<input type="date" class="edit-date" value="' + editKey + '">' +
@@ -946,7 +958,7 @@
           (editPaid ? 'Placená' : 'Neplacená') + '</button>' +
       '</div>' +
       '<div class="edit-lbl">Píchnutí</div>' +
-      '<div class="edit-head">Uprav čas a typ. Pořadí odpovídá průběhu dne.</div>' +
+      '<div class="edit-head">Uprav čas a typ. U přerušení přepni <b>§</b> pro placený paragraf (neodečítá se).</div>' +
       rows +
       '<button type="button" class="act-btn add-punch" id="addPunchBtn">+ Přidat píchnutí</button>';
   }
@@ -955,7 +967,7 @@
     const store = loadPunch();
     const d = store[date] || {};
     editDate = date; editKey = date;
-    editArr = (d.punches || []).map(p => ({ t: p.t, k: p.k }));
+    editArr = (d.punches || []).map(p => ({ t: p.t, k: p.k, paid: p.paid }));
     editBrk = d.brk != null ? d.brk : breakMinutes();
     editPaid = d.brk != null ? !!d.paid : paidEl.checked;
     renderHistory();
@@ -999,11 +1011,11 @@
     const rows = keys.map(k => {
       const s = daySummary(store[k]); if(!s) return null;
       const punches = store[k].punches.map(p => p.t + (p.k==='in' ? 'P' : 'O')).join(' ');
-      return [k, hhmm(s.start), s.open ? '' : hhmm(s.end), s.worked, s.breaks, s.snack,
+      return [k, hhmm(s.start), s.open ? '' : hhmm(s.end), s.worked, s.breaks, s.paidBreaks, s.snack,
               s.plan!=null ? s.plan : '', s.over!=null ? s.over : '', punches];
     }).filter(Boolean);
     if(!rows.length){ toast('Žádné záznamy k exportu'); return; }
-    const head = ['Datum','Prichod','Odchod','Odpracovano_min','Preruseni_min','Svacina_min','Plan_min','Prescas_min','Pichnuti'];
+    const head = ['Datum','Prichod','Odchod','Odpracovano_min','Preruseni_min','Paragraf_min','Svacina_min','Plan_min','Prescas_min','Pichnuti'];
     const csv = '\uFEFF' + [head].concat(rows).map(r => r.join(';')).join('\r\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -1037,6 +1049,8 @@
       renderEdit(); return;
     }
     if(e.target.closest('#paidToggle')){ editPaid = !editPaid; renderEdit(); return; }
+    const pt = e.target.closest('.para-toggle');
+    if(pt){ const i=+pt.dataset.idx; editArr[i].paid = !editArr[i].paid; renderEdit(); return; }
   });
   logListEl.addEventListener('input', e => {
     const inp = e.target.closest('.edit-time');
