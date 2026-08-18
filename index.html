@@ -808,7 +808,10 @@
     let end;
     if(open){ let n=nowMin(); while(n < mins[mins.length-1]) n += 1440; end = n; }
     else end = mins[mins.length-1];
-    const snack = (day && day.paid) ? 0 : ((day && day.brk) || 0);   // neplacená svačina
+    const hasOwn = day && day.brk != null;                    // má den vlastní údaj o svačině?
+    const snackMin = hasOwn ? day.brk : breakMinutes();        // jinak vezmi aktuální nastavení
+    const isPaid   = hasOwn ? !!day.paid : paidEl.checked;
+    const snack = isPaid ? 0 : snackMin;                       // neplacená svačina
     const worked = Math.max(0, end - start - breaks - snack);
     const over = plan != null ? worked - plan : null;
     return { start, end: open?null:mins[mins.length-1], worked, breaks, snack, open, plan, over, punches: arr };
