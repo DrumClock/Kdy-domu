@@ -396,9 +396,9 @@
       box-shadow:none;
       display:flex;
       flex-direction:column;
-      justify-content:center;        /* vejde-li se, vycentruj; jinak karta naroste a scrolluje */
+      justify-content:flex-start;    /* obsah odshora – žádná velká mezera nahoře */
       gap:clamp(7px,1.5vh,16px);
-      padding:calc(env(safe-area-inset-top) + 14px)
+      padding:calc(env(safe-area-inset-top) + 10px)
               calc(env(safe-area-inset-right) + 20px)
               calc(env(safe-area-inset-bottom) + 14px)
               calc(env(safe-area-inset-left) + 20px);
