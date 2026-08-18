@@ -14,16 +14,14 @@ Jednoduchá webová appka (PWA), která spočítá, kdy můžeš odejít z prác
 
 ## Co appka umí
 
-- **Výpočet odchodu** ze zadaného začátku směny.
-- **Tlačítko „Teď"** — jedním ťuknutím nastaví aktuální čas jako začátek směny.
+- **Výpočet odchodu** ze zadaného začátku směny (začátek se bere z prvního Příchodu, nebo ho zadáš ručně jen pro výpočet).
 - **Pracovní doba** na jedno ťuknutí: 6 h (zkrácená) nebo klasická 8 h / 7:30 / 7:00 (ranní / odpolední / noční).
 - **Svačina** s nastavitelnou délkou a přepínačem **placená / neplacená** (placená se do odchodu nepřičítá).
 - **Živý odpočet** — kolik zbývá (červeně) nebo kolik je přesčas (zeleně), aktualizace každou vteřinu.
 - **[Píchačky](#píchačky)** — Příchod / Odchod (i přes NFC) evidují začátek, konec a přerušení směny; historie s odpracovanými hodinami a přesčasy, úpravou i dodatečným dopsáním směn a exportem do CSV.
 - **Připomínka do kalendáře** — vytvoří v telefonu událost na čas odchodu s upozorněním (funguje i při zavřené appce a zamčeném telefonu).
-- **Zapamatování** — začátek směny se drží 9 h, délka směny a nastavení svačiny natrvalo.
-- **Automatické předvyplnění** aktuálního času při startu (dokud nemáš platný uložený začátek).
-- **[NFC](#nfc-štítek)** — přiložením telefonu k NFC štítku appka otevře a rovnou nastaví začátek směny.
+- **Zapamatování** — délka směny a nastavení svačiny se drží natrvalo.
+- **[NFC](#nfc-štítek)** — přiložením telefonu k NFC štítku píchneš příchod nebo odchod.
 - **Funguje offline** a jde nainstalovat na plochu jako běžná aplikace.
 - **QR kód** pro rychlé sdílení a instalaci na cizím telefonu.
 
