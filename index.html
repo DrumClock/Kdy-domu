@@ -808,9 +808,10 @@
     let end;
     if(open){ let n=nowMin(); while(n < mins[mins.length-1]) n += 1440; end = n; }
     else end = mins[mins.length-1];
-    const worked = Math.max(0, end - start - breaks);
+    const snack = (day && day.paid) ? 0 : ((day && day.brk) || 0);   // neplacená svačina
+    const worked = Math.max(0, end - start - breaks - snack);
     const over = plan != null ? worked - plan : null;
-    return { start, end: open?null:mins[mins.length-1], worked, breaks, open, plan, over, punches: arr };
+    return { start, end: open?null:mins[mins.length-1], worked, breaks, snack, open, plan, over, punches: arr };
   }
 
   // klíč aktivní směny (i přes půlnoc); null = žádná aktivní
@@ -843,7 +844,9 @@
     if(kind==='out' && (!last || last.k==='out')){ toast('Nejsi přihlášen(a)'); return; }
     const d = new Date();
     arr.push({ t: pad(d.getHours()) + ':' + pad(d.getMinutes()), k: kind });
-    day.plan = workMin;                              // ulož plánovanou délku směny pro tento den
+    day.plan = workMin;                              // plánovaná délka směny
+    day.brk  = breakMinutes();                       // délka svačiny (min)
+    day.paid = paidEl.checked;                        // placená? → neodečítá se
     store[key] = day; savePunch(store);
     if(kind==='in' && arr.filter(p=>p.k==='in').length===1){   // první příchod = začátek směny
       startEl.value = arr[0].t; saveStart(); calc();
@@ -857,8 +860,9 @@
     const s = daySummary(store[currentKey(store)]);
     if(!s){ statusTxt.textContent = 'Dnes nezaznamenáno'; inBtn.disabled=false; outBtn.disabled=true; return; }
     if(s.open){
+      const off = s.breaks + s.snack;
       statusTxt.innerHTML = 'V práci od <b>' + hhmm(s.start) + '</b> · odpracováno <b>' + dur(s.worked) + '</b>'
-        + (s.breaks ? ' · přerušení ' + dur(s.breaks) : '');
+        + (off ? ' · pauza ' + dur(off) : '');
       inBtn.disabled = true; outBtn.disabled = false;
     } else {
       let txt = 'Konec <b>' + hhmm(s.end) + '</b> · odpracováno <b>' + dur(s.worked) + '</b>';
@@ -898,7 +902,8 @@
     if(!items.length){ logListEl.innerHTML = '<div class="log-empty">Zatím žádné záznamy.</div>'; return; }
     logListEl.innerHTML = items.map(({k,s}) => {
       const range = hhmm(s.start) + ' → ' + (s.open ? '<span class="live">běží</span>' : hhmm(s.end));
-      const brk = s.breaks ? ' · přeruš. ' + dur(s.breaks) : '';
+      const off = s.breaks + s.snack;
+      const brk = off ? ' · pauza ' + dur(off) : '';
       const over = s.over != null ? '<span class="df ' + diffClass(s.over) + '">' + sdur(s.over) + '</span>' : '<span class="df zero">–</span>';
       return '<div class="rec"><div><div class="d">' + fmtDate(k) + '  ' + range + '</div>' +
              '<div class="t">odpracováno ' + dur(s.worked) + brk + '</div></div>' +
@@ -949,7 +954,7 @@
     const clean = editArr.filter(p => /^\d{1,2}:\d{2}$/.test(p.t));
     if(editDate && editDate !== key) delete store[editDate];   // přesun na jiné datum
     if(!clean.length){ delete store[key]; }
-    else { const day = store[key] || { plan: workMin }; day.punches = clean; store[key] = day; }
+    else { const day = store[key] || { plan: workMin, brk: breakMinutes(), paid: paidEl.checked }; day.punches = clean; store[key] = day; }
     savePunch(store);
     editDate = editKey = editArr = null;
     renderHistory(); renderStatus();
@@ -963,11 +968,11 @@
     const rows = keys.map(k => {
       const s = daySummary(store[k]); if(!s) return null;
       const punches = store[k].punches.map(p => p.t + (p.k==='in' ? 'P' : 'O')).join(' ');
-      return [k, hhmm(s.start), s.open ? '' : hhmm(s.end), s.worked, s.breaks,
+      return [k, hhmm(s.start), s.open ? '' : hhmm(s.end), s.worked, s.breaks, s.snack,
               s.plan!=null ? s.plan : '', s.over!=null ? s.over : '', punches];
     }).filter(Boolean);
     if(!rows.length){ toast('Žádné záznamy k exportu'); return; }
-    const head = ['Datum','Prichod','Odchod','Odpracovano_min','Preruseni_min','Plan_min','Prescas_min','Pichnuti'];
+    const head = ['Datum','Prichod','Odchod','Odpracovano_min','Preruseni_min','Svacina_min','Plan_min','Prescas_min','Pichnuti'];
     const csv = '\uFEFF' + [head].concat(rows).map(r => r.join(';')).join('\r\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
