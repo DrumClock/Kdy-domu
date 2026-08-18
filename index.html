@@ -66,7 +66,6 @@
     font-size:26px;
     font-weight:700;
     letter-spacing:-.01em;
-    margin-top:20px;
     margin-bottom:26px;
     text-align:center;
   }
@@ -334,9 +333,13 @@
     .clock{transition:opacity .2s}
   }
 
+  .toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:8px;
+  }
   .corner-btn{
-    position:absolute;
-    top:calc(env(safe-area-inset-top) + 12px);
     display:inline-flex;
     align-items:center;
     justify-content:center;
@@ -349,15 +352,10 @@
     -webkit-backdrop-filter:blur(4px);
     backdrop-filter:blur(4px);
     cursor:pointer;
-    z-index:2;
   }
   .corner-btn:active{color:var(--amber);border-color:#5a4a76}
   .corner-btn:disabled{opacity:.35;cursor:default}
   .corner-btn:disabled:active{color:var(--muted);border-color:var(--line)}
-  .share-btn{right:calc(env(safe-area-inset-right) + 14px)}
-  .hist-btn{right:calc(env(safe-area-inset-right) + 58px)}
-  .cal-btn{left:calc(env(safe-area-inset-left) + 14px)}
-  .help-btn{left:calc(env(safe-area-inset-left) + 58px)}
 
   .start-row{
     display:flex;
@@ -406,7 +404,7 @@
               calc(env(safe-area-inset-left) + 20px);
     }
     /* zruš pevné spodní mezery – rozestupy řeší gap na kartě */
-    h1{margin-top:34px;margin-bottom:0;font-size:clamp(20px,5.2vw,26px)}
+    h1{margin-bottom:0;font-size:clamp(20px,5.2vw,26px)}
     .field{margin-bottom:0}
     label{margin-bottom:6px}
     .seg-group{gap:clamp(7px,1.3vh,14px)}
@@ -428,35 +426,37 @@
 </head>
 <body>
   <main class="card">
-    <button class="corner-btn cal-btn" id="calBtn" type="button"
-            aria-label="Přidat připomínku do kalendáře" title="Připomínka v kalendáři">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M7 2h2v2h6V2h2v2h1a2 2 0 0 1 2 2v2H4V6a2 2 0 0 1 2-2h1V2z"/>
-        <path d="M4 10h16v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-9zm3 3v2h2v-2H7zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2z"/>
-      </svg>
-    </button>
+    <div class="toolbar">
+      <button class="corner-btn" id="calBtn" type="button"
+              aria-label="Přidat připomínku do kalendáře" title="Připomínka v kalendáři">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M7 2h2v2h6V2h2v2h1a2 2 0 0 1 2 2v2H4V6a2 2 0 0 1 2-2h1V2z"/>
+          <path d="M4 10h16v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-9zm3 3v2h2v-2H7zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2z"/>
+        </svg>
+      </button>
 
-    <a class="corner-btn share-btn" href="sdilet.html" aria-label="Sdílet appku (QR kód)" title="Sdílet · QR">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M3 3h7v7H3V3zm2 2v3h3V5H5z"/>
-        <path d="M14 3h7v7h-7V3zm2 2v3h3V5h-3z"/>
-        <path d="M3 14h7v7H3v-7zm2 2v3h3v-3H5z"/>
-        <path d="M14 14h2v2h-2zM18 14h3v2h-3zM16 16h2v2h-2zM14 18h2v3h-2zM18 18h3v3h-3z"/>
-      </svg>
-    </a>
+      <button class="corner-btn" id="histBtn" type="button" aria-label="Historie" title="Historie">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M13 3a9 9 0 1 0 8.94 10H19.9A7 7 0 1 1 13 5a6.9 6.9 0 0 1 4.9 2.05L15 10h7V3l-2.6 2.6A9 9 0 0 0 13 3z"/>
+          <path d="M12 8h1.6v4.3l3.2 1.9-.8 1.35L12 13.2z"/>
+        </svg>
+      </button>
 
-    <button class="corner-btn hist-btn" id="histBtn" type="button" aria-label="Historie" title="Historie">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M13 3a9 9 0 1 0 8.94 10H19.9A7 7 0 1 1 13 5a6.9 6.9 0 0 1 4.9 2.05L15 10h7V3l-2.6 2.6A9 9 0 0 0 13 3z"/>
-        <path d="M12 8h1.6v4.3l3.2 1.9-.8 1.35L12 13.2z"/>
-      </svg>
-    </button>
+      <a class="corner-btn" href="napoveda.html" aria-label="Nápověda" title="Nápověda">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 3.4a3.6 3.6 0 0 1 3.6 3.6c0 1.9-1.3 2.6-2.2 3.2-.6.4-1 .7-1 1.3v.4h-1.9v-.6c0-1.5 1-2.2 1.8-2.7.7-.5 1.2-.8 1.2-1.6a1.7 1.7 0 0 0-3.4 0H8.4A3.6 3.6 0 0 1 12 5.4zM11 16.2h2v2h-2z"/>
+        </svg>
+      </a>
 
-    <a class="corner-btn help-btn" href="napoveda.html" aria-label="Nápověda" title="Nápověda">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 3.4a3.6 3.6 0 0 1 3.6 3.6c0 1.9-1.3 2.6-2.2 3.2-.6.4-1 .7-1 1.3v.4h-1.9v-.6c0-1.5 1-2.2 1.8-2.7.7-.5 1.2-.8 1.2-1.6a1.7 1.7 0 0 0-3.4 0H8.4A3.6 3.6 0 0 1 12 5.4zM11 16.2h2v2h-2z"/>
-      </svg>
-    </a>
+      <a class="corner-btn" href="sdilet.html" aria-label="Sdílet appku (QR kód)" title="Sdílet · QR">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M3 3h7v7H3V3zm2 2v3h3V5H5z"/>
+          <path d="M14 3h7v7h-7V3zm2 2v3h3V5h-3z"/>
+          <path d="M3 14h7v7H3v-7zm2 2v3h3v-3H5z"/>
+          <path d="M14 14h2v2h-2zM18 14h3v2h-3zM16 16h2v2h-2zM14 18h2v3h-2zM18 18h3v3h-3z"/>
+        </svg>
+      </a>
+    </div>
 
     <h1>Osobní píchačka</h1>
 
