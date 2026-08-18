@@ -275,6 +275,12 @@
   .head-btn:active{ border-color:#5a4a76; }
   .edit-lbl{ font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:2px 0 6px; }
   .edit-date{ width:100%; padding:9px 10px; font-size:16px; margin-bottom:14px; }
+  .edit-brk-row{ display:flex; gap:8px; margin-bottom:14px; }
+  .edit-brk-row .edit-brk{ flex:1; min-width:0; padding:9px 10px; font-size:16px; }
+  .paid-toggle{ flex:none; padding:9px 16px; border-radius:10px; border:none;
+    font-weight:700; font-size:13px; cursor:pointer; color:#1c1726; }
+  .paid-toggle.paid{ background:var(--green); }
+  .paid-toggle.unpaid{ background:var(--red); }
   .totals{ display:flex; gap:10px; margin-bottom:14px; }
   .tot{ flex:1; background:#161020; border:1px solid var(--line); border-radius:12px; padding:12px; text-align:center; }
   .tot .k{ font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
@@ -773,7 +779,7 @@
   const saveEditBtn  = document.getElementById('saveEditBtn');
   const cancelEditBtn= document.getElementById('cancelEditBtn');
   const addDayBtn    = document.getElementById('addDayBtn');
-  let editDate = null, editKey = null, editArr = null;
+  let editDate = null, editKey = null, editArr = null, editBrk = 30, editPaid = false;
 
   function ymd(d){ return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
   function hhmm(min){ min=((min%1440)+1440)%1440; return pad(Math.floor(min/60)) + ':' + pad(min%60); }
@@ -916,6 +922,8 @@
     }).join('');
   }
 
+  function brkToStr(min){ return pad(Math.floor(min/60)) + ':' + pad(min%60); }
+
   function renderEdit(){
     sheetTitle.textContent = editDate ? ('Úprava ' + fmtDate(editDate)) : 'Nová směna';
     totalsEl.style.display = 'none';
@@ -931,22 +939,33 @@
     logListEl.innerHTML =
       '<div class="edit-lbl">Datum</div>' +
       '<input type="date" class="edit-date" value="' + editKey + '">' +
-      '<div class="edit-head">Uprav čas a typ píchnutí. Pořadí odpovídá průběhu dne.</div>' +
+      '<div class="edit-lbl">Svačina</div>' +
+      '<div class="edit-brk-row">' +
+        '<input type="time" class="edit-brk" value="' + brkToStr(editBrk) + '">' +
+        '<button type="button" class="paid-toggle ' + (editPaid?'paid':'unpaid') + '" id="paidToggle">' +
+          (editPaid ? 'Placená' : 'Neplacená') + '</button>' +
+      '</div>' +
+      '<div class="edit-lbl">Píchnutí</div>' +
+      '<div class="edit-head">Uprav čas a typ. Pořadí odpovídá průběhu dne.</div>' +
       rows +
       '<button type="button" class="act-btn add-punch" id="addPunchBtn">+ Přidat píchnutí</button>';
   }
 
   function openEdit(date){
     const store = loadPunch();
-    editDate = date;
-    editKey  = date;
-    editArr = ((store[date] && store[date].punches) || []).map(p => ({ t: p.t, k: p.k }));
+    const d = store[date] || {};
+    editDate = date; editKey = date;
+    editArr = (d.punches || []).map(p => ({ t: p.t, k: p.k }));
+    editBrk = d.brk != null ? d.brk : breakMinutes();
+    editPaid = d.brk != null ? !!d.paid : paidEl.checked;
     renderHistory();
   }
   function openNewDay(){
-    editDate = null;                       // nový den
-    editKey  = ymd(new Date());            // výchozí datum = dnes
+    editDate = null;
+    editKey  = ymd(new Date());
     editArr  = [ { t:'08:00', k:'in' }, { t:'16:30', k:'out' } ];
+    editBrk  = breakMinutes();
+    editPaid = paidEl.checked;
     renderHistory();
   }
   function saveEdit(){
@@ -955,9 +974,18 @@
     const key = dateInput ? dateInput.value : editKey;
     if(!key){ toast('Vyber datum'); return; }
     const clean = editArr.filter(p => /^\d{1,2}:\d{2}$/.test(p.t));
+    const origin = editDate ? store[editDate] : null;
     if(editDate && editDate !== key) delete store[editDate];   // přesun na jiné datum
     if(!clean.length){ delete store[key]; }
-    else { const day = store[key] || { plan: workMin, brk: breakMinutes(), paid: paidEl.checked }; day.punches = clean; store[key] = day; }
+    else {
+      const existing = store[key] || origin || {};
+      store[key] = {
+        punches: clean,
+        plan: existing.plan != null ? existing.plan : workMin,
+        brk: editBrk,
+        paid: editPaid
+      };
+    }
     savePunch(store);
     editDate = editKey = editArr = null;
     renderHistory(); renderStatus();
@@ -1008,12 +1036,15 @@
       editArr.push({ t: last ? last.t : nowHHMM(), k: last ? (last.k==='in'?'out':'in') : 'in' });
       renderEdit(); return;
     }
+    if(e.target.closest('#paidToggle')){ editPaid = !editPaid; renderEdit(); return; }
   });
   logListEl.addEventListener('input', e => {
     const inp = e.target.closest('.edit-time');
     if(inp && editArr){ editArr[+inp.dataset.idx].t = inp.value; return; }
     const dt = e.target.closest('.edit-date');
-    if(dt){ editKey = dt.value; }
+    if(dt){ editKey = dt.value; return; }
+    const bk = e.target.closest('.edit-brk');
+    if(bk){ const [h,m]=(bk.value||'0:0').split(':').map(Number); editBrk = (h||0)*60 + (m||0); }
   });
 
   // ===== parametry v URL (pro NFC tag) =====
