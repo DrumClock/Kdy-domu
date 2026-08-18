@@ -19,7 +19,7 @@ Jednoduchá webová appka (PWA), která spočítá, kdy můžeš odejít z prác
 - **Pracovní doba** na jedno ťuknutí: 6 h (zkrácená) nebo klasická 8 h / 7:30 / 7:00 (ranní / odpolední / noční).
 - **Svačina** s nastavitelnou délkou a přepínačem **placená / neplacená** (placená se do odchodu nepřičítá).
 - **Živý odpočet** — kolik zbývá (červeně) nebo kolik je přesčas (zeleně), aktualizace každou vteřinu.
-- **[Evidence přesčasů](#evidence-přesčasů)** — zapsáním odchodu (tlačítko nebo NFC) se uloží rozdíl proti plánu; historie s týdenním a měsíčním součtem a exportem do CSV.
+- **[Píchačky](#píchačky)** — Příchod / Odchod (i přes NFC) evidují začátek, konec a přerušení směny; historie s odpracovanými hodinami, přesčasy a exportem do CSV.
 - **Připomínka do kalendáře** — vytvoří v telefonu událost na čas odchodu s upozorněním (funguje i při zavřené appce a zamčeném telefonu).
 - **Zapamatování** — začátek směny se drží 9 h, délka směny a nastavení svačiny natrvalo.
 - **Automatické předvyplnění** aktuálního času při startu (dokud nemáš platný uložený začátek).
@@ -103,42 +103,44 @@ Upozornění je v souboru nastavené **na čas události**. Pokud ti kalendář 
 
 <img src="nfc.png" alt="NFC" width="72" align="left">
 
-Appka rozumí parametrům v adrese, takže přiložením telefonu k NFC štítku může rovnou nastavit začátek směny:
+Appka rozumí parametrům v adrese, takže přiložením telefonu k NFC štítku rovnou píchneš příchod nebo odchod:
 
 <br clear="left">
 
 | URL na štítku | Co udělá |
 | --- | --- |
-| `https://drumclock.github.io/Kdy-domu/?now` | Nastaví **aktuální čas** jako začátek |
-| `https://drumclock.github.io/Kdy-domu/?start=06:00` | Nastaví **pevný čas** (zde 6:00) |
-| `https://drumclock.github.io/Kdy-domu/?odchod` | **Zapíše odchod** (přesčas / dřívější) do evidence |
+| `https://drumclock.github.io/Kdy-domu/?prichod` | Píchne **Příchod** (začátek směny / návrat z přerušení) |
+| `https://drumclock.github.io/Kdy-domu/?odchod` | Píchne **Odchod** (přerušení / konec směny) |
 
-Po otevření se čas nastaví, appka spočítá odchod a parametr se z adresy odstraní (refresh ho už nezopakuje).
+Po přiložení se píchnutí zapíše, appka aktualizuje stav a parametr se z adresy odstraní (refresh ho už nezopakuje). Ideální je jeden štítek `?prichod` u příchodu a druhý `?odchod` u odchodu.
 
 **Jak štítek zapsat:** pořiď si prázdný NFC tag a v appce jako **NFC Tools** (Android) zapiš na tag zvolenou URL jako záznam typu *URL/URI*. iPhone umí NFC URL číst sám; k zápisu použij podobnou appku. Štítek pak nalep třeba ke skříňce nebo píchačkám.
 
 ---
 
-## Evidence přesčasů
+## Píchačky
 
-Appka umí fungovat jako jednoduchá píchačka a evidovat přesčasy i dřívější odchody.
+Appka funguje jako jednoduché píchačky včetně přerušení.
 
-**Zápis odchodu** — dvěma způsoby:
-- tlačítkem **„Zapsat odchod"** v appce,
-- nebo přiložením telefonu k NFC štítku s `?odchod`.
+**Ovládání** — tlačítka **Příchod** (zelené) a **Odchod** (červené), nebo NFC štítky `?prichod` / `?odchod`. Pod tlačítky běží živý stav: *„V práci od 7:40 · odpracováno 2:15"* nebo *„Konec 16:10 · odpracováno 8:00 · přesčas +0:00"*.
 
-Při zápisu appka vezme aktuální čas, porovná ho s plánovaným odchodem a uloží k danému dni rozdíl — **přesčas (+)** nebo **dřívější odchod (−)**.
+**Logika dne**
+- První **Příchod** = začátek směny (rovnou vyplní i „Začátek směny" v plánovači).
+- Každá dvojice **Odchod → Příchod** uprostřed = **přerušení**.
+- Poslední **Odchod** = konec směny.
+- Odpracováno = (konec − začátek) − přerušení; přesčas = odpracováno − zvolená délka směny.
 
-**Historie** (tlačítko „Historie") ukazuje seznam dní s rozdílem a nahoře **součet za tento týden a měsíc**. Jednotlivé záznamy jde smazat, nebo vymazat vše.
+Tlačítka se sama zapínají/vypínají podle stavu, takže se nedá přihlásit dvakrát ani odejít bez přihlášení.
 
-**Export CSV** — tlačítko v Historii stáhne soubor `prescasy.csv` (oddělený `;`, s BOM pro správnou češtinu v Excelu).
+**Přes půlnoc** — noční směna se páruje správně: píchnutí po půlnoci se přiřadí k rozjeté směně, ne k novému dni.
 
-Typický průběh přes NFC: ráno přiložíš telefon ke štítku `?now` (nastaví začátek), na konci ke štítku `?odchod` (zapíše rozdíl proti plánu).
+**Historie** (ikona hodin nahoře uprostřed) — dny se začátkem, koncem, odpracovaným časem, přerušeními a přesčasem; nahoře **odpracováno a přesčas za tento týden a měsíc**. Záznamy jde mazat.
+
+**Export CSV** — v Historii stáhne `pichacky.csv` (oddělený `;`, s BOM pro Excel): datum, příchod, odchod, odpracováno, přerušení, plán, přesčas a seznam píchnutí.
 
 Poznámky:
-- `?odchod` funguje jen když je v telefonu **uložený začátek** (z `?now` / `?start` / ručně, v rámci 9 h).
-- Ukládá se **jeden záznam na den** (opětovný zápis den přepíše).
-- Data jsou **jen v tvém telefonu** (`localStorage`) — je to osobní přehled, ne oficiální evidence pro zaměstnavatele. Přesnost odpovídá tomu, kdy odchod zapíšeš.
+- Data jsou **jen v tvém telefonu** (`localStorage`) — osobní přehled, ne oficiální evidence pro zaměstnavatele. Přesnost odpovídá tomu, kdy píchneš.
+- Přesčas se počítá proti délce směny zvolené v době píchnutí.
 
 ---
 

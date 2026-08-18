@@ -66,6 +66,7 @@
     font-size:26px;
     font-weight:700;
     letter-spacing:-.01em;
+    margin-top:20px;
     margin-bottom:26px;
     text-align:center;
   }
@@ -222,6 +223,19 @@
 
   /* akční tlačítka pod výsledkem */
   .actions{ display:flex; gap:10px; margin-top:2px; }
+  .punch{ display:flex; gap:10px; margin-top:2px; }
+  .punch-btn{
+    flex:1; padding:13px 10px; border:none; border-radius:12px;
+    font-size:16px; font-weight:700; cursor:pointer; color:#1c1726;
+  }
+  .punch-btn.in{ background:var(--green); }
+  .punch-btn.out{ background:var(--red); }
+  .punch-btn:disabled{ opacity:.38; cursor:default; }
+  .punch-bar{ display:flex; align-items:center; justify-content:center; gap:10px; margin-top:2px; }
+  .status-txt{ font-size:12.5px; color:var(--muted); line-height:1.4; }
+  .status-txt b{ color:var(--ink); font-weight:600; }
+  .status-txt .pos{ color:var(--green); } .status-txt .neg{ color:var(--red); } .status-txt .zero{ color:var(--muted); }
+  .link-btn{ background:transparent; border:none; color:var(--amber); font-size:13px; font-weight:600; cursor:pointer; padding:4px 2px; flex:none; }
   .act-btn{
     flex:1;
     padding:11px 10px;
@@ -258,6 +272,9 @@
   .tot{ flex:1; background:#161020; border:1px solid var(--line); border-radius:12px; padding:12px; text-align:center; }
   .tot .k{ font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
   .tot .v{ font-family:"SFMono-Regular","Consolas",monospace; font-size:20px; font-weight:700; margin-top:4px; }
+  .tot .sub{ font-size:11px; font-weight:600; margin-top:3px; }
+  .tot .sub.pos{ color:var(--green); } .tot .sub.neg{ color:var(--red); } .tot .sub.zero{ color:var(--muted); }
+  .live{ color:var(--amber); font-weight:600; font-size:11px; }
   .log{ display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
   .log-empty{ color:var(--muted); font-size:14px; text-align:center; padding:16px 0; }
   .rec{ display:flex; align-items:center; justify-content:space-between; gap:8px;
@@ -309,6 +326,7 @@
   .corner-btn:disabled:active{color:var(--muted);border-color:var(--line)}
   .share-btn{right:calc(env(safe-area-inset-right) + 14px)}
   .cal-btn{left:calc(env(safe-area-inset-left) + 14px)}
+  .hist-btn{left:50%; transform:translateX(-50%)}
 
   .start-row{
     display:flex;
@@ -357,7 +375,7 @@
               calc(env(safe-area-inset-left) + 20px);
     }
     /* zruš pevné spodní mezery – rozestupy řeší gap na kartě */
-    h1{margin-bottom:0;font-size:clamp(20px,5.2vw,26px)}
+    h1{margin-top:34px;margin-bottom:0;font-size:clamp(20px,5.2vw,26px)}
     .field{margin-bottom:0}
     label{margin-bottom:6px}
     .seg-group{gap:clamp(7px,1.3vh,14px)}
@@ -372,6 +390,8 @@
     .now-lbl{margin-top:clamp(8px,1.3vh,14px);padding-top:clamp(8px,1.3vh,14px)}
     .now{font-size:clamp(18px,6vw,26px)}
     .act-btn{padding:10px 8px;font-size:13px}
+    .punch-btn{padding:12px 8px;font-size:15px}
+    .status-txt{font-size:12px}
   }
 </style>
 </head>
@@ -393,6 +413,13 @@
         <path d="M14 14h2v2h-2zM18 14h3v2h-3zM16 16h2v2h-2zM14 18h2v3h-2zM18 18h3v3h-3z"/>
       </svg>
     </a>
+
+    <button class="corner-btn hist-btn" id="histBtn" type="button" aria-label="Historie" title="Historie">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M13 3a9 9 0 1 0 8.94 10H19.9A7 7 0 1 1 13 5a6.9 6.9 0 0 1 4.9 2.05L15 10h7V3l-2.6 2.6A9 9 0 0 0 13 3z"/>
+        <path d="M12 8h1.6v4.3l3.2 1.9-.8 1.35L12 13.2z"/>
+      </svg>
+    </button>
 
     <h1>Kdy můžu domů?</h1>
 
@@ -442,9 +469,12 @@
       <div class="now" id="now"></div>
     </div>
 
-    <div class="actions">
-      <button type="button" class="act-btn primary" id="leaveBtn">Zapsat odchod</button>
-      <button type="button" class="act-btn" id="histBtn">Historie</button>
+    <div class="punch">
+      <button type="button" class="punch-btn in" id="inBtn">Příchod</button>
+      <button type="button" class="punch-btn out" id="outBtn">Odchod</button>
+    </div>
+    <div class="punch-bar">
+      <span class="status-txt" id="statusTxt"></span>
     </div>
   </main>
 
@@ -707,9 +737,10 @@
     setTimeout(() => URL.revokeObjectURL(url), 1500);
   });
 
-  // ===== Evidence přesčasů / dřívějších odchodů =====
-  const LOG_KEY = 'kdyDomu.log';
-  const leaveBtn = document.getElementById('leaveBtn');
+  // ===== Píchačky: příchod / odchod / přerušení =====
+  const PUNCH_KEY = 'kdyDomu.punch';
+  const inBtn    = document.getElementById('inBtn');
+  const outBtn   = document.getElementById('outBtn');
   const histBtn  = document.getElementById('histBtn');
   const histEl   = document.getElementById('history');
   const histClose= document.getElementById('histClose');
@@ -718,128 +749,182 @@
   const csvBtn   = document.getElementById('csvBtn');
   const clearBtn = document.getElementById('clearBtn');
   const toastEl  = document.getElementById('toast');
+  const statusTxt= document.getElementById('statusTxt');
 
   function ymd(d){ return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
-  function fmtDiff(min){ const a=Math.abs(min); return (min<0?'-':'+') + Math.floor(a/60) + ':' + pad(a%60); }
+  function hhmm(min){ min=((min%1440)+1440)%1440; return pad(Math.floor(min/60)) + ':' + pad(min%60); }
+  function dur(min){ const a=Math.abs(min); return (min<0?'-':'') + Math.floor(a/60) + ':' + pad(a%60); }
+  function sdur(min){ const a=Math.abs(min); return (min<0?'-':'+') + Math.floor(a/60) + ':' + pad(a%60); }
   function diffClass(v){ return v>0 ? 'pos' : (v<0 ? 'neg' : 'zero'); }
   function startOfWeek(d){ const x=new Date(d.getFullYear(),d.getMonth(),d.getDate()); x.setDate(x.getDate() - ((x.getDay()+6)%7)); return x; }
+  function toMin(t){ const [h,m]=t.split(':').map(Number); return h*60+m; }
+  function nowMin(){ const d=new Date(); return d.getHours()*60 + d.getMinutes(); }
 
-  function loadLog(){ try{ return JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); }catch(e){ return []; } }
-  function saveLog(a){ try{ localStorage.setItem(LOG_KEY, JSON.stringify(a)); }catch(e){} }
+  function loadPunch(){ try{ return JSON.parse(localStorage.getItem(PUNCH_KEY) || '{}'); }catch(e){ return {}; } }
+  function savePunch(o){ try{ localStorage.setItem(PUNCH_KEY, JSON.stringify(o)); }catch(e){} }
 
   let toastTimer;
   function toast(msg){
-    toastEl.textContent = msg;
-    toastEl.hidden = false;
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { toastEl.hidden = true; }, 2600);
+    toastEl.textContent = msg; toastEl.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { toastEl.hidden = true; }, 2600);
   }
 
-  function recordDeparture(){
-    if(endTotal === null || !startEl.value){ toast('Nejdřív zadej začátek směny'); return; }
-    const base = new Date();
-    const planned = new Date(base.getFullYear(), base.getMonth(), base.getDate(), 0, 0, 0, 0);
-    planned.setMinutes(endTotal);
-    const now = new Date();
-    let diff = Math.round((now.getTime() - planned.getTime()) / 60000);
-    diff = ((diff % 1440) + 1440) % 1440;          // nejbližší rozdíl v rámci ±12 h
-    if(diff > 720) diff -= 1440;
-    const endMin = ((endTotal % 1440) + 1440) % 1440;
+  // souhrn dne z pole píchnutí (otevřená směna se počítá k aktuálnímu času)
+  function daySummary(day){
+    const arr = (day && day.punches) || [];
+    if(!arr.length) return null;
+    const plan = (day && day.plan != null) ? day.plan : null;
+    let mins = arr.map(p => toMin(p.t));
+    for(let i=1;i<mins.length;i++){ while(mins[i] < mins[i-1]) mins[i] += 1440; }
+    const kinds = arr.map(p => p.k);
+    const open = kinds[kinds.length-1] === 'in';
+    const start = mins[0];
+    let breaks = 0;
+    for(let i=0;i<arr.length-1;i++){ if(kinds[i]==='out' && kinds[i+1]==='in') breaks += mins[i+1]-mins[i]; }
+    let end;
+    if(open){ let n=nowMin(); while(n < mins[mins.length-1]) n += 1440; end = n; }
+    else end = mins[mins.length-1];
+    const worked = Math.max(0, end - start - breaks);
+    const over = plan != null ? worked - plan : null;
+    return { start, end: open?null:mins[mins.length-1], worked, breaks, open, plan, over, punches: arr };
+  }
 
-    const rec = {
-      date: ymd(now),
-      start: startEl.value,
-      planned: pad(Math.floor(endMin/60)) + ':' + pad(endMin%60),
-      actual: pad(now.getHours()) + ':' + pad(now.getMinutes()),
-      diff: diff
-    };
-    const log = loadLog().filter(r => r.date !== rec.date);  // jeden záznam na den (poslední platí)
-    log.push(rec);
-    log.sort((a,b) => a.date < b.date ? 1 : -1);            // nejnovější nahoře
-    saveLog(log);
-    toast((diff >= 0 ? 'Přesčas ' : 'Dřívější odchod ') + fmtDiff(diff) + ' zapsáno');
-    renderHistory();
+  // klíč aktivní směny (i přes půlnoc); null = žádná aktivní
+  function activeShiftKey(store){
+    const keys = Object.keys(store).sort();
+    if(!keys.length) return null;
+    const k = keys[keys.length-1];
+    const arr = store[k] && store[k].punches;
+    if(!arr || !arr.length) return null;
+    let mins = arr.map(p => toMin(p.t));
+    for(let i=1;i<mins.length;i++){ while(mins[i] < mins[i-1]) mins[i] += 1440; }
+    const lastTs = new Date(k + 'T00:00:00').getTime() + mins[mins.length-1]*60000;
+    const gapH = (Date.now() - lastTs) / 3600000;
+    if(arr[arr.length-1].k === 'in') return gapH < 18 ? k : null;  // otevřená směna klidně přes půlnoc
+    return gapH < 6 ? k : null;                                     // krátká pauza → návrat = přerušení
+  }
+  function currentKey(store){ return activeShiftKey(store) || ymd(new Date()); }
+
+  function addPunch(kind){
+    const store = loadPunch();
+    let key = activeShiftKey(store);                 // pokračuj v aktivní směně (i přes půlnoc)
+    if(key === null){
+      if(kind === 'out'){ toast('Nejsi přihlášen(a)'); return; }
+      key = ymd(new Date());                         // nová směna začíná dnes
+    }
+    const day = store[key] || { punches: [], plan: workMin };
+    const arr = day.punches;
+    const last = arr[arr.length-1];
+    if(kind==='in'  && last && last.k==='in'){ toast('Už jsi přihlášen(a)'); return; }
+    if(kind==='out' && (!last || last.k==='out')){ toast('Nejsi přihlášen(a)'); return; }
+    const d = new Date();
+    arr.push({ t: pad(d.getHours()) + ':' + pad(d.getMinutes()), k: kind });
+    day.plan = workMin;                              // ulož plánovanou délku směny pro tento den
+    store[key] = day; savePunch(store);
+    if(kind==='in' && arr.filter(p=>p.k==='in').length===1){   // první příchod = začátek směny
+      startEl.value = arr[0].t; saveStart(); calc();
+    }
+    toast((kind==='in' ? 'Příchod ' : 'Odchod ') + arr[arr.length-1].t + ' zapsáno');
+    renderStatus(); renderHistory();
+  }
+
+  function renderStatus(){
+    const store = loadPunch();
+    const s = daySummary(store[currentKey(store)]);
+    if(!s){ statusTxt.textContent = 'Dnes nezaznamenáno'; inBtn.disabled=false; outBtn.disabled=true; return; }
+    if(s.open){
+      statusTxt.innerHTML = 'V práci od <b>' + hhmm(s.start) + '</b> · odpracováno <b>' + dur(s.worked) + '</b>'
+        + (s.breaks ? ' · přerušení ' + dur(s.breaks) : '');
+      inBtn.disabled = true; outBtn.disabled = false;
+    } else {
+      let txt = 'Konec <b>' + hhmm(s.end) + '</b> · odpracováno <b>' + dur(s.worked) + '</b>';
+      if(s.over != null) txt += ' · přesčas <b class="' + diffClass(s.over) + '">' + sdur(s.over) + '</b>';
+      statusTxt.innerHTML = txt;
+      inBtn.disabled = false; outBtn.disabled = true;   // další Příchod = návrat z přerušení
+    }
   }
 
   function renderHistory(){
-    const log = loadLog();
+    const store = loadPunch();
+    const keys = Object.keys(store).sort().reverse();
     const now = new Date();
     const wk = startOfWeek(now).getTime();
-    let wSum = 0, mSum = 0;
-    log.forEach(r => {
-      const d = new Date(r.date + 'T00:00:00');
-      if(d.getTime() >= wk && d.getTime() < wk + 7*86400000) wSum += r.diff;
-      if(d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()) mSum += r.diff;
+    let wWork=0,wOver=0,mWork=0,mOver=0;
+    const items = keys.map(k => ({ k, s: daySummary(store[k]) })).filter(x => x.s);
+    items.forEach(({k,s}) => {
+      const d = new Date(k + 'T00:00:00');
+      if(d.getTime() >= wk && d.getTime() < wk + 7*86400000){ wWork += s.worked; if(s.over!=null) wOver += s.over; }
+      if(d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth()){ mWork += s.worked; if(s.over!=null) mOver += s.over; }
     });
     totalsEl.innerHTML =
-      '<div class="tot"><div class="k">Tento týden</div><div class="v ' + diffClass(wSum) + '">' + fmtDiff(wSum) + '</div></div>' +
-      '<div class="tot"><div class="k">Tento měsíc</div><div class="v ' + diffClass(mSum) + '">' + fmtDiff(mSum) + '</div></div>';
+      '<div class="tot"><div class="k">Tento týden</div><div class="v">' + dur(wWork) + '</div><div class="sub ' + diffClass(wOver) + '">přesčas ' + sdur(wOver) + '</div></div>' +
+      '<div class="tot"><div class="k">Tento měsíc</div><div class="v">' + dur(mWork) + '</div><div class="sub ' + diffClass(mOver) + '">přesčas ' + sdur(mOver) + '</div></div>';
 
-    if(!log.length){ logListEl.innerHTML = '<div class="log-empty">Zatím žádné záznamy.</div>'; return; }
-    logListEl.innerHTML = log.map(r => {
-      const dd = r.date.slice(8,10) + '.' + r.date.slice(5,7) + '.';
-      return '<div class="rec"><div><div class="d">' + dd + '</div>' +
-             '<div class="t">' + r.start + ' → ' + r.actual + ' (plán ' + r.planned + ')</div></div>' +
-             '<div style="display:flex;align-items:center;gap:6px">' +
-             '<span class="df ' + diffClass(r.diff) + '">' + fmtDiff(r.diff) + '</span>' +
-             '<button class="rec-del" data-date="' + r.date + '" aria-label="Smazat">✕</button></div></div>';
+    if(!items.length){ logListEl.innerHTML = '<div class="log-empty">Zatím žádné záznamy.</div>'; return; }
+    logListEl.innerHTML = items.map(({k,s}) => {
+      const dd = k.slice(8,10) + '.' + k.slice(5,7) + '.';
+      const range = hhmm(s.start) + ' → ' + (s.open ? '<span class="live">běží</span>' : hhmm(s.end));
+      const nb = s.punches.filter(p=>p.k==='out').length;   // počet odchodů; přerušení = mezi nimi
+      const brk = s.breaks ? ' · přeruš. ' + dur(s.breaks) : '';
+      const over = s.over != null ? '<span class="df ' + diffClass(s.over) + '">' + sdur(s.over) + '</span>' : '<span class="df zero">–</span>';
+      return '<div class="rec"><div><div class="d">' + dd + '  ' + range + '</div>' +
+             '<div class="t">odpracováno ' + dur(s.worked) + brk + '</div></div>' +
+             '<div style="display:flex;align-items:center;gap:6px">' + over +
+             '<button class="rec-del" data-date="' + k + '" aria-label="Smazat">✕</button></div></div>';
     }).join('');
   }
 
   function exportCSV(){
-    const log = loadLog().slice().sort((a,b) => a.date < b.date ? -1 : 1);
-    if(!log.length){ toast('Žádné záznamy k exportu'); return; }
-    const head = ['Datum','Zacatek','Plan','Skutecnost','Rozdil_min','Rozdil'];
-    const rows = log.map(r => [r.date, r.start, r.planned, r.actual, r.diff, fmtDiff(r.diff)]);
+    const store = loadPunch();
+    const keys = Object.keys(store).sort();
+    const rows = keys.map(k => {
+      const s = daySummary(store[k]); if(!s) return null;
+      const punches = store[k].punches.map(p => p.t + (p.k==='in' ? 'P' : 'O')).join(' ');
+      return [k, hhmm(s.start), s.open ? '' : hhmm(s.end), s.worked, s.breaks,
+              s.plan!=null ? s.plan : '', s.over!=null ? s.over : '', punches];
+    }).filter(Boolean);
+    if(!rows.length){ toast('Žádné záznamy k exportu'); return; }
+    const head = ['Datum','Prichod','Odchod','Odpracovano_min','Preruseni_min','Plan_min','Prescas_min','Pichnuti'];
     const csv = '\uFEFF' + [head].concat(rows).map(r => r.join(';')).join('\r\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'prescasy.csv';
+    const a = document.createElement('a'); a.href = url; a.download = 'pichacky.csv';
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 1500);
   }
 
-  leaveBtn.addEventListener('click', recordDeparture);
+  inBtn.addEventListener('click',  () => addPunch('in'));
+  outBtn.addEventListener('click', () => addPunch('out'));
   histBtn.addEventListener('click', () => { renderHistory(); histEl.hidden = false; });
   histClose.addEventListener('click', () => { histEl.hidden = true; });
   histEl.addEventListener('click', e => { if(e.target === histEl) histEl.hidden = true; });
   csvBtn.addEventListener('click', exportCSV);
-  clearBtn.addEventListener('click', () => { if(confirm('Opravdu vymazat všechny záznamy?')){ saveLog([]); renderHistory(); } });
+  clearBtn.addEventListener('click', () => { if(confirm('Opravdu vymazat všechny záznamy?')){ savePunch({}); renderStatus(); renderHistory(); } });
   logListEl.addEventListener('click', e => {
     const b = e.target.closest('.rec-del'); if(!b) return;
-    saveLog(loadLog().filter(r => r.date !== b.dataset.date));
-    renderHistory();
+    const store = loadPunch(); delete store[b.dataset.date]; savePunch(store);
+    renderStatus(); renderHistory();
   });
 
   // ===== parametry v URL (pro NFC tag) =====
-  // ?now  → aktuální čas jako začátek
-  // ?start=HH:MM → konkrétní čas
-  // ?odchod → zapíše odchod (přesčas / dřívější)
-  function applyStartParams(params){
-    if(params.has('start')){
-      const [h, m] = (params.get('start') || '').split(':').map(Number);
-      if(!isNaN(h) && !isNaN(m) && h <= 23 && m <= 59){ startEl.value = pad(h) + ':' + pad(m); saveStart(); }
-    } else if(params.has('now')){
-      startEl.value = nowHHMM(); saveStart();
-    }
-  }
-
+  // ?prichod → píchni příchod     ?odchod → píchni odchod
   startEl.addEventListener('input', () => { saveStart(); calc(); });
   brkInput.addEventListener('input', () => { saveSettings(); calc(); });
   paidEl.addEventListener('change', () => { saveSettings(); calc(); });
 
   loadStart();
   loadSettings();
-  const params = new URLSearchParams(location.search);
-  applyStartParams(params);
   syncSeg();
   calc();
-  if(params.has('odchod')) recordDeparture();
-  if((params.has('now') || params.has('start') || params.has('odchod')) && history.replaceState){
+  const params = new URLSearchParams(location.search);
+  if(params.has('prichod')) addPunch('in');
+  if(params.has('odchod'))  addPunch('out');
+  if((params.has('prichod') || params.has('odchod')) && history.replaceState){
     history.replaceState(null, '', location.pathname);   // vyčisti URL
   }
-  setInterval(updateNow, 1000);   // živá aktualizace každou vteřinu
+  renderStatus();
+  renderHistory();
+  setInterval(() => { updateNow(); renderStatus(); }, 1000);   // živá aktualizace
 
   // offline režim (PWA)
   if('serviceWorker' in navigator){
