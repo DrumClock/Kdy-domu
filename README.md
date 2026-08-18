@@ -19,7 +19,7 @@ Jednoduchá webová appka (PWA), která spočítá, kdy můžeš odejít z prác
 - **Pracovní doba** na jedno ťuknutí: 6 h (zkrácená) nebo klasická 8 h / 7:30 / 7:00 (ranní / odpolední / noční).
 - **Svačina** s nastavitelnou délkou a přepínačem **placená / neplacená** (placená se do odchodu nepřičítá).
 - **Živý odpočet** — kolik zbývá (červeně) nebo kolik je přesčas (zeleně), aktualizace každou vteřinu.
-- **[Píchačky](#píchačky)** — Příchod / Odchod (i přes NFC) evidují začátek, konec a přerušení směny; historie s odpracovanými hodinami, přesčasy a exportem do CSV.
+- **[Píchačky](#píchačky)** — Příchod / Odchod (i přes NFC) evidují začátek, konec a přerušení směny; historie s odpracovanými hodinami a přesčasy, úpravou i dodatečným dopsáním směn a exportem do CSV.
 - **Připomínka do kalendáře** — vytvoří v telefonu událost na čas odchodu s upozorněním (funguje i při zavřené appce a zamčeném telefonu).
 - **Zapamatování** — začátek směny se drží 9 h, délka směny a nastavení svačiny natrvalo.
 - **Automatické předvyplnění** aktuálního času při startu (dokud nemáš platný uložený začátek).
@@ -134,7 +134,11 @@ Tlačítka se sama zapínají/vypínají podle stavu, takže se nedá přihlási
 
 **Přes půlnoc** — noční směna se páruje správně: píchnutí po půlnoci se přiřadí k rozjeté směně, ne k novému dni.
 
-**Historie** (ikona hodin nahoře uprostřed) — dny se začátkem, koncem, odpracovaným časem, přerušeními a přesčasem; nahoře **odpracováno a přesčas za tento týden a měsíc**. Záznamy jde mazat.
+**Historie** (ikona hodin nahoře uprostřed) se otevře jako panel přes celou výšku: **nahoře** přehled *odpracováno a přesčas za tento týden a měsíc*, **uprostřed** scrollovací seznam dní (začátek → konec, odpracováno, přerušení, přesčas), **dole** tlačítka.
+
+- **Úprava záznamu** — u dne tužka ✎ otevře editor, kde přepíšeš čas i typ každého píchnutí (Příchod/Odchod), píchnutí přidáš nebo smažeš, a případně změníš datum (přesun na jiný den).
+- **Dodatečné dopsání směny** — tlačítko ➕ v záhlaví vytvoří nový den: vybereš datum a naťukáš píchnutí. Hodí se na zapomenuté nebo minulé směny.
+- Záznamy jde jednotlivě mazat (✕) nebo vše naráz.
 
 **Export CSV** — v Historii stáhne `pichacky.csv` (oddělený `;`, s BOM pro Excel): datum, příchod, odchod, odpracováno, přerušení, plán, přesčas a seznam píchnutí.
 
