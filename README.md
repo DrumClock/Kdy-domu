@@ -136,14 +136,15 @@ Tlačítka se sama zapínají/vypínají podle stavu, takže se nedá přihlási
 
 **Historie** (ikona hodin nahoře uprostřed) se otevře jako panel přes celou výšku: **nahoře** přehled *odpracováno a přesčas za tento týden a měsíc*, **uprostřed** scrollovací seznam dní (začátek → konec, odpracováno, přerušení, přesčas), **dole** tlačítka.
 
-- **Úprava záznamu** — u dne tužka ✎ otevře editor, kde přepíšeš čas i typ každého píchnutí (Příchod/Odchod), píchnutí přidáš nebo smažeš, a případně změníš datum (přesun na jiný den).
+- **Úprava záznamu** — u dne tužka ✎ otevře editor, kde přepíšeš čas i typ každého píchnutí (Příchod/Odchod), píchnutí přidáš nebo smažeš, změníš datum (přesun na jiný den) a nastavíš **svačinu i placená/neplacená napevno pro ten den** (třeba u služební cesty svačinu vynulovat nebo přepnout na placenou).
 - **Dodatečné dopsání směny** — tlačítko ➕ v záhlaví vytvoří nový den: vybereš datum a naťukáš píchnutí. Hodí se na zapomenuté nebo minulé směny.
 - Záznamy jde jednotlivě mazat (✕) nebo vše naráz.
 
-**Export CSV** — v Historii stáhne `pichacky.csv` (oddělený `;`, s BOM pro Excel): datum, příchod, odchod, odpracováno, přerušení, plán, přesčas a seznam píchnutí.
+**Export CSV** — v Historii stáhne `pichacky.csv` (oddělený `;`, s BOM pro Excel): datum, příchod, odchod, odpracováno, přerušení, svačina, plán, přesčas a seznam píchnutí.
 
 Poznámky:
 - Data jsou **jen v tvém telefonu** (`localStorage`) — osobní přehled, ne oficiální evidence pro zaměstnavatele. Přesnost odpovídá tomu, kdy píchneš.
+- Z odpracovaného času se odečítá **neplacená svačina** (podle nastavení „Svačina"). Nový den si tuto hodnotu uloží u sebe; starší dny bez uložené hodnoty se řídí aktuálním nastavením. V editaci dne jde svačinu i placená/neplacená nastavit **napevno** pro konkrétní den.
 - Přesčas se počítá proti délce směny zvolené v době píchnutí.
 
 ---
