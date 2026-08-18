@@ -1,4 +1,4 @@
-# Kdy můžu domů? ⏰
+# Osobní píchačka ⏰
 
 Jednoduchá webová appka (PWA), která spočítá, kdy můžeš odejít z práce — podle začátku směny, délky pracovní doby a pauzy na svačinu. Ukazuje živě, kolik ti ještě **zbývá**, nebo kolik už máš **přesčas**.
 
