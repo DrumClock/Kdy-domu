@@ -1,7 +1,7 @@
 {
-  "name": "Kdy můžu domů?",
-  "short_name": "Domů?",
-  "description": "Výpočet konce směny včetně pauzy a přesčasu.",
+  "name": "Osobní píchačka",
+  "short_name": "Píchačka",
+  "description": "Píchačky (příchod/odchod/přerušení) a výpočet konce směny.",
   "lang": "cs",
   "start_url": "index.html",
   "scope": "./",

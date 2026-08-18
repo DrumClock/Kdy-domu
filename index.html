@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Kdy můžu domů?</title>
+<title>Osobní píchačka</title>
 
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
@@ -11,7 +11,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Domů?">
+<meta name="apple-mobile-web-app-title" content="Píchačka">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
   :root{
@@ -421,14 +421,11 @@
       </svg>
     </button>
 
-    <h1>Kdy můžu domů?</h1>
+    <h1>Osobní píchačka</h1>
 
     <div class="field">
       <label for="start">Začátek směny</label>
-      <div class="start-row">
-        <input type="time" id="start">
-        <button type="button" class="now-btn" id="nowBtn">Teď</button>
-      </div>
+      <input type="time" id="start">
     </div>
 
     <div class="field">
@@ -505,7 +502,6 @@
   const brkEl   = document.getElementById('breakdown');
   const nowEl   = document.getElementById('now');
   const nowLbl  = document.getElementById('nowLbl');
-  const nowBtn  = document.getElementById('nowBtn');
   const calBtn  = document.getElementById('calBtn');
   let workMin = 480;   // ← výchozí doba v minutách (360=6h, 420=7:00, 450=7:30, 480=8h)
   let startTotal = null;  // začátek v minutách od půlnoci
@@ -661,13 +657,6 @@
       if(typeof s.paid === 'boolean') paidEl.checked = s.paid;
     }catch(e){}
   }
-
-  // --- tlačítko "Teď": nastaví aktuální čas jako začátek ---
-  nowBtn.addEventListener('click', () => {
-    startEl.value = nowHHMM();
-    saveStart();
-    calc();
-  });
 
   // --- připomínka do kalendáře (.ics) ---
   function icsLocal(dt){
