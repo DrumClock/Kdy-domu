@@ -24,6 +24,7 @@ Jednoduchá webová appka (PWA), která spočítá, kdy můžeš odejít z prác
 - **[NFC](#nfc-štítek)** — přiložením telefonu k NFC štítku píchneš příchod nebo odchod.
 - **Funguje offline** a jde nainstalovat na plochu jako běžná aplikace.
 - **QR kód** pro rychlé sdílení a instalaci na cizím telefonu.
+- **Nápověda** přímo v appce (ikona „?") — stručný přehled, jak vše používat.
 
 
 ---
@@ -157,6 +158,7 @@ Appka je čistá **PWA** bez frameworků — jeden HTML soubor s vloženým CSS 
 | `manifest.json` | Metadata PWA (název, ikony, barvy) |
 | `sw.js` | Service worker — offline cache |
 | `sdilet.html` | Sdílecí stránka s QR kódem a návodem |
+| `napoveda.html` | Nápověda k aplikaci |
 | `qr.png` | QR kód s adresou aplikace |
 | `nfc.png` | Ikonka NFC pro README |
 | `screenshot-app.png`, `screenshot-qr.png` | Náhledy do README |

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Nápověda – Osobní píchačka</title>
+<style>
+  :root{
+    --bg:#1c1726; --panel:#251d33; --line:#3a2f4d;
+    --ink:#efe9df; --muted:#9a8fae; --amber:#ffb020;
+    --green:#43c67d; --red:#ff5c6c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{min-height:100%}
+  body{
+    background:radial-gradient(120% 60% at 50% -10%, #2a2138 0%, var(--bg) 55%);
+    background-attachment:fixed;
+    color:var(--ink);
+    font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+    line-height:1.55;
+    padding:calc(24px + env(safe-area-inset-top)) 20px calc(40px + env(safe-area-inset-bottom));
+  }
+  .wrap{max-width:520px;margin:0 auto}
+  .eyebrow{font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--amber);font-weight:600;text-align:center;margin-bottom:6px}
+  h1{font-size:26px;font-weight:700;text-align:center;margin-bottom:24px}
+  section{
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:16px 18px;margin-bottom:14px;
+  }
+  h2{font-size:16px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  h2 .ic{font-size:15px}
+  p{font-size:14px;color:var(--ink);margin:0 0 8px}
+  p:last-child{margin-bottom:0}
+  ul{margin:0;padding-left:18px}
+  li{font-size:14px;margin:0 0 6px}
+  li:last-child{margin-bottom:0}
+  .muted{color:var(--muted)}
+  b{font-weight:600}
+  .tag{font-family:"SFMono-Regular","Consolas",monospace;font-size:13px;background:#160f20;border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+  .pill{display:inline-block;font-weight:700;font-size:12px;border-radius:6px;padding:1px 8px;color:#1c1726}
+  .pill.in{background:var(--green)} .pill.out{background:var(--red)}
+  .back{display:inline-block;margin-top:8px;color:var(--amber);text-decoration:none;font-size:14px;font-weight:600;text-align:center;width:100%}
+  .close{
+    position:fixed;
+    top:calc(env(safe-area-inset-top) + 14px);
+    right:calc(env(safe-area-inset-right) + 16px);
+    display:inline-flex; align-items:center; justify-content:center;
+    width:38px; height:38px; border-radius:11px;
+    color:var(--muted); text-decoration:none; font-size:20px; line-height:1;
+    border:1px solid var(--line); background:rgba(22,15,32,.55);
+    -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
+    z-index:5;
+  }
+  .close:active{color:var(--ink); border-color:#5a4a76}
+  a{color:var(--amber)}
+</style>
+</head>
+<body>
+  <a class="close" href="index.html" aria-label="Zavřít" title="Zpět do aplikace">✕</a>
+  <div class="wrap">
+    <div class="eyebrow">Jak na to</div>
+    <h1>Nápověda</h1>
+
+    <section>
+      <h2><span class="ic">🟢</span> Píchačky</h2>
+      <ul>
+        <li><span class="pill in">Příchod</span> = začátek směny. Každý další <span class="pill out">Odchod</span> → <span class="pill in">Příchod</span> uprostřed je <b>přerušení</b>. Poslední <span class="pill out">Odchod</span> = konec.</li>
+        <li>Tlačítka se sama přepínají — nejde se přihlásit dvakrát ani odejít bez přihlášení.</li>
+        <li><b>Odpracováno</b> = (konec − začátek) − přerušení − neplacená svačina. <b>Přesčas</b> = odpracováno − zvolená délka směny.</li>
+        <li>Noční směna <b>přes půlnoc</b> se spáruje sama.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span class="ic">🏠</span> Odchod domů (plánovač)</h2>
+      <p>Dole zadáš <b>Začátek</b> (nebo se vezme z prvního Příchodu), <b>Pracovní dobu</b> a <b>Svačinu</b>. Nahoře uvidíš čas odchodu a živě <b>Zbývá</b> (červeně) nebo <b>Přesčas</b> (zeleně).</p>
+      <p class="muted">Ruční zadání začátku slouží jen pro tenhle výpočet, neukládá se.</p>
+    </section>
+
+    <section>
+      <h2><span class="ic">🕘</span> Historie</h2>
+      <ul>
+        <li>Nahoře souhrn <b>tento týden / měsíc</b>, uprostřed seznam dní.</li>
+        <li>Tužka <b>✎</b> u dne = úprava: časy a typ píchnutí, datum, svačina, a <b>§</b> u přerušení = <b>placený paragraf</b> (neodečítá se).</li>
+        <li><b>➕</b> nahoře = dodatečně dopsat celou směnu.</li>
+        <li><b>Export</b> uloží <span class="tag">CSV</span> pro Excel, <b>Vymazat vše</b> smaže záznamy.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><span class="ic">📶</span> NFC štítky</h2>
+      <p>Na štítek zapiš (např. appkou NFC Tools) adresu:</p>
+      <ul>
+        <li><span class="tag">…/Kdy-domu/?prichod</span> → píchne Příchod</li>
+        <li><span class="tag">…/Kdy-domu/?odchod</span> → píchne Odchod</li>
+      </ul>
+      <p class="muted">Přiložením telefonu se píchnutí zapíše. Funguje i offline (appka musí být aspoň jednou otevřená online).</p>
+    </section>
+
+    <section>
+      <h2><span class="ic">📅</span> Připomínka do kalendáře</h2>
+      <p>Ikona kalendáře vlevo nahoře vytvoří událost „Odchod domů" na spočítaný čas s upozorněním — zazvoní i při zavřené appce a zamčeném telefonu.</p>
+    </section>
+
+    <section>
+      <h2><span class="ic">⬇️</span> Instalace a offline</h2>
+      <p>Ikonou <b>QR</b> vpravo nahoře otevřeš <a href="sdilet.html">sdílecí stránku</a> s návodem „Přidat na plochu". Po instalaci appka funguje i bez internetu.</p>
+    </section>
+
+    <section>
+      <h2><span class="ic">❓</span> Dobré vědět</h2>
+      <ul>
+        <li>Data jsou <b>jen v tvém telefonu</b> — osobní přehled, ne oficiální evidence.</li>
+        <li>Nová verze appky se projeví po <b>obnovení</b> (zavřít a otevřít). Změna názvu/ikony až po reinstalaci.</li>
+        <li>Placená svačina i placený paragraf se <b>neodečítají</b>; neplacené ano.</li>
+      </ul>
+    </section>
+  </div>
+</body>
+</html>
