@@ -453,6 +453,22 @@
 
     <h1>Osobní píchačka</h1>
 
+    <div class="punch">
+      <button type="button" class="punch-btn in" id="inBtn">Příchod</button>
+      <button type="button" class="punch-btn out" id="outBtn">Odchod</button>
+    </div>
+    <div class="punch-bar">
+      <span class="status-txt" id="statusTxt"></span>
+    </div>
+
+    <div class="display">
+      <div class="lbl">Odchod domů</div>
+      <div class="clock" id="result" aria-live="polite">–:–</div>
+      <div class="breakdown" id="breakdown"></div>
+      <div class="now-lbl" id="nowLbl"></div>
+      <div class="now" id="now"></div>
+    </div>
+
     <div class="field">
       <label for="start">Začátek směny</label>
       <input type="time" id="start">
@@ -486,22 +502,6 @@
         <span class="box"></span>
         <span>Placená pauza <span class="state" id="paidState">(neplacená → přičítá se)</span></span>
       </label>
-    </div>
-
-    <div class="display">
-      <div class="lbl">Odchod domů</div>
-      <div class="clock" id="result" aria-live="polite">–:–</div>
-      <div class="breakdown" id="breakdown"></div>
-      <div class="now-lbl" id="nowLbl"></div>
-      <div class="now" id="now"></div>
-    </div>
-
-    <div class="punch">
-      <button type="button" class="punch-btn in" id="inBtn">Příchod</button>
-      <button type="button" class="punch-btn out" id="outBtn">Odchod</button>
-    </div>
-    <div class="punch-bar">
-      <span class="status-txt" id="statusTxt"></span>
     </div>
   </main>
 
@@ -634,40 +634,21 @@
     calc();
   });
 
-  // --- uložení startu na 9 h ---
-  const STORE_KEY = 'kdyDomu.start';
-  const DAY_MS = 9 * 60 * 60 * 1000;
-
-  function saveStart(){
-    try{
-      if(startEl.value){
-        localStorage.setItem(STORE_KEY, JSON.stringify({ time: startEl.value, ts: Date.now() }));
-      } else {
-        localStorage.removeItem(STORE_KEY);
-      }
-    }catch(e){}
-  }
-
+  // --- Začátek směny se odvozuje z prvního Příchodu (ruční zadání jen pro výpočet) ---
   function nowHHMM(){
     const d = new Date();
     return pad(d.getHours()) + ':' + pad(d.getMinutes());
   }
 
-  function loadStart(){
-    try{
-      const raw = localStorage.getItem(STORE_KEY);
-      if(raw){
-        const { time, ts } = JSON.parse(raw);
-        if(time && (Date.now() - ts) < DAY_MS){
-          startEl.value = time;               // mladší 9 h → předvyplnit uložený
-          return;
-        }
-        localStorage.removeItem(STORE_KEY);   // starší → zahodit
-      }
-    }catch(e){}
-    // není platný uložený start → předvyplň aktuální čas a ulož
-    startEl.value = nowHHMM();
-    saveStart();
+  // při otevření vezmi začátek z prvního Příchodu aktivní směny (i přes půlnoc)
+  function syncStartFromShift(){
+    const store = loadPunch();
+    const key = activeShiftKey(store);
+    if(key && store[key].punches && store[key].punches.length){
+      const firstIn = store[key].punches.find(p => p.k === 'in');
+      if(firstIn) startEl.value = firstIn.t;
+    }
+    // žádná aktivní směna → pole zůstane prázdné, lze zadat ručně
   }
 
   // --- uložení pracovní doby a svačiny (trvalá předvolba) ---
@@ -867,7 +848,7 @@
     day.paid = paidEl.checked;                        // placená? → neodečítá se
     store[key] = day; savePunch(store);
     if(kind==='in' && arr.filter(p=>p.k==='in').length===1){   // první příchod = začátek směny
-      startEl.value = arr[0].t; saveStart(); calc();
+      startEl.value = arr[0].t; calc();
     }
     toast((kind==='in' ? 'Příchod ' : 'Odchod ') + arr[arr.length-1].t + ' zapsáno');
     renderStatus(); renderHistory();
@@ -1063,12 +1044,12 @@
 
   // ===== parametry v URL (pro NFC tag) =====
   // ?prichod → píchni příchod     ?odchod → píchni odchod
-  startEl.addEventListener('input', () => { saveStart(); calc(); });
+  startEl.addEventListener('input', () => { calc(); });
   brkInput.addEventListener('input', () => { saveSettings(); calc(); });
   paidEl.addEventListener('change', () => { saveSettings(); calc(); });
 
-  loadStart();
   loadSettings();
+  syncStartFromShift();
   syncSeg();
   calc();
   const params = new URLSearchParams(location.search);
