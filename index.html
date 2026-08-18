@@ -871,7 +871,7 @@
   function fmtDate(k){ return k.slice(8,10) + '.' + k.slice(5,7) + '.'; }
 
   function renderHistory(){
-    if(editDate) renderEdit(); else renderList();
+    if(editArr) renderEdit(); else renderList();
   }
 
   function renderList(){
