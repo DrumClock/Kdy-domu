@@ -286,7 +286,14 @@
     font-weight:700; font-size:13px; cursor:pointer; color:#1c1726; }
   .paid-toggle.paid{ background:var(--green); }
   .paid-toggle.unpaid{ background:var(--red); }
-  .totals{ display:flex; gap:10px; margin-bottom:14px; }
+  .totals{ margin-bottom:14px; }
+  .month-nav{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .mnav{ background:#161020; border:1px solid var(--line); border-radius:10px; color:var(--ink);
+    font-size:15px; cursor:pointer; padding:7px 16px; }
+  .mnav:disabled{ opacity:.32; cursor:default; }
+  .mnav:active:not(:disabled){ border-color:#5a4a76; }
+  .mlabel{ font-size:15px; font-weight:700; text-transform:capitalize; }
+  .totals-cards{ display:flex; gap:10px; }
   .tot{ flex:1; background:#161020; border:1px solid var(--line); border-radius:12px; padding:12px; text-align:center; }
   .tot .k{ font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
   .tot .v{ font-family:"SFMono-Regular","Consolas",monospace; font-size:20px; font-weight:700; margin-top:4px; }
@@ -828,6 +835,7 @@
   const cancelEditBtn= document.getElementById('cancelEditBtn');
   const addDayBtn    = document.getElementById('addDayBtn');
   let editDate = null, editKey = null, editArr = null, editBrk = 30, editPaid = false, editPlan = 480;
+  let histMonth = null;
 
   function ymd(d){ return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
   function hhmm(min){ min=((min%1440)+1440)%1440; return pad(Math.floor(min/60)) + ':' + pad(min%60); }
@@ -936,6 +944,8 @@
   }
 
   function fmtDate(k){ return k.slice(8,10) + '.' + k.slice(5,7) + '.'; }
+  const MONTHS = ['leden','únor','březen','duben','květen','červen','červenec','srpen','září','říjen','listopad','prosinec'];
+  function monthLabel(y,m){ return MONTHS[m] + ' ' + y; }
 
   function renderHistory(){
     if(editArr) renderEdit(); else renderList();
@@ -947,24 +957,37 @@
     viewActions.hidden = false; editActions.hidden = true;
     addDayBtn.hidden = false;
 
-    const store = loadPunch();
-    const keys = Object.keys(store).sort().reverse();
     const now = new Date();
-    const wk = startOfWeek(now).getTime();
-    let wWork=0,wOver=0,mWork=0,mOver=0;
-    const items = keys.map(k => ({ k, s: daySummary(store[k]) })).filter(x => x.s);
-    items.forEach(({k,s}) => {
-      if(s.open) return;                    // neukončenou směnu do součtů nepočítej
-      const d = new Date(k + 'T00:00:00');
-      if(d.getTime() >= wk && d.getTime() < wk + 7*86400000){ wWork += s.worked; if(s.over!=null) wOver += s.over; }
-      if(d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth()){ mWork += s.worked; if(s.over!=null) mOver += s.over; }
-    });
-    totalsEl.innerHTML =
-      '<div class="tot"><div class="k">Tento týden</div><div class="v">' + dur(wWork) + '</div><div class="sub ' + diffClass(wOver) + '">přesčas ' + sdur(wOver) + '</div></div>' +
-      '<div class="tot"><div class="k">Tento měsíc</div><div class="v">' + dur(mWork) + '</div><div class="sub ' + diffClass(mOver) + '">přesčas ' + sdur(mOver) + '</div></div>';
+    if(!histMonth) histMonth = { y: now.getFullYear(), m: now.getMonth() };
+    const { y, m } = histMonth;
+    const isCurrent = (y === now.getFullYear() && m === now.getMonth());
 
-    if(!items.length){ logListEl.innerHTML = '<div class="log-empty">Zatím žádné záznamy.</div>'; return; }
-    logListEl.innerHTML = items.map(({k,s}) => {
+    const store = loadPunch();
+    const items = Object.keys(store).sort().reverse()
+      .map(k => ({ k, s: daySummary(store[k]) })).filter(x => x.s);
+
+    // filtr na zvolený měsíc
+    const inMonth = items.filter(({k}) => {
+      const d = new Date(k + 'T00:00:00');
+      return d.getFullYear() === y && d.getMonth() === m;
+    });
+
+    let mWork = 0, mOver = 0;
+    inMonth.forEach(({s}) => { if(s.open) return; mWork += s.worked; if(s.over!=null) mOver += s.over; });
+
+    totalsEl.innerHTML =
+      '<div class="month-nav">' +
+        '<button type="button" class="mnav" data-dir="-1" aria-label="Předchozí měsíc">◀</button>' +
+        '<div class="mlabel">' + monthLabel(y,m) + '</div>' +
+        '<button type="button" class="mnav" data-dir="1" aria-label="Další měsíc"' + (isCurrent?' disabled':'') + '>▶</button>' +
+      '</div>' +
+      '<div class="totals-cards">' +
+        '<div class="tot"><div class="k">Odpracováno</div><div class="v">' + dur(mWork) + '</div></div>' +
+        '<div class="tot"><div class="k">Přesčas</div><div class="v ' + diffClass(mOver) + '">' + sdur(mOver) + '</div></div>' +
+      '</div>';
+
+    if(!inMonth.length){ logListEl.innerHTML = '<div class="log-empty">V tomto měsíci žádné záznamy.</div>'; return; }
+    logListEl.innerHTML = inMonth.map(({k,s}) => {
       const range = hhmm(s.start) + ' → ' + (s.open ? '<span class="live">běží</span>' : hhmm(s.end));
       const off = s.breaks + s.snack;
       const brk = (off ? ' · pauza ' + dur(off) : '') + (s.paidBreaks ? ' · §' + dur(s.paidBreaks) : '');
@@ -1083,7 +1106,7 @@
 
   inBtn.addEventListener('click',  () => addPunch('in'));
   outBtn.addEventListener('click', () => addPunch('out'));
-  histBtn.addEventListener('click', () => { editDate=editKey=editArr=null; renderHistory(); histEl.hidden = false; });
+  histBtn.addEventListener('click', () => { editDate=editKey=editArr=null; histMonth=null; renderHistory(); histEl.hidden = false; });
   histClose.addEventListener('click', () => { editDate=editKey=editArr=null; histEl.hidden = true; });
   histEl.addEventListener('click', e => { if(e.target === histEl){ editDate=editKey=editArr=null; histEl.hidden = true; } });
   addDayBtn.addEventListener('click', openNewDay);
@@ -1095,6 +1118,17 @@
   });
   saveEditBtn.addEventListener('click', saveEdit);
   cancelEditBtn.addEventListener('click', cancelEdit);
+
+  totalsEl.addEventListener('click', e => {
+    const b = e.target.closest('.mnav'); if(!b || b.disabled) return;
+    const now = new Date();
+    let { y, m } = histMonth || { y: now.getFullYear(), m: now.getMonth() };
+    m += (+b.dataset.dir);
+    if(m < 0){ m = 11; y--; } else if(m > 11){ m = 0; y++; }
+    if(y > now.getFullYear() || (y === now.getFullYear() && m > now.getMonth())) return;  // ne do budoucna
+    histMonth = { y, m };
+    renderList();
+  });
 
   logListEl.addEventListener('click', e => {
     const editB = e.target.closest('.rec-edit'); if(editB){ openEdit(editB.dataset.date); return; }
