@@ -897,6 +897,7 @@
     let wWork=0,wOver=0,mWork=0,mOver=0;
     const items = keys.map(k => ({ k, s: daySummary(store[k]) })).filter(x => x.s);
     items.forEach(({k,s}) => {
+      if(s.open) return;                    // neukončenou směnu do součtů nepočítej
       const d = new Date(k + 'T00:00:00');
       if(d.getTime() >= wk && d.getTime() < wk + 7*86400000){ wWork += s.worked; if(s.over!=null) wOver += s.over; }
       if(d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth()){ mWork += s.worked; if(s.over!=null) mOver += s.over; }
