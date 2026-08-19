@@ -274,6 +274,10 @@
   .head-btn:active{ border-color:#5a4a76; }
   .edit-lbl{ font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:2px 0 6px; }
   .edit-date{ width:100%; padding:9px 10px; font-size:16px; margin-bottom:14px; }
+  .plan-row{ display:flex; gap:6px; margin-bottom:14px; }
+  .plan-btn{ flex:1; padding:9px 4px; border:1px solid var(--line); border-radius:10px;
+    background:#161020; color:var(--muted); font-weight:700; font-size:14px; cursor:pointer; }
+  .plan-btn.on{ background:var(--amber); border-color:var(--amber); color:#1c1726; }
   .edit-brk-row{ display:flex; gap:8px; margin-bottom:14px; }
   .edit-brk-row .edit-brk{ flex:1; min-width:0; padding:9px 10px; font-size:16px; }
   .paid-toggle{ flex:none; padding:9px 16px; border-radius:10px; border:none;
@@ -771,7 +775,7 @@
   const saveEditBtn  = document.getElementById('saveEditBtn');
   const cancelEditBtn= document.getElementById('cancelEditBtn');
   const addDayBtn    = document.getElementById('addDayBtn');
-  let editDate = null, editKey = null, editArr = null, editBrk = 30, editPaid = false;
+  let editDate = null, editKey = null, editArr = null, editBrk = 30, editPaid = false, editPlan = 480;
 
   function ymd(d){ return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
   function hhmm(min){ min=((min%1440)+1440)%1440; return pad(Math.floor(min/60)) + ':' + pad(min%60); }
@@ -940,9 +944,15 @@
         '<button type="button" class="row-del" data-idx="' + i + '" aria-label="Smazat">✕</button>' +
       '</div>';
     }).join('');
+    const plans = [[360,'6'],[420,'7:00'],[450,'7:30'],[480,'8']];
+    const planRow = plans.map(([m,l]) =>
+      '<button type="button" class="plan-btn ' + (editPlan===m?'on':'') + '" data-plan="' + m + '">' + l + '</button>'
+    ).join('');
     logListEl.innerHTML =
       '<div class="edit-lbl">Datum</div>' +
       '<input type="date" class="edit-date" value="' + editKey + '">' +
+      '<div class="edit-lbl">Pracovní doba</div>' +
+      '<div class="plan-row">' + planRow + '</div>' +
       '<div class="edit-lbl">Svačina</div>' +
       '<div class="edit-brk-row">' +
         '<input type="time" class="edit-brk" value="' + brkToStr(editBrk) + '">' +
@@ -962,6 +972,7 @@
     editArr = (d.punches || []).map(p => ({ t: p.t, k: p.k, paid: p.paid }));
     editBrk = d.brk != null ? d.brk : breakMinutes();
     editPaid = d.brk != null ? !!d.paid : paidEl.checked;
+    editPlan = d.plan != null ? d.plan : workMin;
     renderHistory();
   }
   function openNewDay(){
@@ -970,6 +981,7 @@
     editArr  = [ { t:'08:00', k:'in' }, { t:'16:30', k:'out' } ];
     editBrk  = breakMinutes();
     editPaid = paidEl.checked;
+    editPlan = workMin;
     renderHistory();
   }
   function saveEdit(){
@@ -985,7 +997,7 @@
       const existing = store[key] || origin || {};
       store[key] = {
         punches: clean,
-        plan: existing.plan != null ? existing.plan : workMin,
+        plan: editPlan,
         brk: editBrk,
         paid: editPaid
       };
@@ -1041,6 +1053,8 @@
       renderEdit(); return;
     }
     if(e.target.closest('#paidToggle')){ editPaid = !editPaid; renderEdit(); return; }
+    const plb = e.target.closest('.plan-btn');
+    if(plb){ editPlan = +plb.dataset.plan; renderEdit(); return; }
     const pt = e.target.closest('.para-toggle');
     if(pt){ const i=+pt.dataset.idx; editArr[i].paid = !editArr[i].paid; renderEdit(); return; }
   });
