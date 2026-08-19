@@ -911,7 +911,9 @@
       const range = hhmm(s.start) + ' → ' + (s.open ? '<span class="live">běží</span>' : hhmm(s.end));
       const off = s.breaks + s.snack;
       const brk = (off ? ' · pauza ' + dur(off) : '') + (s.paidBreaks ? ' · §' + dur(s.paidBreaks) : '');
-      const over = s.over != null ? '<span class="df ' + diffClass(s.over) + '">' + sdur(s.over) + '</span>' : '<span class="df zero">–</span>';
+      const over = s.open
+        ? '<span class="df zero">–</span>'
+        : (s.over != null ? '<span class="df ' + diffClass(s.over) + '">' + sdur(s.over) + '</span>' : '<span class="df zero">–</span>');
       return '<div class="rec"><div><div class="d">' + fmtDate(k) + '  ' + range + '</div>' +
              '<div class="t">odpracováno ' + dur(s.worked) + brk + '</div></div>' +
              '<div class="rec-actions">' + over +
