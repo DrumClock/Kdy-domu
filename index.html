@@ -1045,7 +1045,10 @@
   logListEl.addEventListener('click', e => {
     const editB = e.target.closest('.rec-edit'); if(editB){ openEdit(editB.dataset.date); return; }
     const delB  = e.target.closest('.rec-del');
-    if(delB){ const store=loadPunch(); delete store[delB.dataset.date]; savePunch(store); renderStatus(); renderHistory(); return; }
+    if(delB){
+      if(!confirm('Smazat záznam ' + fmtDate(delB.dataset.date) + '?')) return;
+      const store=loadPunch(); delete store[delB.dataset.date]; savePunch(store); renderStatus(); renderHistory(); return;
+    }
     const tt = e.target.closest('.type-toggle');
     if(tt){ const i=+tt.dataset.idx; editArr[i].k = editArr[i].k==='in' ? 'out' : 'in'; renderEdit(); return; }
     const rd = e.target.closest('.row-del');
