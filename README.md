@@ -32,9 +32,14 @@ Jednoduchá webová appka (PWA), která spočítá, kdy můžeš odejít z prác
 ## Náhledy
 
 <p align="center">
-  <img src="screenshot-app.png" alt="Hlavní obrazovka aplikace" width="270">
-  &nbsp;&nbsp;&nbsp;
-  <img src="screenshot-qr.png" alt="Sdílecí stránka s QR kódem" width="270">
+  <img src="screenshot-app.png" alt="Hlavní obrazovka" width="230">
+  &nbsp;&nbsp;
+  <img src="screenshot-history.png" alt="Historie" width="230">
+</p>
+<p align="center">
+  <img src="screenshot-help.png" alt="Nápověda" width="230">
+  &nbsp;&nbsp;
+  <img src="screenshot-qr.png" alt="Sdílecí stránka s QR kódem" width="230">
 </p>
 
 ---
@@ -161,7 +166,7 @@ Appka je čistá **PWA** bez frameworků — jeden HTML soubor s vloženým CSS 
 | `napoveda.html` | Nápověda k aplikaci |
 | `qr.png` | QR kód s adresou aplikace |
 | `nfc.png` | Ikonka NFC pro README |
-| `screenshot-app.png`, `screenshot-qr.png` | Náhledy do README |
+| `screenshot-app.png`, `screenshot-history.png`, `screenshot-help.png`, `screenshot-qr.png` | Náhledy do README |
 | `icon-192.png`, `icon-512.png`, `icon-maskable.png` | Ikony aplikace |
 
 ### Vlastní hosting (GitHub Pages)
