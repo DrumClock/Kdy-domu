@@ -275,8 +275,10 @@
   .edit-lbl{ font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:2px 0 6px; }
   .edit-date{ width:100%; padding:9px 10px; font-size:16px; margin-bottom:14px; }
   .plan-row{ display:flex; gap:6px; margin-bottom:14px; }
-  .plan-btn{ flex:1; padding:9px 4px; border:1px solid var(--line); border-radius:10px;
-    background:#161020; color:var(--muted); font-weight:700; font-size:14px; cursor:pointer; }
+  .plan-btn{ flex:1; padding:8px 3px; border:1px solid var(--line); border-radius:10px;
+    background:#161020; color:var(--muted); cursor:pointer; text-align:center; line-height:1.15; }
+  .plan-btn .ph{ display:block; font-weight:700; font-size:15px; }
+  .plan-btn .pc{ display:block; font-size:9px; letter-spacing:.06em; text-transform:uppercase; opacity:.8; margin-top:2px; }
   .plan-btn.on{ background:var(--amber); border-color:var(--amber); color:#1c1726; }
   .edit-brk-row{ display:flex; gap:8px; margin-bottom:14px; }
   .edit-brk-row .edit-brk{ flex:1; min-width:0; padding:9px 10px; font-size:16px; }
@@ -944,9 +946,10 @@
         '<button type="button" class="row-del" data-idx="' + i + '" aria-label="Smazat">✕</button>' +
       '</div>';
     }).join('');
-    const plans = [[360,'6'],[420,'7:00'],[450,'7:30'],[480,'8']];
-    const planRow = plans.map(([m,l]) =>
-      '<button type="button" class="plan-btn ' + (editPlan===m?'on':'') + '" data-plan="' + m + '">' + l + '</button>'
+    const plans = [[360,'6','zkrácená'],[480,'8','ranní'],[450,'7:30','odpolední'],[420,'7:00','noční']];
+    const planRow = plans.map(([m,l,c]) =>
+      '<button type="button" class="plan-btn ' + (editPlan===m?'on':'') + '" data-plan="' + m + '">' +
+        '<span class="ph">' + l + '</span><span class="pc">' + c + '</span></button>'
     ).join('');
     logListEl.innerHTML =
       '<div class="edit-lbl">Datum</div>' +
