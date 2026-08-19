@@ -329,6 +329,24 @@
     box-shadow:0 12px 30px -10px rgba(0,0,0,.6); max-width:90vw; text-align:center;
   }
   .toast[hidden]{ display:none; }
+
+  .dialog{
+    position:fixed; inset:0; z-index:30;
+    background:rgba(12,9,18,.72);
+    -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .dialog[hidden]{ display:none; }
+  .dialog-box{
+    width:100%; max-width:340px;
+    background:var(--panel); border:1px solid var(--line); border-radius:16px;
+    padding:22px 20px 18px;
+    box-shadow:0 24px 50px -18px rgba(0,0,0,.6);
+  }
+  .dialog-msg{ font-size:15px; color:var(--ink); line-height:1.5; text-align:center; margin-bottom:20px; }
+  .dialog-actions{ display:flex; gap:10px; }
+  .dialog-actions .act-btn{ flex:1; }
+  .act-btn.danger-solid{ background:var(--red); border-color:var(--red); color:#1c1726; }
   .foot{
     margin-top:18px;
     font-size:12px;
@@ -543,6 +561,16 @@
 
   <div class="toast" id="toast" hidden></div>
 
+  <div class="dialog" id="confirmDlg" hidden>
+    <div class="dialog-box">
+      <div class="dialog-msg" id="confirmMsg"></div>
+      <div class="dialog-actions">
+        <button type="button" class="act-btn" id="confirmCancel">Zrušit</button>
+        <button type="button" class="act-btn danger-solid" id="confirmOk">Smazat</button>
+      </div>
+    </div>
+  </div>
+
 <script>
   const startEl = document.getElementById('start');
   const segEl   = document.getElementById('seg');
@@ -654,15 +682,19 @@
     return pad(d.getHours()) + ':' + pad(d.getMinutes());
   }
 
-  // při otevření vezmi začátek z prvního Příchodu aktivní směny (i přes půlnoc)
+  // při otevření vezmi začátek z prvního Příchodu jen když směna běží
   function syncStartFromShift(){
     const store = loadPunch();
     const key = activeShiftKey(store);
     if(key && store[key].punches && store[key].punches.length){
-      const firstIn = store[key].punches.find(p => p.k === 'in');
-      if(firstIn) startEl.value = firstIn.t;
+      const arr = store[key].punches;
+      const running = arr[arr.length-1].k === 'in';   // poslední píchnutí = Příchod → běží
+      if(running){
+        const firstIn = arr.find(p => p.k === 'in');
+        if(firstIn){ startEl.value = firstIn.t; return; }
+      }
     }
-    // žádná aktivní směna → pole zůstane prázdné, lze zadat ručně
+    startEl.value = '';   // ukončená / žádná směna → prázdné pole
   }
 
   // --- uložení pracovní doby a svačiny (trvalá předvolba) ---
@@ -771,6 +803,24 @@
   const clearBtn = document.getElementById('clearBtn');
   const toastEl  = document.getElementById('toast');
   const statusTxt= document.getElementById('statusTxt');
+  const confirmDlg   = document.getElementById('confirmDlg');
+  const confirmMsg   = document.getElementById('confirmMsg');
+  const confirmOk    = document.getElementById('confirmOk');
+  const confirmCancel= document.getElementById('confirmCancel');
+  let confirmResolver = null;
+  function askConfirm(msg, okLabel){
+    confirmMsg.textContent = msg;
+    confirmOk.textContent = okLabel || 'Smazat';
+    confirmDlg.hidden = false;
+    return new Promise(res => { confirmResolver = res; });
+  }
+  function closeConfirm(val){
+    confirmDlg.hidden = true;
+    if(confirmResolver){ confirmResolver(val); confirmResolver = null; }
+  }
+  confirmOk.addEventListener('click', () => closeConfirm(true));
+  confirmCancel.addEventListener('click', () => closeConfirm(false));
+  confirmDlg.addEventListener('click', e => { if(e.target === confirmDlg) closeConfirm(false); });
   const sheetTitle   = document.getElementById('sheetTitle');
   const viewActions  = document.getElementById('viewActions');
   const editActions  = document.getElementById('editActions');
@@ -1038,7 +1088,11 @@
   histEl.addEventListener('click', e => { if(e.target === histEl){ editDate=editKey=editArr=null; histEl.hidden = true; } });
   addDayBtn.addEventListener('click', openNewDay);
   csvBtn.addEventListener('click', exportCSV);
-  clearBtn.addEventListener('click', () => { if(confirm('Opravdu vymazat všechny záznamy?')){ savePunch({}); renderStatus(); renderHistory(); } });
+  clearBtn.addEventListener('click', () => {
+    askConfirm('Opravdu vymazat všechny záznamy?', 'Vymazat vše').then(ok => {
+      if(ok){ savePunch({}); renderStatus(); renderHistory(); }
+    });
+  });
   saveEditBtn.addEventListener('click', saveEdit);
   cancelEditBtn.addEventListener('click', cancelEdit);
 
@@ -1046,8 +1100,12 @@
     const editB = e.target.closest('.rec-edit'); if(editB){ openEdit(editB.dataset.date); return; }
     const delB  = e.target.closest('.rec-del');
     if(delB){
-      if(!confirm('Smazat záznam ' + fmtDate(delB.dataset.date) + '?')) return;
-      const store=loadPunch(); delete store[delB.dataset.date]; savePunch(store); renderStatus(); renderHistory(); return;
+      const date = delB.dataset.date;
+      askConfirm('Smazat záznam ' + fmtDate(date) + '?').then(ok => {
+        if(!ok) return;
+        const store=loadPunch(); delete store[date]; savePunch(store); renderStatus(); renderHistory();
+      });
+      return;
     }
     const tt = e.target.closest('.type-toggle');
     if(tt){ const i=+tt.dataset.idx; editArr[i].k = editArr[i].k==='in' ? 'out' : 'in'; renderEdit(); return; }
