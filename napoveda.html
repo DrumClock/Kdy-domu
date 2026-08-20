@@ -73,17 +73,17 @@
 
     <section>
       <h2><span class="ic">🏠</span> Odchod domů (plánovač)</h2>
-      <p>Dole zadáš <b>Začátek</b> (nebo se vezme z prvního Příchodu), <b>Pracovní dobu</b> a <b>Svačinu</b>. Nahoře uvidíš čas odchodu a živě <b>Zbývá</b> (červeně) nebo <b>Přesčas</b> (zeleně).</p>
-      <p class="muted">Ruční zadání začátku slouží jen pro tenhle výpočet, neukládá se.</p>
+      <p>Dole zadáš <b>Pracovní dobu</b> a <b>Svačinu</b>. <b>Začátek</b> se vezme z prvního Příchodu (dokud směna běží), nebo ho zadáš ručně. Nahoře uvidíš čas odchodu a živě <b>Zbývá</b> (červeně) nebo <b>Přesčas</b> (zeleně).</p>
+      <p class="muted">Ruční zadání začátku slouží jen pro tenhle výpočet, neukládá se. Po skončení směny je pole prázdné.</p>
     </section>
 
     <section>
       <h2><span class="ic">🕘</span> Historie</h2>
       <ul>
-        <li>Nahoře souhrn <b>tento týden / měsíc</b>, uprostřed seznam dní.</li>
-        <li>Tužka <b>✎</b> u dne = úprava: časy a typ píchnutí, datum, svačina, a <b>§</b> u přerušení = <b>placený paragraf</b> (neodečítá se).</li>
-        <li><b>➕</b> nahoře = dodatečně dopsat celou směnu.</li>
-        <li><b>Export</b> uloží <span class="tag">CSV</span> pro Excel, <b>Vymazat vše</b> smaže záznamy.</li>
+        <li>Nahoře <b>přepínač měsíce</b> (◀ ▶) se souhrnem <b>Odpracováno</b> a <b>Přesčas</b> za zvolený měsíc; uprostřed seznam dní toho měsíce.</li>
+        <li>Tužka <b>✎</b> u dne = úprava: časy a typ píchnutí, datum, <b>pracovní doba</b>, svačina, a <b>§</b> u přerušení = <b>placený paragraf</b> (neodečítá se).</li>
+        <li><b>➕</b> nahoře = dodatečně dopsat celou směnu (vybereš datum).</li>
+        <li><b>Export</b> uloží <span class="tag">CSV</span> pro Excel, <b>Vymazat vše</b> smaže záznamy. Mazání se potvrzuje.</li>
       </ul>
     </section>
 
@@ -104,13 +104,14 @@
 
     <section>
       <h2><span class="ic">⬇️</span> Instalace a offline</h2>
-      <p>Ikonou <b>QR</b> vpravo nahoře otevřeš <a href="sdilet.html">sdílecí stránku</a> s návodem „Přidat na plochu". Po instalaci appka funguje i bez internetu.</p>
+      <p>Ikonou <b>QR</b> nahoře otevřeš <a href="sdilet.html">sdílecí stránku</a> s návodem „Přidat na plochu". Po instalaci appka funguje i bez internetu.</p>
     </section>
 
     <section>
       <h2><span class="ic">❓</span> Dobré vědět</h2>
       <ul>
         <li>Data jsou <b>jen v tvém telefonu</b> — osobní přehled, ne oficiální evidence.</li>
+        <li>Běžící (neukončená) směna se do měsíčního součtu nepočítá, dokud ji neukončíš Odchodem.</li>
         <li>Nová verze appky se projeví po <b>obnovení</b> (zavřít a otevřít). Změna názvu/ikony až po reinstalaci.</li>
         <li>Placená svačina i placený paragraf se <b>neodečítají</b>; neplacené ano.</li>
       </ul>
