@@ -231,6 +231,13 @@
   .punch-btn.out{ background:var(--red); }
   .punch-btn:disabled{ opacity:.38; cursor:default; }
   .punch-bar{ display:flex; align-items:center; justify-content:center; gap:10px; margin-top:2px; }
+  .punch2{ display:flex; gap:10px; margin-top:8px; }
+  .mark-btn{ flex:1; padding:9px 8px; border:1px solid var(--line); border-radius:12px;
+    background:#161020; color:var(--muted); font-weight:600; font-size:13px; cursor:pointer; }
+  .mark-btn:active{ border-color:#5a4a76; }
+  .mark-btn.para.active{ background:var(--amber); border-color:var(--amber); color:#1c1726; }
+  .mark-btn.nemoc.active{ background:var(--red); border-color:var(--red); color:#1c1726; }
+  .sp-para{ color:var(--amber); } .sp-nemoc{ color:var(--red); }
   .status-txt{ font-size:12.5px; color:var(--muted); line-height:1.4; }
   .status-txt b{ color:var(--ink); font-weight:600; }
   .status-txt .pos{ color:var(--green); } .status-txt .neg{ color:var(--red); } .status-txt .zero{ color:var(--muted); }
@@ -498,6 +505,10 @@
     <div class="punch">
       <button type="button" class="punch-btn in" id="inBtn">Příchod</button>
       <button type="button" class="punch-btn out" id="outBtn">Odchod</button>
+    </div>
+    <div class="punch2">
+      <button type="button" class="mark-btn para" id="paraBtn">§ Paragraf</button>
+      <button type="button" class="mark-btn nemoc" id="nemocBtn">✚ Nemoc</button>
     </div>
     <div class="punch-bar">
       <span class="status-txt" id="statusTxt"></span>
@@ -813,6 +824,8 @@
   const clearBtn = document.getElementById('clearBtn');
   const toastEl  = document.getElementById('toast');
   const statusTxt= document.getElementById('statusTxt');
+  const paraBtn  = document.getElementById('paraBtn');
+  const nemocBtn = document.getElementById('nemocBtn');
   const confirmDlg   = document.getElementById('confirmDlg');
   const confirmMsg   = document.getElementById('confirmMsg');
   const confirmOk    = document.getElementById('confirmOk');
@@ -860,6 +873,9 @@
 
   // souhrn dne z pole píchnutí (otevřená směna se počítá k aktuálnímu času)
   function daySummary(day){
+    if(day && day.type){   // celodenní paragraf / nemoc – nepočítá se do odpracováno ani přesčasu
+      return { special:true, type:day.type, worked:0, breaks:0, paidBreaks:0, snack:0, over:null, open:false, punches:[] };
+    }
     const arr = (day && day.punches) || [];
     if(!arr.length) return null;
     const plan = (day && day.plan != null) ? day.plan : null;
@@ -911,7 +927,8 @@
       if(kind === 'out'){ toast('Nejsi přihlášen(a)'); return; }
       key = ymd(new Date());                         // nová směna začíná dnes
     }
-    const day = store[key] || { punches: [], plan: workMin };
+    let day = store[key];
+    if(!day || !day.punches){ day = { punches: [], plan: workMin }; }   // nová směna (přebije i celodenní typ)
     const arr = day.punches;
     const last = arr[arr.length-1];
     if(kind==='in'  && last && last.k==='in'){ toast('Už jsi přihlášen(a)'); return; }
@@ -931,7 +948,16 @@
 
   function renderStatus(){
     const store = loadPunch();
+    const today = store[ymd(new Date())];
+    paraBtn.classList.toggle('active',  !!(today && today.type === 'paragraf'));
+    nemocBtn.classList.toggle('active', !!(today && today.type === 'nemoc'));
+
     const s = daySummary(store[currentKey(store)]);
+    if(s && s.special){
+      statusTxt.innerHTML = 'Dnes: <b>' + (s.type === 'nemoc' ? 'Nemoc' : 'Paragraf (celý den)') + '</b>';
+      inBtn.disabled = false; outBtn.disabled = true;
+      return;
+    }
     if(!s){ statusTxt.textContent = 'Dnes nezaznamenáno'; inBtn.disabled=false; outBtn.disabled=true; return; }
     if(s.open){
       const off = s.breaks + s.snack;
@@ -942,7 +968,7 @@
       let txt = 'Konec <b>' + hhmm(s.end) + '</b> · odpracováno <b>' + dur(s.worked) + '</b>';
       if(s.over != null) txt += ' · přesčas <b class="' + diffClass(s.over) + '">' + sdur(s.over) + '</b>';
       statusTxt.innerHTML = txt;
-      inBtn.disabled = false; outBtn.disabled = true;   // další Příchod = návrat z přerušení
+      inBtn.disabled = false; outBtn.disabled = true;
     }
   }
 
@@ -976,7 +1002,7 @@
     });
 
     let mWork = 0, mOver = 0;
-    inMonth.forEach(({s}) => { if(s.open) return; mWork += s.worked; if(s.over!=null) mOver += s.over; });
+    inMonth.forEach(({s}) => { if(s.open || s.special) return; mWork += s.worked; if(s.over!=null) mOver += s.over; });
 
     totalsEl.innerHTML =
       '<div class="month-nav">' +
@@ -991,6 +1017,16 @@
 
     if(!inMonth.length){ logListEl.innerHTML = '<div class="log-empty">V tomto měsíci žádné záznamy.</div>'; return; }
     logListEl.innerHTML = inMonth.map(({k,s}) => {
+      if(s.special){
+        const label = s.type === 'nemoc' ? '✚ Nemoc' : '§ Paragraf';
+        const cls = s.type === 'nemoc' ? 'sp-nemoc' : 'sp-para';
+        return '<div class="rec">' +
+               '<span class="rec-edit" style="visibility:hidden">✎</span>' +
+               '<div class="rec-main"><div class="d ' + cls + '">' + fmtDate(k) + '  ' + label + '</div>' +
+               '<div class="t">celý den · nepočítá se</div></div>' +
+               '<div class="rec-actions"><span class="df zero">–</span>' +
+               '<button class="rec-del" data-date="' + k + '" aria-label="Smazat">✕</button></div></div>';
+      }
       const range = hhmm(s.start) + ' → ' + (s.open ? '<span class="live">běží</span>' : hhmm(s.end));
       const off = s.breaks + s.snack;
       const brk = (off ? ' · pauza ' + dur(off) : '') + (s.paidBreaks ? ' · §' + dur(s.paidBreaks) : '');
@@ -1094,6 +1130,7 @@
     const keys = Object.keys(store).sort();
     const rows = keys.map(k => {
       const s = daySummary(store[k]); if(!s) return null;
+      if(s.special){ return [k, '', '', 0, 0, 0, 0, '', '', s.type]; }
       const punches = store[k].punches.map(p => p.t + (p.k==='in' ? 'P' : 'O')).join(' ');
       return [k, hhmm(s.start), s.open ? '' : hhmm(s.end), s.worked, s.breaks, s.paidBreaks, s.snack,
               s.plan!=null ? s.plan : '', s.over!=null ? s.over : '', punches];
@@ -1110,6 +1147,27 @@
 
   inBtn.addEventListener('click',  () => addPunch('in'));
   outBtn.addEventListener('click', () => addPunch('out'));
+
+  function markLabel(t){ return t === 'nemoc' ? 'Nemoc' : 'Paragraf'; }
+  function setDayType(type){
+    const store = loadPunch();
+    const key = ymd(new Date());
+    const cur = store[key];
+    if(cur && cur.type === type){                    // už je → zrušit (přepínač)
+      delete store[key]; savePunch(store);
+      toast(markLabel(type) + ' zrušeno'); renderStatus(); renderHistory(); return;
+    }
+    const apply = () => {
+      const s2 = loadPunch(); s2[key] = { type }; savePunch(s2);
+      toast(markLabel(type) + ' zapsáno'); renderStatus(); renderHistory();
+    };
+    if(cur && cur.punches && cur.punches.length){
+      askConfirm('Dnes je zaznamenaná směna. Přepsat na ' + markLabel(type) + '?', 'Přepsat')
+        .then(ok => { if(ok) apply(); });
+    } else { apply(); }
+  }
+  paraBtn.addEventListener('click',  () => setDayType('paragraf'));
+  nemocBtn.addEventListener('click', () => setDayType('nemoc'));
   histBtn.addEventListener('click', () => { editDate=editKey=editArr=null; histMonth=null; renderHistory(); histEl.hidden = false; });
   histClose.addEventListener('click', () => { editDate=editKey=editArr=null; histEl.hidden = true; });
   histEl.addEventListener('click', e => { if(e.target === histEl){ editDate=editKey=editArr=null; histEl.hidden = true; } });
