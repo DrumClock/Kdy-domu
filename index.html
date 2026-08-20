@@ -898,9 +898,19 @@
     const hasOwn = day && day.brk != null;                    // má den vlastní údaj o svačině?
     const snackMin = hasOwn ? day.brk : breakMinutes();        // jinak vezmi aktuální nastavení
     const isPaid   = hasOwn ? !!day.paid : paidEl.checked;
-    const snack = isPaid ? 0 : snackMin;                       // neplacená svačina
-    const worked = Math.max(0, end - start - breaks - snack);
-    const over = plan != null ? worked - plan : null;
+
+    // čistá práce = přítomnost − neplacená přerušení − §paragraf (paragraf se nepočítá do práce)
+    const workBefore = Math.max(0, end - start - breaks - paidBreaks);
+    // svačina se odečítá jen když je čistá práce nad 6 h a není placená (zákoník práce)
+    const snack = (!isPaid && workBefore > 360) ? snackMin : 0;
+    const worked = Math.max(0, workBefore - snack);
+
+    let over = null;
+    if(plan != null){
+      const deficit = Math.max(0, plan - worked);
+      const credit = Math.min(paidBreaks, deficit);           // paragraf zaplní plán, ale netvoří přesčas
+      over = worked + credit - plan;
+    }
     return { start, end: open?null:mins[mins.length-1], worked, breaks, paidBreaks, snack, open, plan, over, punches: arr };
   }
 
