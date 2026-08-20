@@ -307,10 +307,12 @@
     background:#161020; border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
   .rec .d{ font-size:13px; color:var(--ink); font-weight:600; }
   .rec .t{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .rec-main{ flex:1; min-width:0; }
   .rec-actions{ display:flex; align-items:center; gap:4px; }
   .rec .df{ font-family:"SFMono-Regular","Consolas",monospace; font-weight:700; font-size:15px; margin-right:2px; }
   .df.pos{ color:var(--green); } .df.neg{ color:var(--red); } .df.zero{ color:var(--muted); }
-  .rec-edit, .rec-del{ background:transparent; border:none; color:var(--muted); cursor:pointer; font-size:14px; padding:3px 5px; }
+  .rec-edit, .rec-del{ background:transparent; border:none; color:var(--muted); cursor:pointer; font-size:15px; padding:6px 8px; flex:none; }
+  .rec-edit{ margin-right:2px; }
   .rec-edit:active, .rec-del:active{ color:var(--ink); }
 
   /* editace záznamu */
@@ -995,10 +997,11 @@
       const over = s.open
         ? '<span class="df zero">–</span>'
         : (s.over != null ? '<span class="df ' + diffClass(s.over) + '">' + sdur(s.over) + '</span>' : '<span class="df zero">–</span>');
-      return '<div class="rec"><div><div class="d">' + fmtDate(k) + '  ' + range + '</div>' +
+      return '<div class="rec">' +
+             '<button class="rec-edit" data-date="' + k + '" aria-label="Upravit">✎</button>' +
+             '<div class="rec-main"><div class="d">' + fmtDate(k) + '  ' + range + '</div>' +
              '<div class="t">odpracováno ' + dur(s.worked) + brk + '</div></div>' +
              '<div class="rec-actions">' + over +
-             '<button class="rec-edit" data-date="' + k + '" aria-label="Upravit">✎</button>' +
              '<button class="rec-del" data-date="' + k + '" aria-label="Smazat">✕</button></div></div>';
     }).join('');
   }
