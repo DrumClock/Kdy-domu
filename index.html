@@ -238,6 +238,10 @@
   .mark-btn.para.active{ background:var(--amber); border-color:var(--amber); color:#1c1726; }
   .mark-btn.nemoc.active{ background:var(--red); border-color:var(--red); color:#1c1726; }
   .sp-para{ color:var(--amber); } .sp-nemoc{ color:var(--red); }
+  .sp-dov{ color:#4aa3ff; } .sp-sva{ color:#c08bff; } .sp-nah{ color:var(--green); }
+  .edit-type{ width:100%; padding:9px 10px; font-size:16px; margin-bottom:14px;
+    background:#161020; color:var(--ink); border:1px solid var(--line); border-radius:10px; }
+  .edit-date-to{ width:100%; padding:9px 10px; font-size:16px; margin-bottom:14px; }
   .status-txt{ font-size:12.5px; color:var(--muted); line-height:1.4; }
   .status-txt b{ color:var(--ink); font-weight:600; }
   .status-txt .pos{ color:var(--green); } .status-txt .neg{ color:var(--red); } .status-txt .zero{ color:var(--muted); }
@@ -334,6 +338,9 @@
   .para-toggle{ flex:none; background:transparent; border:1px solid var(--line); border-radius:8px;
     color:var(--muted); font-weight:700; font-size:15px; cursor:pointer; padding:6px 11px; }
   .para-toggle.on{ background:var(--green); border-color:var(--green); color:#1c1726; }
+  .nv-toggle{ flex:none; background:transparent; border:1px solid var(--line); border-radius:8px;
+    color:var(--muted); font-weight:700; font-size:12px; cursor:pointer; padding:6px 8px; }
+  .nv-toggle.on{ background:var(--green); border-color:var(--green); color:#1c1726; }
   .add-punch{ margin-top:4px; }
   .sheet-actions{ display:flex; gap:10px; }
   .sheet-actions[hidden]{ display:none; }
@@ -851,7 +858,9 @@
   const cancelEditBtn= document.getElementById('cancelEditBtn');
   const addDayBtn    = document.getElementById('addDayBtn');
   let editDate = null, editKey = null, editArr = null, editBrk = 30, editPaid = false, editPlan = 480;
+  let editType = 'smena', editKeyTo = null;
   let histMonth = null;
+  const TYPE_LABELS = { smena:'Směna', paragraf:'Paragraf', nemoc:'Nemoc', dovolena:'Dovolená', svatek:'Svátek', nahradni:'Náhradní volno' };
 
   function ymd(d){ return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
   function hhmm(min){ min=((min%1440)+1440)%1440; return pad(Math.floor(min/60)) + ':' + pad(min%60); }
@@ -873,8 +882,13 @@
 
   // souhrn dne z pole píchnutí (otevřená směna se počítá k aktuálnímu času)
   function daySummary(day){
-    if(day && day.type){   // celodenní paragraf / nemoc – nepočítá se do odpracováno ani přesčasu
-      return { special:true, type:day.type, worked:0, breaks:0, paidBreaks:0, snack:0, over:null, open:false, punches:[] };
+    if(day && day.type){   // celodenní typy
+      if(day.type === 'nahradni'){                 // náhradní volno = délka směny; +do práce, −z přesčasu
+        const amt = day.plan != null ? day.plan : workMin;
+        return { special:true, type:'nahradni', worked:amt, breaks:0, paidBreaks:0, snack:0, over:-amt, open:false, plan:amt, punches:[] };
+      }
+      // paragraf / nemoc / dovolená / svátek → nepočítá se do odpracováno ani přesčasu
+      return { special:true, neutral:true, type:day.type, worked:0, breaks:0, paidBreaks:0, snack:0, over:null, open:false, punches:[] };
     }
     const arr = (day && day.punches) || [];
     if(!arr.length) return null;
@@ -884,12 +898,13 @@
     const kinds = arr.map(p => p.k);
     const open = kinds[kinds.length-1] === 'in';
     const start = mins[0];
-    let breaks = 0, paidBreaks = 0;
+    let breaks = 0, paidBreaks = 0, nvBreaks = 0;
     for(let i=0;i<arr.length-1;i++){
       if(kinds[i]==='out' && kinds[i+1]==='in'){
         const g = mins[i+1]-mins[i];
-        if(arr[i].paid) paidBreaks += g;   // placený paragraf → počítá se jako práce
-        else breaks += g;                  // běžné přerušení → odečítá se
+        if(arr[i].paid) paidBreaks += g;        // §paragraf (přerušení)
+        else if(arr[i].nv) nvBreaks += g;       // náhradní volno (přerušení)
+        else breaks += g;                       // neplacené přerušení → odečítá se
       }
     }
     let end;
@@ -899,19 +914,28 @@
     const snackMin = hasOwn ? day.brk : breakMinutes();        // jinak vezmi aktuální nastavení
     const isPaid   = hasOwn ? !!day.paid : paidEl.checked;
 
-    // čistá práce = přítomnost − neplacená přerušení − §paragraf (paragraf se nepočítá do práce)
-    const workBefore = Math.max(0, end - start - breaks - paidBreaks);
+    // čistá práce = přítomnost − neplacená přerušení − §paragraf − NV přerušení
+    const workBefore = Math.max(0, end - start - breaks - paidBreaks - nvBreaks);
     // svačina se odečítá jen když je čistá práce nad 6 h a není placená (zákoník práce)
     const snack = (!isPaid && workBefore > 360) ? snackMin : 0;
-    const worked = Math.max(0, workBefore - snack);
+    const actualWork = Math.max(0, workBefore - snack);
+    const last = arr[arr.length-1];
+    const finalPara = !open && last.k === 'out' && !!last.paid;   // § na posledním odchodu = zbytek směny paragraf
+    const finalNV   = !open && last.k === 'out' && !!last.nv;     // NV na posledním odchodu = zbytek náhradní volno
 
+    let paraTotal = paidBreaks;
     let over = null;
+    let nvFill = nvBreaks;                       // NV přerušení se počítají jako odpracováno
     if(plan != null){
-      const deficit = Math.max(0, plan - worked);
-      const credit = Math.min(paidBreaks, deficit);           // paragraf zaplní plán, ale netvoří přesčas
-      over = worked + credit - plan;
+      let deficit = Math.max(0, plan - actualWork);
+      let credit = Math.min(paidBreaks, deficit);               // §přerušení zaplní plán
+      deficit -= credit;
+      if(finalPara && deficit > 0){ paraTotal += deficit; credit += deficit; deficit = 0; }  // zbytek do plánu = paragraf
+      over = actualWork + credit - plan;
+      if(finalNV && over < 0) nvFill += (-over);                 // zbytek do plánu = náhradní volno
     }
-    return { start, end: open?null:mins[mins.length-1], worked, breaks, paidBreaks, snack, open, plan, over, punches: arr };
+    const worked = actualWork + nvFill;                          // NV se přičte do odpracováno
+    return { start, end: open?null:mins[mins.length-1], worked, breaks, paidBreaks: paraTotal, snack, open, plan, over, nv: (nvFill > 0), punches: arr };
   }
 
   // klíč aktivní směny (i přes půlnoc); null = žádná aktivní
@@ -964,7 +988,7 @@
 
     const s = daySummary(store[currentKey(store)]);
     if(s && s.special){
-      statusTxt.innerHTML = 'Dnes: <b>' + (s.type === 'nemoc' ? 'Nemoc' : 'Paragraf (celý den)') + '</b>';
+      statusTxt.innerHTML = 'Dnes: <b>' + (TYPE_LABELS[s.type] || s.type) + '</b>';
       inBtn.disabled = false; outBtn.disabled = true;
       return;
     }
@@ -1012,7 +1036,7 @@
     });
 
     let mWork = 0, mOver = 0;
-    inMonth.forEach(({s}) => { if(s.open || s.special) return; mWork += s.worked; if(s.over!=null) mOver += s.over; });
+    inMonth.forEach(({s}) => { if(s.open || s.neutral) return; mWork += s.worked; if(s.over!=null) mOver += s.over; });
 
     totalsEl.innerHTML =
       '<div class="month-nav">' +
@@ -1028,18 +1052,26 @@
     if(!inMonth.length){ logListEl.innerHTML = '<div class="log-empty">V tomto měsíci žádné záznamy.</div>'; return; }
     logListEl.innerHTML = inMonth.map(({k,s}) => {
       if(s.special){
-        const label = s.type === 'nemoc' ? '✚ Nemoc' : '§ Paragraf';
-        const cls = s.type === 'nemoc' ? 'sp-nemoc' : 'sp-para';
+        const map = {
+          paragraf:['§ Paragraf','sp-para'], nemoc:['✚ Nemoc','sp-nemoc'],
+          dovolena:['🏖 Dovolená','sp-dov'], svatek:['★ Svátek','sp-sva'],
+          nahradni:['⇄ Náhradní volno','sp-nah']
+        };
+        const [label, cls] = map[s.type] || ['?',''];
+        const right = (s.type === 'nahradni')
+          ? '<span class="df ' + diffClass(s.over) + '">' + sdur(s.over) + '</span>'
+          : '<span class="df zero">–</span>';
+        const sub = (s.type === 'nahradni') ? ('odpracováno ' + dur(s.worked)) : 'celý den · nepočítá se';
         return '<div class="rec">' +
-               '<span class="rec-edit" style="visibility:hidden">✎</span>' +
+               '<button class="rec-edit" data-date="' + k + '" aria-label="Upravit">✎</button>' +
                '<div class="rec-main"><div class="d ' + cls + '">' + fmtDate(k) + '  ' + label + '</div>' +
-               '<div class="t">celý den · nepočítá se</div></div>' +
-               '<div class="rec-actions"><span class="df zero">–</span>' +
+               '<div class="t">' + sub + '</div></div>' +
+               '<div class="rec-actions">' + right +
                '<button class="rec-del" data-date="' + k + '" aria-label="Smazat">✕</button></div></div>';
       }
       const range = hhmm(s.start) + ' → ' + (s.open ? '<span class="live">běží</span>' : hhmm(s.end));
       const off = s.breaks + s.snack;
-      const brk = (off ? ' · pauza ' + dur(off) : '') + (s.paidBreaks ? ' · §' + dur(s.paidBreaks) : '');
+      const brk = (off ? ' · pauza ' + dur(off) : '') + (s.paidBreaks ? ' · §' + dur(s.paidBreaks) : '') + (s.nv ? ' · <span class="sp-nah">NV</span>' : '');
       const over = s.open
         ? '<span class="df zero">–</span>'
         : (s.over != null ? '<span class="df ' + diffClass(s.over) + '">' + sdur(s.over) + '</span>' : '<span class="df zero">–</span>');
@@ -1054,48 +1086,75 @@
 
   function brkToStr(min){ return pad(Math.floor(min/60)) + ':' + pad(min%60); }
 
-  function renderEdit(){
-    sheetTitle.textContent = editDate ? ('Úprava ' + fmtDate(editDate)) : 'Nová směna';
-    totalsEl.style.display = 'none';
-    viewActions.hidden = true; editActions.hidden = false;
-    addDayBtn.hidden = true;
-    const rows = editArr.map((p,i) => {
-      const isBreakOut = p.k==='out' && editArr[i+1] && editArr[i+1].k==='in';
+  function plansHtml(){
+    const plans = [[360,'6','zkrácená'],[480,'8','ranní'],[450,'7:30','odpolední'],[420,'7:00','noční']];
+    return plans.map(([m,l,c]) =>
+      '<button type="button" class="plan-btn ' + (editPlan===m?'on':'') + '" data-plan="' + m + '">' +
+        '<span class="ph">' + l + '</span><span class="pc">' + c + '</span></button>').join('');
+  }
+  function punchRowsHtml(){
+    return editArr.map((p,i) => {
+      const isOut = p.k === 'out';
       return '<div class="edit-row" data-idx="' + i + '">' +
         '<button type="button" class="type-toggle ' + (p.k==='in'?'in':'out') + '" data-idx="' + i + '">' +
           (p.k==='in' ? 'Příchod' : 'Odchod') + '</button>' +
         '<input type="time" class="edit-time" data-idx="' + i + '" value="' + p.t + '">' +
-        (isBreakOut ? '<button type="button" class="para-toggle ' + (p.paid?'on':'') + '" data-idx="' + i + '" title="Placený paragraf">§</button>' : '') +
+        (isOut ? '<button type="button" class="para-toggle ' + (p.paid?'on':'') + '" data-idx="' + i + '" title="Paragraf (placený)">§</button>' : '') +
+        (isOut ? '<button type="button" class="nv-toggle ' + (p.nv?'on':'') + '" data-idx="' + i + '" title="Náhradní volno">NV</button>' : '') +
         '<button type="button" class="row-del" data-idx="' + i + '" aria-label="Smazat">✕</button>' +
       '</div>';
     }).join('');
-    const plans = [[360,'6','zkrácená'],[480,'8','ranní'],[450,'7:30','odpolední'],[420,'7:00','noční']];
-    const planRow = plans.map(([m,l,c]) =>
-      '<button type="button" class="plan-btn ' + (editPlan===m?'on':'') + '" data-plan="' + m + '">' +
-        '<span class="ph">' + l + '</span><span class="pc">' + c + '</span></button>'
-    ).join('');
-    logListEl.innerHTML =
+  }
+
+  function renderEdit(){
+    sheetTitle.textContent = editDate ? ('Úprava ' + fmtDate(editDate)) : 'Nový záznam';
+    totalsEl.style.display = 'none';
+    viewActions.hidden = true; editActions.hidden = false;
+    addDayBtn.hidden = true;
+
+    const typeOpts = Object.keys(TYPE_LABELS).map(t =>
+      '<option value="' + t + '"' + (editType===t?' selected':'') + '>' + TYPE_LABELS[t] + '</option>').join('');
+
+    let html =
+      '<div class="edit-lbl">Typ dne</div>' +
+      '<select class="edit-type" id="editTypeSel">' + typeOpts + '</select>' +
       '<div class="edit-lbl">Datum</div>' +
-      '<input type="date" class="edit-date" value="' + editKey + '">' +
-      '<div class="edit-lbl">Pracovní doba</div>' +
-      '<div class="plan-row">' + planRow + '</div>' +
-      '<div class="edit-lbl">Svačina</div>' +
-      '<div class="edit-brk-row">' +
-        '<input type="time" class="edit-brk" value="' + brkToStr(editBrk) + '">' +
-        '<button type="button" class="paid-toggle ' + (editPaid?'paid':'unpaid') + '" id="paidToggle">' +
-          (editPaid ? 'Placená' : 'Neplacená') + '</button>' +
-      '</div>' +
-      '<div class="edit-lbl">Píchnutí</div>' +
-      '<div class="edit-head">Uprav čas a typ. U přerušení přepni <b>§</b> pro placený paragraf (neodečítá se).</div>' +
-      rows +
-      '<button type="button" class="act-btn add-punch" id="addPunchBtn">+ Přidat píchnutí</button>';
+      '<input type="date" class="edit-date" value="' + editKey + '">';
+
+    if(editType === 'dovolena'){
+      html += '<div class="edit-lbl">Datum do</div>' +
+              '<input type="date" class="edit-date-to" value="' + (editKeyTo || editKey) + '">' +
+              '<div class="edit-head">Dovolená za zvolené období (od–do) se nepočítá do odpracováno ani přesčasu.</div>';
+    } else if(editType === 'nemoc' || editType === 'paragraf' || editType === 'svatek'){
+      html += '<div class="edit-head">Celý den se nepočítá do odpracováno ani přesčasu.</div>';
+    } else if(editType === 'nahradni'){
+      html += '<div class="edit-lbl">Délka (dle směny)</div>' +
+              '<div class="plan-row">' + plansHtml() + '</div>' +
+              '<div class="edit-head">Náhradní volno se přičte do odpracováno a odečte z přesčasu.</div>';
+    } else {   // směna
+      html += '<div class="edit-lbl">Pracovní doba</div>' +
+              '<div class="plan-row">' + plansHtml() + '</div>' +
+              '<div class="edit-lbl">Svačina</div>' +
+              '<div class="edit-brk-row">' +
+                '<input type="time" class="edit-brk" value="' + brkToStr(editBrk) + '">' +
+                '<button type="button" class="paid-toggle ' + (editPaid?'paid':'unpaid') + '" id="paidToggle">' +
+                  (editPaid ? 'Placená' : 'Neplacená') + '</button>' +
+              '</div>' +
+              '<div class="edit-lbl">Píchnutí</div>' +
+              '<div class="edit-head">Uprav čas a typ. U přerušení přepni <b>§</b> pro placený paragraf (neodečítá se).</div>' +
+              punchRowsHtml() +
+              '<button type="button" class="act-btn add-punch" id="addPunchBtn">+ Přidat píchnutí</button>';
+    }
+    logListEl.innerHTML = html;
   }
 
   function openEdit(date){
     const store = loadPunch();
     const d = store[date] || {};
-    editDate = date; editKey = date;
-    editArr = (d.punches || []).map(p => ({ t: p.t, k: p.k, paid: p.paid }));
+    editDate = date; editKey = date; editKeyTo = date;
+    editType = d.type || 'smena';
+    editArr = (d.punches || []).map(p => ({ t: p.t, k: p.k, paid: p.paid, nv: p.nv }));
+    if(!editArr.length && editType === 'smena') editArr = [ { t:'08:00', k:'in' }, { t:'16:30', k:'out' } ];
     editBrk = d.brk != null ? d.brk : breakMinutes();
     editPaid = d.brk != null ? !!d.paid : paidEl.checked;
     editPlan = d.plan != null ? d.plan : workMin;
@@ -1103,7 +1162,8 @@
   }
   function openNewDay(){
     editDate = null;
-    editKey  = ymd(new Date());
+    editKey  = ymd(new Date()); editKeyTo = editKey;
+    editType = 'smena';
     editArr  = [ { t:'08:00', k:'in' }, { t:'16:30', k:'out' } ];
     editBrk  = breakMinutes();
     editPaid = paidEl.checked;
@@ -1115,23 +1175,31 @@
     const dateInput = logListEl.querySelector('.edit-date');
     const key = dateInput ? dateInput.value : editKey;
     if(!key){ toast('Vyber datum'); return; }
-    const clean = editArr.filter(p => /^\d{1,2}:\d{2}$/.test(p.t));
-    const origin = editDate ? store[editDate] : null;
     if(editDate && editDate !== key) delete store[editDate];   // přesun na jiné datum
-    if(!clean.length){ delete store[key]; }
-    else {
-      const existing = store[key] || origin || {};
-      store[key] = {
-        punches: clean,
-        plan: editPlan,
-        brk: editBrk,
-        paid: editPaid
-      };
+
+    if(editType === 'dovolena'){
+      const toInput = logListEl.querySelector('.edit-date-to');
+      let a = key, b = (toInput && toInput.value) ? toInput.value : key;
+      if(b < a){ const t=a; a=b; b=t; }
+      let d = new Date(a + 'T00:00:00'); const end = new Date(b + 'T00:00:00');
+      let n = 0;
+      while(d <= end && n < 400){ store[ymd(d)] = { type:'dovolena' }; d.setDate(d.getDate()+1); n++; }
+      savePunch(store);
+      editDate = editKey = editKeyTo = editArr = null; editType = 'smena';
+      renderHistory(); renderStatus(); toast('Dovolená zapsána'); return;
+    }
+    if(editType === 'paragraf' || editType === 'nemoc' || editType === 'svatek'){
+      store[key] = { type: editType };
+    } else if(editType === 'nahradni'){
+      store[key] = { type: 'nahradni', plan: editPlan };
+    } else {   // směna
+      const clean = editArr.filter(p => /^\d{1,2}:\d{2}$/.test(p.t));
+      if(!clean.length){ delete store[key]; }
+      else { store[key] = { punches: clean, plan: editPlan, brk: editBrk, paid: editPaid }; }
     }
     savePunch(store);
-    editDate = editKey = editArr = null;
-    renderHistory(); renderStatus();
-    toast('Uloženo');
+    editDate = editKey = editKeyTo = editArr = null; editType = 'smena';
+    renderHistory(); renderStatus(); toast('Uloženo');
   }
   function cancelEdit(){ editDate = editKey = editArr = null; renderHistory(); }
 
@@ -1226,15 +1294,21 @@
     const plb = e.target.closest('.plan-btn');
     if(plb){ editPlan = +plb.dataset.plan; renderEdit(); return; }
     const pt = e.target.closest('.para-toggle');
-    if(pt){ const i=+pt.dataset.idx; editArr[i].paid = !editArr[i].paid; renderEdit(); return; }
+    if(pt){ const i=+pt.dataset.idx; editArr[i].paid = !editArr[i].paid; if(editArr[i].paid) editArr[i].nv = false; renderEdit(); return; }
+    const nv = e.target.closest('.nv-toggle');
+    if(nv){ const i=+nv.dataset.idx; editArr[i].nv = !editArr[i].nv; if(editArr[i].nv) editArr[i].paid = false; renderEdit(); return; }
   });
   logListEl.addEventListener('input', e => {
     const inp = e.target.closest('.edit-time');
     if(inp && editArr){ editArr[+inp.dataset.idx].t = inp.value; return; }
     const dt = e.target.closest('.edit-date');
     if(dt){ editKey = dt.value; return; }
+    const dto = e.target.closest('.edit-date-to');
+    if(dto){ editKeyTo = dto.value; return; }
     const bk = e.target.closest('.edit-brk');
-    if(bk){ const [h,m]=(bk.value||'0:0').split(':').map(Number); editBrk = (h||0)*60 + (m||0); }
+    if(bk){ const [h,m]=(bk.value||'0:0').split(':').map(Number); editBrk = (h||0)*60 + (m||0); return; }
+    const ts = e.target.closest('.edit-type');
+    if(ts){ editType = ts.value; renderEdit(); }
   });
 
   // ===== parametry v URL (pro NFC tag) =====
