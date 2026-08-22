@@ -305,6 +305,15 @@
   .mnav:active:not(:disabled){ border-color:#5a4a76; }
   .mlabel{ font-size:15px; font-weight:700; text-transform:capitalize; }
   .totals-cards{ display:flex; gap:10px; }
+  .konto-card{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px;
+    background:#161020; border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+  .konto-k{ font-size:12px; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
+  .konto-v{ font-family:"SFMono-Regular","Consolas",monospace; font-size:22px; font-weight:700; }
+  .konto-v.pos{ color:var(--green); } .konto-v.neg{ color:var(--red); } .konto-v.zero{ color:var(--ink); }
+  .konto-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px; }
+  .konto-row label{ font-size:12px; color:var(--muted); }
+  .konto-row input{ width:90px; padding:7px 10px; font-size:15px; text-align:right;
+    background:#161020; color:var(--ink); border:1px solid var(--line); border-radius:9px; }
   .tot{ flex:1; background:#161020; border:1px solid var(--line); border-radius:12px; padding:12px; text-align:center; }
   .tot .k{ font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
   .tot .v{ font-family:"SFMono-Regular","Consolas",monospace; font-size:20px; font-weight:700; margin-top:4px; }
@@ -880,6 +889,20 @@
   function loadPunch(){ try{ return JSON.parse(localStorage.getItem(PUNCH_KEY) || '{}'); }catch(e){ return {}; } }
   function savePunch(o){ try{ localStorage.setItem(PUNCH_KEY, JSON.stringify(o)); }catch(e){} }
 
+  const KONTO_KEY = 'kdyDomu.konto0';
+  function loadKonto(){ const v = parseInt(localStorage.getItem(KONTO_KEY) || '0', 10); return isNaN(v) ? 0 : v; }
+  function saveKonto(min){ try{ localStorage.setItem(KONTO_KEY, String(min|0)); }catch(e){} }
+  function parseSigned(str){                         // "+12:00" / "-1:30" / "12:00" / "12" → minuty
+    str = (str || '').trim().replace(',', ':');
+    if(!str) return 0;
+    let sign = 1;
+    if(str[0] === '-'){ sign = -1; str = str.slice(1); } else if(str[0] === '+'){ str = str.slice(1); }
+    let h = 0, m = 0;
+    if(str.includes(':')){ const p = str.split(':'); h = parseInt(p[0]||'0',10)||0; m = parseInt(p[1]||'0',10)||0; }
+    else { h = parseInt(str,10)||0; }
+    return sign * (h*60 + m);
+  }
+
   let toastTimer;
   function toast(msg){
     toastEl.textContent = msg; toastEl.hidden = false;
@@ -1055,6 +1078,15 @@
     let mWork = 0, mOver = 0;
     inMonth.forEach(({s}) => { if(s.open || s.neutral) return; mWork += s.worked; if(s.over!=null) mOver += s.over; });
 
+    // kumulativní konto ke konci zvoleného měsíce = počáteční stav + přesčasy všech dnů do konce měsíce
+    const konto0 = loadKonto();
+    let konto = konto0;
+    items.forEach(({k,s}) => {
+      if(s.open || s.neutral || s.over == null) return;
+      const d = new Date(k + 'T00:00:00');
+      if(d.getFullYear() < y || (d.getFullYear() === y && d.getMonth() <= m)) konto += s.over;
+    });
+
     totalsEl.innerHTML =
       '<div class="month-nav">' +
         '<button type="button" class="mnav" data-dir="-1" aria-label="Předchozí měsíc">◀</button>' +
@@ -1064,7 +1096,13 @@
       '<div class="totals-cards">' +
         '<div class="tot"><div class="k">Odpracováno</div><div class="v">' + dur(mWork) + '</div></div>' +
         '<div class="tot"><div class="k">Přesčas</div><div class="v ' + diffClass(mOver) + '">' + sdur(mOver) + '</div></div>' +
-      '</div>';
+      '</div>' +
+      '<div class="konto-card">' +
+        '<div class="konto-k">Konto ke konci ' + monthLabel(y,m).split(' ')[0] + '</div>' +
+        '<div class="konto-v ' + diffClass(konto) + '">' + sdur(konto) + '</div>' +
+      '</div>' +
+      '<div class="konto-row"><label for="kontoInput">Počáteční stav konta</label>' +
+        '<input type="text" id="kontoInput" inputmode="text" placeholder="+0:00" value="' + (konto0 ? sdur(konto0) : '') + '"></div>';
 
     if(!inMonth.length){ logListEl.innerHTML = '<div class="log-empty">V tomto měsíci žádné záznamy.</div>'; return; }
     logListEl.innerHTML = inMonth.map(({k,s}) => {
@@ -1294,6 +1332,10 @@
     if(y > maxY || (y === maxY && m > maxM)) return;
     histMonth = { y, m };
     renderList();
+  });
+  totalsEl.addEventListener('change', e => {
+    const inp = e.target.closest('#kontoInput');
+    if(inp){ saveKonto(parseSigned(inp.value)); renderList(); }
   });
 
   logListEl.addEventListener('click', e => {
