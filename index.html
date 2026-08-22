@@ -332,15 +332,19 @@
   .badge{ display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px;
     padding:0 5px; border-radius:6px; font-size:12px; font-weight:700; color:#1c1726; }
   .b-para{ background:var(--amber); } .b-nv{ background:var(--green); } .b-nemoc{ background:#fff; }
-  .b-dov{ background:#1e88e5; } .b-sva{ background:#c08bff; }
+  .b-dov{ background:#1e88e5; } .b-sva{ background:#2a2138; border:1px solid var(--line); }
   .b-smena{ background:#2a2138; border:1px solid var(--line); }
   .badge svg{ display:block; }
+  .badge.ico{ padding:2px; }
+  .badge.ico svg{ width:100%; height:100%; }
   .type-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
   .type-opt{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
     padding:10px 4px; border:1px solid var(--line); border-radius:12px; background:#161020;
     color:var(--muted); cursor:pointer; min-height:64px; }
   .type-opt.on{ border-color:var(--amber); background:#20182e; color:var(--ink); }
   .type-opt-l{ font-size:11px; font-weight:600; text-align:center; line-height:1.15; }
+  .type-opt-ic .badge{ min-width:30px; height:30px; }
+  .type-opt-ic .badge:not(.ico){ font-size:16px; }
   .rec .df{ font-family:"SFMono-Regular","Consolas",monospace; font-weight:700; font-size:15px; min-width:58px; text-align:right; }
   .df.pos{ color:var(--green); } .df.neg{ color:var(--red); } .df.zero{ color:var(--muted); }
   .rec-edit, .rec-del{ background:transparent; border:none; color:var(--muted); cursor:pointer; font-size:15px; padding:6px 8px; flex:none; }
@@ -1050,22 +1054,30 @@
 
   function typeBadge(type){
     if(type === 'smena'){
-      return '<span class="badge b-smena"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">' +
+      return '<span class="badge ico b-smena"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">' +
         '<circle cx="12" cy="12" r="9" fill="none" stroke="#ffb020" stroke-width="2"/>' +
         '<path d="M12 7v5l3 2" fill="none" stroke="#ffb020" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
     }
     if(type === 'nemoc'){
-      return '<span class="badge b-nemoc"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">' +
+      return '<span class="badge ico b-nemoc"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">' +
         '<path fill="#e23b3b" d="M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z"/></svg></span>';
     }
     if(type === 'dovolena'){
-      return '<span class="badge b-dov"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">' +
+      return '<span class="badge ico b-dov"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">' +
         '<g fill="#ffd21f"><circle cx="12" cy="12" r="4.2"/>' +
         '<g stroke="#ffd21f" stroke-width="1.8" stroke-linecap="round">' +
         '<path d="M12 2.6v2.6M12 18.8v2.6M2.6 12h2.6M18.8 12h2.6M5.3 5.3l1.9 1.9M16.8 16.8l1.9 1.9M18.7 5.3l-1.9 1.9M7.2 16.8l-1.9 1.9"/>' +
         '</g></g></svg></span>';
     }
-    const m = { paragraf:['§','b-para'], svatek:['★','b-sva'], nahradni:['NV','b-nv'] };
+    if(type === 'svatek'){
+      return '<span class="badge ico b-sva"><svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">' +
+        '<g fill="none" stroke="#e6e2ea" stroke-width="1.6">' +
+        '<rect x="1.6" y="3.2" width="16.8" height="15.2" rx="2.2"/>' +
+        '<path d="M1.6 7.4h16.8"/><path d="M6 1.4v3M14 1.4v3"/></g>' +
+        '<path d="M5.6 12.4l3 3 6-6.2" fill="none" stroke="#43c67d" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '</svg></span>';
+    }
+    const m = { paragraf:['§','b-para'], nahradni:['NV','b-nv'] };
     const b = m[type]; return b ? '<span class="badge ' + b[1] + '">' + b[0] + '</span>' : '';
   }
 
