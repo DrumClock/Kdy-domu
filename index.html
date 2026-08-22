@@ -317,14 +317,16 @@
   .rec{ display:flex; align-items:center; justify-content:space-between; gap:8px;
     background:#161020; border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
   .rec .d{ font-size:13px; color:var(--ink); font-weight:600; }
+  .rec .d-sub{ font-weight:400; color:var(--muted); }
   .rec .t{ font-size:12px; color:var(--muted); margin-top:2px; }
   .rec-main{ flex:1; min-width:0; }
-  .rec-actions{ display:flex; align-items:center; gap:4px; }
+  .rec-actions{ display:flex; align-items:center; gap:6px; }
+  .rec-badges{ display:flex; align-items:center; justify-content:center; gap:3px; min-width:26px; flex:none; }
   .badge{ display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px;
     padding:0 5px; border-radius:6px; font-size:12px; font-weight:700; color:#1c1726; }
   .b-para{ background:var(--amber); } .b-nv{ background:var(--green); } .b-nemoc{ background:var(--red); }
   .b-dov{ background:#4aa3ff; } .b-sva{ background:#c08bff; }
-  .rec .df{ font-family:"SFMono-Regular","Consolas",monospace; font-weight:700; font-size:15px; margin-right:2px; }
+  .rec .df{ font-family:"SFMono-Regular","Consolas",monospace; font-weight:700; font-size:15px; min-width:58px; text-align:right; }
   .df.pos{ color:var(--green); } .df.neg{ color:var(--red); } .df.zero{ color:var(--muted); }
   .rec-edit, .rec-del{ background:transparent; border:none; color:var(--muted); cursor:pointer; font-size:15px; padding:6px 8px; flex:none; }
   .rec-edit{ margin-right:2px; }
@@ -1078,7 +1080,7 @@
         return '<div class="rec">' + editBtn +
                '<div class="rec-main"><div class="d">' + fmtDate(k) + '</div>' +
                '<div class="t">' + names[s.type] + ' · ' + sub + '</div></div>' +
-               '<div class="rec-actions">' + typeBadge(s.type) + right + delBtn + '</div></div>';
+               '<div class="rec-actions"><span class="rec-badges">' + typeBadge(s.type) + '</span>' + right + delBtn + '</div></div>';
       }
 
       const range = hhmm(s.start) + ' → ' + (s.open ? '<span class="live">běží</span>' : hhmm(s.end));
@@ -1089,9 +1091,9 @@
         ? '<span class="df zero">–</span>'
         : '<span class="df ' + diffClass(s.over) + '">' + sdur(s.over) + '</span>';
       return '<div class="rec">' + editBtn +
-             '<div class="rec-main"><div class="d">' + fmtDate(k) + ' · odpracováno ' + dur(s.worked) + '</div>' +
+             '<div class="rec-main"><div class="d">' + fmtDate(k) + ' <span class="d-sub">· odpracováno ' + dur(s.worked) + '</span></div>' +
              '<div class="t">' + line2 + '</div></div>' +
-             '<div class="rec-actions">' + badges + over + delBtn + '</div></div>';
+             '<div class="rec-actions"><span class="rec-badges">' + badges + '</span>' + over + delBtn + '</div></div>';
     }).join('');
   }
 

@@ -16,9 +16,11 @@ Jednoduchá webová appka (PWA), která spočítá, kdy můžeš odejít z prác
 
 - **Výpočet odchodu** ze zadaného začátku směny (začátek se bere z prvního Příchodu, nebo ho zadáš ručně jen pro výpočet).
 - **Pracovní doba** na jedno ťuknutí: 6 h (zkrácená) nebo klasická 8 h / 7:30 / 7:00 (ranní / odpolední / noční).
-- **Svačina** s nastavitelnou délkou a přepínačem **placená / neplacená** (placená se do odchodu nepřičítá).
+- **Svačina** s nastavitelnou délkou a přepínačem **placená / neplacená**. Neplacená se z odpracované doby odečítá jen když je čistá práce **nad 6 h** (podle zákoníku práce).
 - **Živý odpočet** — kolik zbývá (červeně) nebo kolik je přesčas (zeleně), aktualizace každou vteřinu.
-- **[Píchačky](#píchačky)** — Příchod / Odchod (i přes NFC) evidují začátek, konec a přerušení směny; historie s odpracovanými hodinami a přesčasy, úpravou i dodatečným dopsáním směn a exportem do CSV.
+- **[Píchačky](#píchačky)** — Příchod / Odchod (i přes NFC) evidují začátek, konec, přerušení a přesčas směny.
+- **Typy dnů** — vedle běžné směny i **paragraf (§)**, **náhradní volno (NV)**, **nemoc**, **dovolená** (od–do) a **svátek**.
+- **Historie** po měsících s úpravou, dodatečným dopsáním a exportem do CSV.
 - **Připomínka do kalendáře** — vytvoří v telefonu událost na čas odchodu s upozorněním (funguje i při zavřené appce a zamčeném telefonu).
 - **Zapamatování** — délka směny a nastavení svačiny se drží natrvalo.
 - **[NFC](#nfc-štítek)** — přiložením telefonu k NFC štítku píchneš příchod nebo odchod.
@@ -132,19 +134,29 @@ Appka funguje jako jednoduché píchačky včetně přerušení.
 - První **Příchod** = začátek směny (rovnou vyplní i „Začátek směny" v plánovači).
 - Každá dvojice **Odchod → Příchod** uprostřed = **přerušení**.
 - Poslední **Odchod** = konec směny.
-- Odpracováno = (konec − začátek) − přerušení; přesčas = odpracováno − zvolená délka směny.
+- Odpracováno = (konec − začátek) − přerušení − neplacená svačina; přesčas = odpracováno − zvolená délka směny.
+- **Svačina** se odečítá jen když je čistá práce **nad 6 h** (zákoník práce). Do 6:00 včetně se neodečítá, od 6:01 se odečte celá (např. 6:01 → 5:31).
+
+**Paragraf (§) a náhradní volno (NV)** — v editaci dne má každý **Odchod** přepínače **§** a **NV** (vzájemně se vylučují):
+- **§ paragraf** — u přerušení = placená pauza; u posledního Odchodu = zbytek směny je paragraf. Do odpracované doby se **nepočítá**, ale **zaplní plán** (netvoří přesčas).
+- **NV náhradní volno** — u přerušení nebo posledního Odchodu. **Přičte se do odpracované doby** (doplní den do plné směny) a **odečte z přesčasu**.
+
+**Celodenní typy** (v editaci přes „Typ dne", nebo § / ✚ na hlavní obrazovce pro dnešek):
+- **Paragraf**, **Nemoc**, **Dovolená**, **Svátek** — nepočítají se do odpracováno ani přesčasu. **Dovolená a Nemoc** jdou zadat **od–do** (soboty a neděle se přeskočí).
+- **Náhradní volno (celý den)** — přičte délku směny do odpracováno a odečte z přesčasu.
 
 Tlačítka se sama zapínají/vypínají podle stavu, takže se nedá přihlásit dvakrát ani odejít bez přihlášení.
 
 **Přes půlnoc** — noční směna se páruje správně: píchnutí po půlnoci se přiřadí k rozjeté směně, ne k novému dni.
 
-**Historie** (ikona hodin nahoře uprostřed) se otevře jako panel přes celou výšku: **nahoře** přehled *odpracováno a přesčas za tento týden a měsíc*, **uprostřed** scrollovací seznam dní (začátek → konec, odpracováno, přerušení, přesčas), **dole** tlačítka.
+**Historie** (ikona hodin nahoře uprostřed) se otevře jako panel přes celou výšku: **nahoře** přepínač měsíce (◀ ▶) se souhrnem *Odpracováno* a *Přesčas* za zvolený měsíc, **uprostřed** scrollovací seznam dní, **dole** tlačítka. Listovat jde i do budoucích měsíců (kde máš záznam, např. dovolenou).
 
-- **Úprava záznamu** — u dne tužka ✎ otevře editor, kde přepíšeš čas i typ každého píchnutí (Příchod/Odchod), píchnutí přidáš nebo smažeš, změníš datum (přesun na jiný den) a nastavíš **svačinu i placená/neplacená napevno pro ten den** (třeba u služební cesty svačinu vynulovat nebo přepnout na placenou).
-- **Dodatečné dopsání směny** — tlačítko ➕ v záhlaví vytvoří nový den: vybereš datum a naťukáš píchnutí. Hodí se na zapomenuté nebo minulé směny.
-- Záznamy jde jednotlivě mazat (✕) nebo vše naráz.
+- Každý den má vpravo barevné **ikony** podle obsahu: **§** (paragraf), **NV** (náhradní volno), **✚** (nemoc), **☀** (dovolená), **★** (svátek).
+- **Úprava záznamu** — tužka ✎ otevře editor: typ dne, časy a typ píchnutí, datum, pracovní doba, svačina, § a NV.
+- **Dodatečné dopsání** — tlačítko ➕ v záhlaví (vybereš datum a typ).
+- Záznamy jde jednotlivě mazat (✕). **Vymazat měsíc** smaže jen právě zobrazený měsíc.
 
-**Export CSV** — v Historii stáhne `pichacky.csv` (oddělený `;`, s BOM pro Excel): datum, příchod, odchod, odpracováno, přerušení, svačina, plán, přesčas a seznam píchnutí.
+**Export CSV** — v Historii stáhne `pichacky.csv` (oddělený `;`, s BOM pro Excel): datum, příchod, odchod, odpracováno, přerušení, paragraf, svačina, plán, přesčas a seznam píchnutí; u celodenních typů je uveden typ.
 
 Poznámky:
 - Data jsou **jen v tvém telefonu** (`localStorage`) — osobní přehled, ne oficiální evidence pro zaměstnavatele. Přesnost odpovídá tomu, kdy píchneš.

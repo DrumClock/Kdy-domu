@@ -67,7 +67,15 @@
         <li><span class="pill in">Příchod</span> = začátek směny. Každý další <span class="pill out">Odchod</span> → <span class="pill in">Příchod</span> uprostřed je <b>přerušení</b>. Poslední <span class="pill out">Odchod</span> = konec.</li>
         <li>Tlačítka se sama přepínají — nejde se přihlásit dvakrát ani odejít bez přihlášení.</li>
         <li><b>Odpracováno</b> = (konec − začátek) − přerušení − neplacená svačina. <b>Přesčas</b> = odpracováno − zvolená délka směny.</li>
+        <li><b>Svačina</b> se odečítá jen když je čistá práce <b>nad 6 h</b> (zákoník práce). Do 6:00 se neodečítá, od 6:01 se odečte celá.</li>
         <li>Noční směna <b>přes půlnoc</b> se spáruje sama.</li>
+      </ul>
+
+      <h2><span class="ic">§</span> Paragraf a náhradní volno</h2>
+      <ul>
+        <li>V úpravě dne má každý <b>Odchod</b> přepínače <b>§</b> a <b>NV</b> (vylučují se).</li>
+        <li><b>§ paragraf</b> — placená pauza / zbytek směny paragraf. Nepočítá se do odpracováno, ale <b>zaplní plán</b> (netvoří přesčas).</li>
+        <li><b>NV náhradní volno</b> — <b>přičte se do odpracováno</b> (doplní den do plné směny) a <b>odečte z přesčasu</b>.</li>
       </ul>
     </section>
 
@@ -80,10 +88,20 @@
     <section>
       <h2><span class="ic">🕘</span> Historie</h2>
       <ul>
-        <li>Nahoře <b>přepínač měsíce</b> (◀ ▶) se souhrnem <b>Odpracováno</b> a <b>Přesčas</b> za zvolený měsíc; uprostřed seznam dní toho měsíce.</li>
-        <li>Tužka <b>✎</b> u dne = úprava: časy a typ píchnutí, datum, <b>pracovní doba</b>, svačina, a <b>§</b> u přerušení = <b>placený paragraf</b> (neodečítá se).</li>
-        <li><b>➕</b> nahoře = dodatečně dopsat celou směnu (vybereš datum).</li>
-        <li><b>Export</b> uloží <span class="tag">CSV</span> pro Excel, <b>Vymazat vše</b> smaže záznamy. Mazání se potvrzuje.</li>
+        <li>Nahoře <b>přepínač měsíce</b> (◀ ▶) se souhrnem <b>Odpracováno</b> a <b>Přesčas</b>; uprostřed seznam dní. Listovat jde i do budoucích měsíců (kde máš záznam).</li>
+        <li>Každý den má vpravo <b>ikonu</b>: <b>§</b> paragraf, <b>NV</b> náhradní volno, <b>✚</b> nemoc, <b>☀</b> dovolená, <b>★</b> svátek.</li>
+        <li>Tužka <b>✎</b> u dne = úprava: typ dne, časy a typ píchnutí, datum, pracovní doba, svačina, § a NV.</li>
+        <li><b>➕</b> nahoře = dodatečně dopsat den (vybereš datum a typ).</li>
+        <li><b>Export</b> uloží <span class="tag">CSV</span> pro Excel. <b>Vymazat měsíc</b> smaže jen zobrazený měsíc. Mazání se potvrzuje.</li>
+      </ul>
+
+      <h2><span class="ic">📅</span> Typy dnů</h2>
+      <ul>
+        <li>V úpravě přes <b>Typ dne</b>: Směna, Paragraf, Nemoc, Dovolená, Svátek, Náhradní volno.</li>
+        <li><b>Dovolená</b> a <b>Nemoc</b> jdou zadat <b>od–do</b> (soboty a neděle se přeskočí).</li>
+        <li><b>Paragraf / Nemoc / Dovolená / Svátek</b> se nepočítají do odpracováno ani přesčasu.</li>
+        <li><b>Náhradní volno (celý den)</b> přičte délku směny do odpracováno a odečte z přesčasu.</li>
+        <li>Na hlavní obrazovce označí <b>§ Paragraf</b> a <b>✚ Nemoc</b> rychle dnešek.</li>
       </ul>
     </section>
 
