@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Záloha – Osobní píchačka</title>
+<style>
+  :root{
+    --bg:#1c1726; --panel:#251d33; --line:#3a2f4d;
+    --ink:#efe9df; --muted:#9a8fae; --amber:#ffb020;
+    --green:#43c67d; --red:#ff5c6c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{min-height:100%}
+  body{
+    background:radial-gradient(120% 60% at 50% -10%, #2a2138 0%, var(--bg) 55%);
+    background-attachment:fixed;
+    color:var(--ink);
+    font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+    line-height:1.55;
+    padding:calc(24px + env(safe-area-inset-top)) 20px calc(40px + env(safe-area-inset-bottom));
+  }
+  .wrap{max-width:520px;margin:0 auto}
+  .eyebrow{font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--amber);font-weight:600;text-align:center;margin-bottom:6px}
+  h1{font-size:26px;font-weight:700;text-align:center;margin-bottom:22px}
+  section{
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:18px;margin-bottom:14px;
+  }
+  h2{font-size:16px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  p{font-size:13.5px;color:var(--muted);margin:0 0 14px}
+  .btn{
+    width:100%;padding:13px 12px;border:none;border-radius:12px;
+    font-size:15px;font-weight:700;cursor:pointer;color:#1c1726;background:var(--amber);
+  }
+  .btn.sec{background:#161020;color:var(--ink);border:1px solid var(--line)}
+  .btn + .btn{margin-top:10px}
+  .close{
+    position:fixed;top:calc(env(safe-area-inset-top) + 14px);right:calc(env(safe-area-inset-right) + 16px);
+    display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:11px;
+    color:var(--muted);text-decoration:none;font-size:20px;line-height:1;
+    border:1px solid var(--line);background:rgba(22,15,32,.55);
+    -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);z-index:5;
+  }
+  .close:active{color:var(--ink);border-color:#5a4a76}
+  .toast{
+    position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 22px);transform:translateX(-50%);
+    background:#0f0a17;border:1px solid var(--line);color:var(--ink);
+    padding:11px 18px;border-radius:12px;font-size:14px;z-index:20;max-width:90%;text-align:center;
+  }
+  .toast[hidden]{display:none}
+  .dialog{position:fixed;inset:0;z-index:30;background:rgba(12,9,18,.72);
+    -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+    display:flex;align-items:center;justify-content:center;padding:24px}
+  .dialog[hidden]{display:none}
+  .dialog-box{width:100%;max-width:340px;background:var(--panel);border:1px solid var(--line);
+    border-radius:16px;padding:22px 20px 18px}
+  .dialog-msg{font-size:15px;color:var(--ink);line-height:1.5;text-align:center;margin-bottom:20px}
+  .drow{display:flex;gap:10px}
+  .drow .btn{flex:1;margin:0}
+  .btn.rep{background:var(--red)}
+</style>
+</head>
+<body>
+  <a class="close" href="index.html" aria-label="Zavřít" title="Zpět do aplikace">✕</a>
+  <div class="wrap">
+    <div class="eyebrow">Záloha a export</div>
+    <h1>Záloha</h1>
+
+    <section>
+      <h2><span>📄</span> Export do Excelu (CSV)</h2>
+      <p>Stáhne přehled všech dnů jako <b>pichacky.csv</b> — otevřeš v Excelu nebo tabulkách.</p>
+      <button type="button" class="btn sec" id="csvBtn">Stáhnout CSV</button>
+    </section>
+
+    <section>
+      <h2><span>💾</span> Kompletní záloha (JSON)</h2>
+      <p>Uloží <b>vše</b> — záznamy směn, konto i nastavení — do jednoho souboru. Hodí se na zálohu nebo přenos do jiného telefonu.</p>
+      <button type="button" class="btn" id="exportJsonBtn">Zálohovat do souboru ↓</button>
+      <button type="button" class="btn sec" id="importJsonBtn">Obnovit ze souboru ↑</button>
+    </section>
+
+    <input type="file" id="importFile" accept="application/json,.json" hidden>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <div class="dialog" id="importDlg" hidden>
+    <div class="dialog-box">
+      <div class="dialog-msg">Jak importovat zálohu?<br><span style="font-size:12.5px;color:var(--muted)">Sloučit přidá k datům, Nahradit vše přepíše.</span></div>
+      <div class="drow">
+        <button type="button" class="btn" id="importMerge">Sloučit</button>
+        <button type="button" class="btn rep" id="importReplace">Nahradit</button>
+      </div>
+      <button type="button" class="btn sec" id="importCancel" style="margin-top:10px">Zrušit</button>
+    </div>
+  </div>
+
+<script>
+  const pad = n => String(n).padStart(2,'0');
+  const ymd = d => d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+  const toastEl = document.getElementById('toast');
+  let toastTimer;
+  function toast(msg){ toastEl.textContent = msg; toastEl.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(()=>toastEl.hidden=true, 2600); }
+
+  const PUNCH_KEY = 'kdyDomu.punch';
+  const SET_KEY   = 'kdyDomu.settings';
+  const BACKUP_KEYS = ['kdyDomu.punch','kdyDomu.settings','kdyDomu.konto0','kdyDomu.evt'];
+  function loadPunch(){ try{ return JSON.parse(localStorage.getItem(PUNCH_KEY) || '{}'); }catch(e){ return {}; } }
+  function savePunch(o){ try{ localStorage.setItem(PUNCH_KEY, JSON.stringify(o)); }catch(e){} }
+
+  const toMin = t => { const [h,m]=String(t).split(':').map(Number); return h*60+m; };
+  const hhmm = m => { m=((m%1440)+1440)%1440; return pad(Math.floor(m/60))+':'+pad(m%60); };
+  function nowMin(){ const d=new Date(); return d.getHours()*60+d.getMinutes(); }
+
+  // souhrn dne – shodná logika jako v appce (kvůli CSV)
+  function daySummary(day){
+    if(day && day.type){
+      if(day.type==='nahradni'){ const amt=day.plan!=null?day.plan:0; return {special:true,type:'nahradni',worked:amt,breaks:0,paidBreaks:0,snack:0,over:-amt,open:false}; }
+      return {special:true,neutral:true,type:day.type,worked:0,breaks:0,paidBreaks:0,snack:0,over:null,open:false};
+    }
+    const arr=(day&&day.punches)||[]; if(!arr.length) return null;
+    const plan=(day&&day.plan!=null)?day.plan:null;
+    let mins=arr.map(p=>toMin(p.t)); for(let i=1;i<mins.length;i++){while(mins[i]<mins[i-1])mins[i]+=1440;}
+    const kinds=arr.map(p=>p.k); const open=kinds[kinds.length-1]==='in'; const start=mins[0];
+    let breaks=0,paidBreaks=0,nvBreaks=0;
+    for(let i=0;i<arr.length-1;i++){ if(kinds[i]==='out'&&kinds[i+1]==='in'){ const g=mins[i+1]-mins[i];
+      if(arr[i].paid)paidBreaks+=g; else if(arr[i].nv)nvBreaks+=g; else breaks+=g; } }
+    let end; if(open){ let n=nowMin(); while(n<mins[mins.length-1])n+=1440; end=n; } else end=mins[mins.length-1];
+    const brkMin = day&&day.brk!=null?day.brk:0; const isPaid = !!(day&&day.paid);
+    const workBefore=Math.max(0,end-start-breaks-paidBreaks-nvBreaks);
+    const snack=(!isPaid&&workBefore>360)?brkMin:0;
+    const actualWork=Math.max(0,workBefore-snack);
+    const last=arr[arr.length-1];
+    const finalPara=!open&&last.k==='out'&&!!last.paid;
+    const finalNV=!open&&last.k==='out'&&!!last.nv;
+    let paraTotal=paidBreaks, over=null, nvFill=nvBreaks;
+    if(plan!=null){ let deficit=Math.max(0,plan-actualWork); let credit=Math.min(paidBreaks,deficit); deficit-=credit;
+      if(finalPara&&deficit>0){paraTotal+=deficit;credit+=deficit;deficit=0;} over=actualWork+credit-plan;
+      if(finalNV&&over<0)nvFill+=(-over); }
+    const worked=actualWork+nvFill;
+    return {start,end:open?null:mins[mins.length-1],worked,breaks,paidBreaks:paraTotal,snack,open,plan,over,punches:arr};
+  }
+
+  function download(name, text, type){
+    const blob=new Blob([text],{type}); const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download=name;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
+  }
+
+  document.getElementById('csvBtn').addEventListener('click', () => {
+    const store=loadPunch(); const keys=Object.keys(store).sort();
+    const rows=keys.map(k=>{ const s=daySummary(store[k]); if(!s) return null;
+      if(s.special) return [k,'','',0,0,0,0,'','',s.type];
+      const punches=(store[k].punches||[]).map(p=>p.t+(p.k==='in'?'P':'O')).join(' ');
+      return [k,hhmm(s.start),s.open?'':hhmm(s.end),s.worked,s.breaks,s.paidBreaks,s.snack,s.plan!=null?s.plan:'',s.over!=null?s.over:'',punches];
+    }).filter(Boolean);
+    if(!rows.length){ toast('Žádné záznamy k exportu'); return; }
+    const head=['Datum','Prichod','Odchod','Odpracovano_min','Preruseni_min','Paragraf_min','Svacina_min','Plan_min','Prescas_min','Pichnuti'];
+    const csv='\uFEFF'+[head].concat(rows).map(r=>r.join(';')).join('\r\n');
+    download('pichacky.csv', csv, 'text/csv;charset=utf-8');
+  });
+
+  document.getElementById('exportJsonBtn').addEventListener('click', () => {
+    const out={ app:'osobni-pichacka', version:1, exported:new Date().toISOString(), data:{} };
+    BACKUP_KEYS.forEach(k=>{ const v=localStorage.getItem(k); if(v!=null) out.data[k]=v; });
+    download('pichacky-zaloha-'+ymd(new Date())+'.json', JSON.stringify(out,null,2), 'application/json');
+  });
+
+  const importFile=document.getElementById('importFile');
+  const importDlg=document.getElementById('importDlg');
+  let importData=null;
+  document.getElementById('importJsonBtn').addEventListener('click', ()=>importFile.click());
+  importFile.addEventListener('change', ()=>{
+    const f=importFile.files&&importFile.files[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload=()=>{ try{ const p=JSON.parse(r.result);
+        if(!p||!p.data||(p.data['kdyDomu.punch']===undefined&&p.data['kdyDomu.settings']===undefined)){ toast('Neplatná záloha'); }
+        else { importData=p; importDlg.hidden=false; }
+      }catch(e){ toast('Soubor nejde načíst'); } importFile.value=''; };
+    r.readAsText(f);
+  });
+  function applyImport(mode){
+    const d=importData&&importData.data; importDlg.hidden=true;
+    if(!d){ importData=null; toast('Neplatný soubor'); return; }
+    try{
+      if(mode==='replace'){ BACKUP_KEYS.forEach(k=>{ if(d[k]!=null) localStorage.setItem(k,d[k]); }); }
+      else { const cur=loadPunch(); const imp=d['kdyDomu.punch']?JSON.parse(d['kdyDomu.punch']):{}; savePunch(Object.assign({},cur,imp)); }
+    }catch(e){ toast('Chyba importu'); importData=null; return; }
+    importData=null; toast('Import hotov — vrať se do aplikace');
+  }
+  document.getElementById('importMerge').addEventListener('click', ()=>applyImport('merge'));
+  document.getElementById('importReplace').addEventListener('click', ()=>applyImport('replace'));
+  document.getElementById('importCancel').addEventListener('click', ()=>{ importData=null; importDlg.hidden=true; });
+  importDlg.addEventListener('click', e=>{ if(e.target===importDlg){ importData=null; importDlg.hidden=true; } });
+</script>
+</body>
+</html>

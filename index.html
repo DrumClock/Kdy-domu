@@ -592,7 +592,7 @@
       <div class="totals" id="totals"></div>
       <div class="log" id="logList"></div>
       <div class="sheet-actions" id="viewActions">
-        <button type="button" class="act-btn" id="csvBtn">Export</button>
+        <a class="act-btn" href="zaloha.html" style="text-align:center;text-decoration:none;line-height:1.2">Záloha</a>
         <button type="button" class="act-btn danger" id="clearBtn">Vymazat měsíc</button>
       </div>
       <div class="sheet-actions" id="editActions" hidden>
@@ -842,7 +842,6 @@
   const histClose= document.getElementById('histClose');
   const totalsEl = document.getElementById('totals');
   const logListEl= document.getElementById('logList');
-  const csvBtn   = document.getElementById('csvBtn');
   const clearBtn = document.getElementById('clearBtn');
   const toastEl  = document.getElementById('toast');
   const statusTxt= document.getElementById('statusTxt');
@@ -1258,26 +1257,6 @@
   }
   function cancelEdit(){ editDate = editKey = editArr = null; renderHistory(); }
 
-  function exportCSV(){
-    const store = loadPunch();
-    const keys = Object.keys(store).sort();
-    const rows = keys.map(k => {
-      const s = daySummary(store[k]); if(!s) return null;
-      if(s.special){ return [k, '', '', 0, 0, 0, 0, '', '', s.type]; }
-      const punches = store[k].punches.map(p => p.t + (p.k==='in' ? 'P' : 'O')).join(' ');
-      return [k, hhmm(s.start), s.open ? '' : hhmm(s.end), s.worked, s.breaks, s.paidBreaks, s.snack,
-              s.plan!=null ? s.plan : '', s.over!=null ? s.over : '', punches];
-    }).filter(Boolean);
-    if(!rows.length){ toast('Žádné záznamy k exportu'); return; }
-    const head = ['Datum','Prichod','Odchod','Odpracovano_min','Preruseni_min','Paragraf_min','Svacina_min','Plan_min','Prescas_min','Pichnuti'];
-    const csv = '\uFEFF' + [head].concat(rows).map(r => r.join(';')).join('\r\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'pichacky.csv';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
-  }
-
   inBtn.addEventListener('click',  () => addPunch('in'));
   outBtn.addEventListener('click', () => addPunch('out'));
 
@@ -1305,7 +1284,6 @@
   histClose.addEventListener('click', () => { editDate=editKey=editArr=null; histEl.hidden = true; });
   histEl.addEventListener('click', e => { if(e.target === histEl){ editDate=editKey=editArr=null; histEl.hidden = true; } });
   addDayBtn.addEventListener('click', openNewDay);
-  csvBtn.addEventListener('click', exportCSV);
   clearBtn.addEventListener('click', () => {
     const now = new Date();
     const { y, m } = histMonth || { y: now.getFullYear(), m: now.getMonth() };
