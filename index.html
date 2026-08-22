@@ -1122,13 +1122,13 @@
 
       const range = hhmm(s.start) + ' → ' + (s.open ? '<span class="live">běží</span>' : hhmm(s.end));
       const off = s.breaks + s.snack;
-      const line2 = range + (off ? ' · pauza ' + dur(off) : '');
+      const line2 = 'odpracováno ' + dur(s.worked) + ' · ' + range + (off ? ' · pauza ' + dur(off) : '');
       const badges = (s.paidBreaks ? typeBadge('paragraf') : '') + (s.nv ? typeBadge('nahradni') : '');
       const over = (s.open || s.over == null)
         ? '<span class="df zero">–</span>'
         : '<span class="df ' + diffClass(s.over) + '">' + sdur(s.over) + '</span>';
       return '<div class="rec">' + editBtn +
-             '<div class="rec-main"><div class="d">' + fmtDate(k) + ' <span class="d-sub">· odpracováno ' + dur(s.worked) + '</span></div>' +
+             '<div class="rec-main"><div class="d">' + fmtDate(k) + '</div>' +
              '<div class="t">' + line2 + '</div></div>' +
              '<div class="rec-actions"><span class="rec-badges">' + badges + '</span>' + over + delBtn + '</div></div>';
     }).join('');
