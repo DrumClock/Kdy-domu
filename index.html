@@ -320,6 +320,10 @@
   .rec .t{ font-size:12px; color:var(--muted); margin-top:2px; }
   .rec-main{ flex:1; min-width:0; }
   .rec-actions{ display:flex; align-items:center; gap:4px; }
+  .badge{ display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px;
+    padding:0 5px; border-radius:6px; font-size:12px; font-weight:700; color:#1c1726; }
+  .b-para{ background:var(--amber); } .b-nv{ background:var(--green); } .b-nemoc{ background:var(--red); }
+  .b-dov{ background:#4aa3ff; } .b-sva{ background:#c08bff; }
   .rec .df{ font-family:"SFMono-Regular","Consolas",monospace; font-weight:700; font-size:15px; margin-right:2px; }
   .df.pos{ color:var(--green); } .df.neg{ color:var(--red); } .df.zero{ color:var(--muted); }
   .rec-edit, .rec-del{ background:transparent; border:none; color:var(--muted); cursor:pointer; font-size:15px; padding:6px 8px; flex:none; }
@@ -578,7 +582,7 @@
       <div class="log" id="logList"></div>
       <div class="sheet-actions" id="viewActions">
         <button type="button" class="act-btn" id="csvBtn">Export</button>
-        <button type="button" class="act-btn danger" id="clearBtn">Vymazat vše</button>
+        <button type="button" class="act-btn danger" id="clearBtn">Vymazat měsíc</button>
       </div>
       <div class="sheet-actions" id="editActions" hidden>
         <button type="button" class="act-btn primary" id="saveEditBtn">Uložit</button>
@@ -1014,6 +1018,11 @@
     if(editArr) renderEdit(); else renderList();
   }
 
+  function typeBadge(type){
+    const m = { paragraf:['§','b-para'], nemoc:['✚','b-nemoc'], dovolena:['☀','b-dov'], svatek:['★','b-sva'], nahradni:['NV','b-nv'] };
+    const b = m[type]; return b ? '<span class="badge ' + b[1] + '">' + b[0] + '</span>' : '';
+  }
+
   function renderList(){
     sheetTitle.textContent = 'Historie';
     totalsEl.style.display = '';
@@ -1023,13 +1032,19 @@
     const now = new Date();
     if(!histMonth) histMonth = { y: now.getFullYear(), m: now.getMonth() };
     const { y, m } = histMonth;
-    const isCurrent = (y === now.getFullYear() && m === now.getMonth());
 
     const store = loadPunch();
     const items = Object.keys(store).sort().reverse()
       .map(k => ({ k, s: daySummary(store[k]) })).filter(x => x.s);
 
-    // filtr na zvolený měsíc
+    // nejzazší měsíc dopředu = aktuální nebo poslední záznam (kvůli dovolené v budoucnu)
+    let maxY = now.getFullYear(), maxM = now.getMonth();
+    Object.keys(store).forEach(k => {
+      const d = new Date(k + 'T00:00:00');
+      if(d.getFullYear() > maxY || (d.getFullYear() === maxY && d.getMonth() > maxM)){ maxY = d.getFullYear(); maxM = d.getMonth(); }
+    });
+    const atMax = (y === maxY && m === maxM);
+
     const inMonth = items.filter(({k}) => {
       const d = new Date(k + 'T00:00:00');
       return d.getFullYear() === y && d.getMonth() === m;
@@ -1042,7 +1057,7 @@
       '<div class="month-nav">' +
         '<button type="button" class="mnav" data-dir="-1" aria-label="Předchozí měsíc">◀</button>' +
         '<div class="mlabel">' + monthLabel(y,m) + '</div>' +
-        '<button type="button" class="mnav" data-dir="1" aria-label="Další měsíc"' + (isCurrent?' disabled':'') + '>▶</button>' +
+        '<button type="button" class="mnav" data-dir="1" aria-label="Další měsíc"' + (atMax?' disabled':'') + '>▶</button>' +
       '</div>' +
       '<div class="totals-cards">' +
         '<div class="tot"><div class="k">Odpracováno</div><div class="v">' + dur(mWork) + '</div></div>' +
@@ -1051,36 +1066,32 @@
 
     if(!inMonth.length){ logListEl.innerHTML = '<div class="log-empty">V tomto měsíci žádné záznamy.</div>'; return; }
     logListEl.innerHTML = inMonth.map(({k,s}) => {
+      const editBtn = '<button class="rec-edit" data-date="' + k + '" aria-label="Upravit">✎</button>';
+      const delBtn  = '<button class="rec-del" data-date="' + k + '" aria-label="Smazat">✕</button>';
+
       if(s.special){
-        const map = {
-          paragraf:['§ Paragraf','sp-para'], nemoc:['✚ Nemoc','sp-nemoc'],
-          dovolena:['🏖 Dovolená','sp-dov'], svatek:['★ Svátek','sp-sva'],
-          nahradni:['⇄ Náhradní volno','sp-nah']
-        };
-        const [label, cls] = map[s.type] || ['?',''];
+        const names = { paragraf:'Paragraf', nemoc:'Nemoc', dovolena:'Dovolená', svatek:'Svátek', nahradni:'Náhradní volno' };
         const right = (s.type === 'nahradni')
           ? '<span class="df ' + diffClass(s.over) + '">' + sdur(s.over) + '</span>'
           : '<span class="df zero">–</span>';
-        const sub = (s.type === 'nahradni') ? ('odpracováno ' + dur(s.worked)) : 'celý den · nepočítá se';
-        return '<div class="rec">' +
-               '<button class="rec-edit" data-date="' + k + '" aria-label="Upravit">✎</button>' +
-               '<div class="rec-main"><div class="d ' + cls + '">' + fmtDate(k) + '  ' + label + '</div>' +
-               '<div class="t">' + sub + '</div></div>' +
-               '<div class="rec-actions">' + right +
-               '<button class="rec-del" data-date="' + k + '" aria-label="Smazat">✕</button></div></div>';
+        const sub = (s.type === 'nahradni') ? ('odpracováno ' + dur(s.worked)) : 'celý den';
+        return '<div class="rec">' + editBtn +
+               '<div class="rec-main"><div class="d">' + fmtDate(k) + '</div>' +
+               '<div class="t">' + names[s.type] + ' · ' + sub + '</div></div>' +
+               '<div class="rec-actions">' + typeBadge(s.type) + right + delBtn + '</div></div>';
       }
+
       const range = hhmm(s.start) + ' → ' + (s.open ? '<span class="live">běží</span>' : hhmm(s.end));
       const off = s.breaks + s.snack;
-      const brk = (off ? ' · pauza ' + dur(off) : '') + (s.paidBreaks ? ' · §' + dur(s.paidBreaks) : '') + (s.nv ? ' · <span class="sp-nah">NV</span>' : '');
-      const over = s.open
+      const line2 = range + (off ? ' · pauza ' + dur(off) : '');
+      const badges = (s.paidBreaks ? typeBadge('paragraf') : '') + (s.nv ? typeBadge('nahradni') : '');
+      const over = (s.open || s.over == null)
         ? '<span class="df zero">–</span>'
-        : (s.over != null ? '<span class="df ' + diffClass(s.over) + '">' + sdur(s.over) + '</span>' : '<span class="df zero">–</span>');
-      return '<div class="rec">' +
-             '<button class="rec-edit" data-date="' + k + '" aria-label="Upravit">✎</button>' +
-             '<div class="rec-main"><div class="d">' + fmtDate(k) + '  ' + range + '</div>' +
-             '<div class="t">odpracováno ' + dur(s.worked) + brk + '</div></div>' +
-             '<div class="rec-actions">' + over +
-             '<button class="rec-del" data-date="' + k + '" aria-label="Smazat">✕</button></div></div>';
+        : '<span class="df ' + diffClass(s.over) + '">' + sdur(s.over) + '</span>';
+      return '<div class="rec">' + editBtn +
+             '<div class="rec-main"><div class="d">' + fmtDate(k) + ' · odpracováno ' + dur(s.worked) + '</div>' +
+             '<div class="t">' + line2 + '</div></div>' +
+             '<div class="rec-actions">' + badges + over + delBtn + '</div></div>';
     }).join('');
   }
 
@@ -1121,11 +1132,11 @@
       '<div class="edit-lbl">Datum</div>' +
       '<input type="date" class="edit-date" value="' + editKey + '">';
 
-    if(editType === 'dovolena'){
+    if(editType === 'dovolena' || editType === 'nemoc'){
       html += '<div class="edit-lbl">Datum do</div>' +
               '<input type="date" class="edit-date-to" value="' + (editKeyTo || editKey) + '">' +
-              '<div class="edit-head">Dovolená za zvolené období (od–do) se nepočítá do odpracováno ani přesčasu.</div>';
-    } else if(editType === 'nemoc' || editType === 'paragraf' || editType === 'svatek'){
+              '<div class="edit-head">Zapíše se za celé období od–do (soboty a neděle se přeskočí). Nepočítá se do odpracováno ani přesčasu.</div>';
+    } else if(editType === 'paragraf' || editType === 'svatek'){
       html += '<div class="edit-head">Celý den se nepočítá do odpracováno ani přesčasu.</div>';
     } else if(editType === 'nahradni'){
       html += '<div class="edit-lbl">Délka (dle směny)</div>' +
@@ -1177,18 +1188,22 @@
     if(!key){ toast('Vyber datum'); return; }
     if(editDate && editDate !== key) delete store[editDate];   // přesun na jiné datum
 
-    if(editType === 'dovolena'){
+    if(editType === 'dovolena' || editType === 'nemoc'){
       const toInput = logListEl.querySelector('.edit-date-to');
       let a = key, b = (toInput && toInput.value) ? toInput.value : key;
       if(b < a){ const t=a; a=b; b=t; }
       let d = new Date(a + 'T00:00:00'); const end = new Date(b + 'T00:00:00');
       let n = 0;
-      while(d <= end && n < 400){ store[ymd(d)] = { type:'dovolena' }; d.setDate(d.getDate()+1); n++; }
+      while(d <= end && n < 400){
+        const wd = d.getDay();
+        if(wd !== 0 && wd !== 6) store[ymd(d)] = { type: editType };   // přeskoč So (6) a Ne (0)
+        d.setDate(d.getDate()+1); n++;
+      }
       savePunch(store);
       editDate = editKey = editKeyTo = editArr = null; editType = 'smena';
-      renderHistory(); renderStatus(); toast('Dovolená zapsána'); return;
+      renderHistory(); renderStatus(); toast('Uloženo'); return;
     }
-    if(editType === 'paragraf' || editType === 'nemoc' || editType === 'svatek'){
+    if(editType === 'paragraf' || editType === 'svatek'){
       store[key] = { type: editType };
     } else if(editType === 'nahradni'){
       store[key] = { type: 'nahradni', plan: editPlan };
@@ -1252,8 +1267,13 @@
   addDayBtn.addEventListener('click', openNewDay);
   csvBtn.addEventListener('click', exportCSV);
   clearBtn.addEventListener('click', () => {
-    askConfirm('Opravdu vymazat všechny záznamy?', 'Vymazat vše').then(ok => {
-      if(ok){ savePunch({}); renderStatus(); renderHistory(); }
+    const now = new Date();
+    const { y, m } = histMonth || { y: now.getFullYear(), m: now.getMonth() };
+    askConfirm('Vymazat všechny záznamy za ' + monthLabel(y,m) + '?', 'Vymazat').then(ok => {
+      if(!ok) return;
+      const store = loadPunch();
+      Object.keys(store).forEach(k => { const d=new Date(k+'T00:00:00'); if(d.getFullYear()===y && d.getMonth()===m) delete store[k]; });
+      savePunch(store); renderStatus(); renderHistory();
     });
   });
   saveEditBtn.addEventListener('click', saveEdit);
@@ -1265,7 +1285,11 @@
     let { y, m } = histMonth || { y: now.getFullYear(), m: now.getMonth() };
     m += (+b.dataset.dir);
     if(m < 0){ m = 11; y--; } else if(m > 11){ m = 0; y++; }
-    if(y > now.getFullYear() || (y === now.getFullYear() && m > now.getMonth())) return;  // ne do budoucna
+    // nejzazší povolený měsíc dopředu = aktuální nebo poslední záznam
+    const store = loadPunch();
+    let maxY = now.getFullYear(), maxM = now.getMonth();
+    Object.keys(store).forEach(k => { const d=new Date(k+'T00:00:00'); if(d.getFullYear()>maxY||(d.getFullYear()===maxY&&d.getMonth()>maxM)){maxY=d.getFullYear();maxM=d.getMonth();} });
+    if(y > maxY || (y === maxY && m > maxM)) return;
     histMonth = { y, m };
     renderList();
   });
