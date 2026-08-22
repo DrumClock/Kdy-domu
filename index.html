@@ -333,8 +333,9 @@
   .rec-badges{ display:flex; align-items:center; justify-content:center; gap:3px; min-width:26px; flex:none; }
   .badge{ display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px;
     padding:0 5px; border-radius:6px; font-size:12px; font-weight:700; color:#1c1726; }
-  .b-para{ background:var(--amber); } .b-nv{ background:var(--green); } .b-nemoc{ background:var(--red); }
-  .b-dov{ background:#4aa3ff; } .b-sva{ background:#c08bff; }
+  .b-para{ background:var(--amber); } .b-nv{ background:var(--green); } .b-nemoc{ background:#fff; }
+  .b-dov{ background:#1e88e5; } .b-sva{ background:#c08bff; }
+  .badge svg{ display:block; }
   .rec .df{ font-family:"SFMono-Regular","Consolas",monospace; font-weight:700; font-size:15px; min-width:58px; text-align:right; }
   .df.pos{ color:var(--green); } .df.neg{ color:var(--red); } .df.zero{ color:var(--muted); }
   .rec-edit, .rec-del{ background:transparent; border:none; color:var(--muted); cursor:pointer; font-size:15px; padding:6px 8px; flex:none; }
@@ -1043,7 +1044,18 @@
   }
 
   function typeBadge(type){
-    const m = { paragraf:['§','b-para'], nemoc:['✚','b-nemoc'], dovolena:['☀','b-dov'], svatek:['★','b-sva'], nahradni:['NV','b-nv'] };
+    if(type === 'nemoc'){
+      return '<span class="badge b-nemoc"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">' +
+        '<path fill="#e23b3b" d="M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z"/></svg></span>';
+    }
+    if(type === 'dovolena'){
+      return '<span class="badge b-dov"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">' +
+        '<g fill="#ffd21f"><circle cx="12" cy="12" r="4.2"/>' +
+        '<g stroke="#ffd21f" stroke-width="1.8" stroke-linecap="round">' +
+        '<path d="M12 2.6v2.6M12 18.8v2.6M2.6 12h2.6M18.8 12h2.6M5.3 5.3l1.9 1.9M16.8 16.8l1.9 1.9M18.7 5.3l-1.9 1.9M7.2 16.8l-1.9 1.9"/>' +
+        '</g></g></svg></span>';
+    }
+    const m = { paragraf:['§','b-para'], svatek:['★','b-sva'], nahradni:['NV','b-nv'] };
     const b = m[type]; return b ? '<span class="badge ' + b[1] + '">' + b[0] + '</span>' : '';
   }
 
