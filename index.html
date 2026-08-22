@@ -239,8 +239,6 @@
   .mark-btn.nemoc.active{ background:var(--red); border-color:var(--red); color:#1c1726; }
   .sp-para{ color:var(--amber); } .sp-nemoc{ color:var(--red); }
   .sp-dov{ color:#4aa3ff; } .sp-sva{ color:#c08bff; } .sp-nah{ color:var(--green); }
-  .edit-type{ width:100%; padding:9px 10px; font-size:16px; margin-bottom:14px;
-    background:#161020; color:var(--ink); border:1px solid var(--line); border-radius:10px; }
   .edit-date-to{ width:100%; padding:9px 10px; font-size:16px; margin-bottom:14px; }
   .status-txt{ font-size:12.5px; color:var(--muted); line-height:1.4; }
   .status-txt b{ color:var(--ink); font-weight:600; }
@@ -335,7 +333,14 @@
     padding:0 5px; border-radius:6px; font-size:12px; font-weight:700; color:#1c1726; }
   .b-para{ background:var(--amber); } .b-nv{ background:var(--green); } .b-nemoc{ background:#fff; }
   .b-dov{ background:#1e88e5; } .b-sva{ background:#c08bff; }
+  .b-smena{ background:#2a2138; border:1px solid var(--line); }
   .badge svg{ display:block; }
+  .type-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
+  .type-opt{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+    padding:10px 4px; border:1px solid var(--line); border-radius:12px; background:#161020;
+    color:var(--muted); cursor:pointer; min-height:64px; }
+  .type-opt.on{ border-color:var(--amber); background:#20182e; color:var(--ink); }
+  .type-opt-l{ font-size:11px; font-weight:600; text-align:center; line-height:1.15; }
   .rec .df{ font-family:"SFMono-Regular","Consolas",monospace; font-weight:700; font-size:15px; min-width:58px; text-align:right; }
   .df.pos{ color:var(--green); } .df.neg{ color:var(--red); } .df.zero{ color:var(--muted); }
   .rec-edit, .rec-del{ background:transparent; border:none; color:var(--muted); cursor:pointer; font-size:15px; padding:6px 8px; flex:none; }
@@ -1044,6 +1049,11 @@
   }
 
   function typeBadge(type){
+    if(type === 'smena'){
+      return '<span class="badge b-smena"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">' +
+        '<circle cx="12" cy="12" r="9" fill="none" stroke="#ffb020" stroke-width="2"/>' +
+        '<path d="M12 7v5l3 2" fill="none" stroke="#ffb020" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+    }
     if(type === 'nemoc'){
       return '<span class="badge b-nemoc"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">' +
         '<path fill="#e23b3b" d="M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z"/></svg></span>';
@@ -1175,12 +1185,16 @@
     viewActions.hidden = true; editActions.hidden = false;
     addDayBtn.hidden = true;
 
-    const typeOpts = Object.keys(TYPE_LABELS).map(t =>
-      '<option value="' + t + '"' + (editType===t?' selected':'') + '>' + TYPE_LABELS[t] + '</option>').join('');
+    const typeOrder = ['smena','paragraf','nemoc','dovolena','svatek','nahradni'];
+    const typeGrid = typeOrder.map(t =>
+      '<button type="button" class="type-opt' + (editType===t?' on':'') + '" data-type="' + t + '">' +
+        '<span class="type-opt-ic">' + typeBadge(t) + '</span>' +
+        '<span class="type-opt-l">' + TYPE_LABELS[t] + '</span>' +
+      '</button>').join('');
 
     let html =
       '<div class="edit-lbl">Typ dne</div>' +
-      '<select class="edit-type" id="editTypeSel">' + typeOpts + '</select>' +
+      '<div class="type-grid">' + typeGrid + '</div>' +
       '<div class="edit-lbl">Datum</div>' +
       '<input type="date" class="edit-date" value="' + editKey + '">';
 
@@ -1352,6 +1366,8 @@
     if(e.target.closest('#paidToggle')){ editPaid = !editPaid; renderEdit(); return; }
     const plb = e.target.closest('.plan-btn');
     if(plb){ editPlan = +plb.dataset.plan; renderEdit(); return; }
+    const topt = e.target.closest('.type-opt');
+    if(topt){ editType = topt.dataset.type; renderEdit(); return; }
     const pt = e.target.closest('.para-toggle');
     if(pt){ const i=+pt.dataset.idx; editArr[i].paid = !editArr[i].paid; if(editArr[i].paid) editArr[i].nv = false; renderEdit(); return; }
     const nv = e.target.closest('.nv-toggle');
@@ -1366,8 +1382,6 @@
     if(dto){ editKeyTo = dto.value; return; }
     const bk = e.target.closest('.edit-brk');
     if(bk){ const [h,m]=(bk.value||'0:0').split(':').map(Number); editBrk = (h||0)*60 + (m||0); return; }
-    const ts = e.target.closest('.edit-type');
-    if(ts){ editType = ts.value; renderEdit(); }
   });
 
   // ===== parametry v URL (pro NFC tag) =====
