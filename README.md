@@ -21,6 +21,8 @@ Jednoduchá webová appka (PWA), která spočítá, kdy můžeš odejít z prác
 - **[Píchačky](#píchačky)** — Příchod / Odchod (i přes NFC) evidují začátek, konec, přerušení a přesčas směny.
 - **Typy dnů** — vedle běžné směny i **paragraf (§)**, **náhradní volno (NV)**, **nemoc**, **dovolená** (od–do) a **svátek**.
 - **Historie** po měsících s úpravou, dodatečným dopsáním a exportem do CSV.
+- **Konto přesčasů** — kumulativní banka napříč měsíci s ručním počátečním stavem; náhradní volno z ní čerpá.
+- **Záloha** — kompletní export/import do JSON souboru (přenos na jiný telefon) a export do CSV pro Excel.
 - **Připomínka do kalendáře** — vytvoří v telefonu událost na čas odchodu s upozorněním (funguje i při zavřené appce a zamčeném telefonu).
 - **Zapamatování** — délka směny a nastavení svačiny se drží natrvalo.
 - **[NFC](#nfc-štítek)** — přiložením telefonu k NFC štítku píchneš příchod nebo odchod.
@@ -151,12 +153,17 @@ Tlačítka se sama zapínají/vypínají podle stavu, takže se nedá přihlási
 
 **Historie** (ikona hodin nahoře uprostřed) se otevře jako panel přes celou výšku: **nahoře** přepínač měsíce (◀ ▶) se souhrnem *Odpracováno* a *Přesčas* za zvolený měsíc, **uprostřed** scrollovací seznam dní, **dole** tlačítka. Listovat jde i do budoucích měsíců (kde máš záznam, např. dovolenou).
 
-- Každý den má vpravo barevné **ikony** podle obsahu: **§** (paragraf), **NV** (náhradní volno), **✚** (nemoc), **☀** (dovolená), **★** (svátek).
-- **Úprava záznamu** — tužka ✎ otevře editor: typ dne, časy a typ píchnutí, datum, pracovní doba, svačina, § a NV.
+- Každý den má vpravo barevné **ikony** podle obsahu: **§** (paragraf), **NV** (náhradní volno), křížek (nemoc), sluníčko (dovolená), kalendář s fajfkou (svátek).
+- **Úprava záznamu** — tužka ✎ otevře editor: **typ dne** (dlaždice s ikonami), časy a typ píchnutí, datum, pracovní doba, svačina, § a NV.
 - **Dodatečné dopsání** — tlačítko ➕ v záhlaví (vybereš datum a typ).
 - Záznamy jde jednotlivě mazat (✕). **Vymazat měsíc** smaže jen právě zobrazený měsíc.
 
-**Export CSV** — v Historii stáhne `pichacky.csv` (oddělený `;`, s BOM pro Excel): datum, příchod, odchod, odpracováno, přerušení, paragraf, svačina, plán, přesčas a seznam píchnutí; u celodenních typů je uveden typ.
+**Konto přesčasů** — pod souhrnem je karta **Konto ke konci [měsíce]** = kumulativní součet všech přesčasů až do konce zobrazeného měsíce plus ruční **počáteční stav konta** (zadáš třeba `+12:00`, klidně i mínus). Přesčas konto zvyšuje, náhradní volno z něj čerpá — a protože je součet průběžný, **NV v jednom měsíci ubere z konta našetřeného v jiném**. Konto může jít i do mínusu.
+
+**Záloha a export** (tlačítko **Záloha** v Historii → stránka Záloha):
+- **Export CSV** — přehled dnů pro Excel (`pichacky.csv`).
+- **Záloha JSON ↓** — kompletní záloha (záznamy + konto + nastavení) do `pichacky-zaloha-RRRR-MM-DD.json`.
+- **Obnovit ↑** — načte JSON a nabídne **Sloučit** (přidá záznamy) nebo **Nahradit** (přepíše vše). Ideální pro přenos na jiný telefon.
 
 Poznámky:
 - Data jsou **jen v tvém telefonu** (`localStorage`) — osobní přehled, ne oficiální evidence pro zaměstnavatele. Přesnost odpovídá tomu, kdy píchneš.
@@ -176,6 +183,7 @@ Appka je čistá **PWA** bez frameworků — jeden HTML soubor s vloženým CSS 
 | `sw.js` | Service worker — offline cache |
 | `sdilet.html` | Sdílecí stránka s QR kódem a návodem |
 | `napoveda.html` | Nápověda k aplikaci |
+| `zaloha.html` | Záloha/obnova (JSON) a export CSV |
 | `qr.png` | QR kód s adresou aplikace |
 | `nfc.png` | Ikonka NFC pro README |
 | `screenshot-app.png`, `screenshot-history.png`, `screenshot-help.png`, `screenshot-qr.png` | Náhledy do README |
