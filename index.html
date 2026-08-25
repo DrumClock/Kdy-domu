@@ -831,9 +831,8 @@
       'END:VEVENT',
       'END:VCALENDAR'
     ].join('\r\n');
-    const now = new Date();
-    const stamp = pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds());
-    return { text, fname: 'odchod-domu-' + ymd(dep) + '-' + stamp + '.ics' };   // jedinečný název při každém ťuknutí
+    const depH = pad(dep.getHours()), depM = pad(dep.getMinutes());
+    return { text, fname: 'odchod-domu-' + ymd(dep) + '-' + depH + depM + '.ics' };   // stejný pro daný odchod → 1 ťuknutí; jiný když se odchod změní
   }
 
   calBtn.addEventListener('click', () => {
