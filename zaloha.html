@@ -183,20 +183,46 @@
     sel.innerHTML=html;
   })();
 
+  // sestav čitelnou zálohu (verze 2) – rozdělenou po měsících
+  function buildBackup(scope){
+    const punch=loadPunch();
+    const months={};
+    Object.keys(punch).sort().forEach(k=>{
+      const m=k.slice(0,7);
+      if(scope!=='all' && m!==scope) return;
+      (months[m]=months[m]||{})[k]=punch[k];
+    });
+    const out={ app:'osobni-pichacka', version:2, exported:new Date().toISOString(), months };
+    if(scope==='all'){
+      try{ const s=localStorage.getItem('kdyDomu.settings'); if(s!=null) out.settings=JSON.parse(s); }catch(e){}
+      const konto=localStorage.getItem('kdyDomu.konto0'); if(konto!=null) out.konto0=parseInt(konto,10)||0;
+      try{ const e=localStorage.getItem('kdyDomu.evt'); if(e!=null) out.evt=JSON.parse(e); }catch(e){}
+    } else out.note='záloha měsíce '+scope;
+    return out;
+  }
+
   document.getElementById('exportJsonBtn').addEventListener('click', () => {
     const scope=document.getElementById('backupScope').value;
-    const out={ app:'osobni-pichacka', version:1, exported:new Date().toISOString(), data:{} };
-    if(scope==='all'){
-      BACKUP_KEYS.forEach(k=>{ const v=localStorage.getItem(k); if(v!=null) out.data[k]=v; });
-      download('pichacky-zaloha-'+ymd(new Date())+'.json', JSON.stringify(out,null,2), 'application/json');
-    } else {
-      const punch=loadPunch(); const filt={};
-      Object.keys(punch).forEach(k=>{ if(k.slice(0,7)===scope) filt[k]=punch[k]; });
-      out.note='záloha měsíce '+scope;
-      out.data['kdyDomu.punch']=JSON.stringify(filt);
-      download('pichacky-zaloha-'+scope+'.json', JSON.stringify(out,null,2), 'application/json');
-    }
+    const out=buildBackup(scope);
+    const name = scope==='all' ? ('pichacky-zaloha-'+ymd(new Date())+'.json') : ('pichacky-zaloha-'+scope+'.json');
+    download(name, JSON.stringify(out,null,2), 'application/json');
   });
+
+  // převede načtený soubor (nový i starý formát) na { punch, settings, konto, evt }
+  function extractImport(p){
+    if(p && p.months && typeof p.months==='object'){        // nový formát v2
+      const punch={}; Object.values(p.months).forEach(mo=>Object.assign(punch,mo));
+      return { punch,
+        settings: p.settings!=null?JSON.stringify(p.settings):null,
+        konto: p.konto0!=null?String(p.konto0|0):null,
+        evt: p.evt!=null?JSON.stringify(p.evt):null };
+    }
+    if(p && p.data){                                        // starý formát v1
+      let punch={}; try{ punch=p.data['kdyDomu.punch']?JSON.parse(p.data['kdyDomu.punch']):{}; }catch(e){}
+      return { punch, settings:p.data['kdyDomu.settings']||null, konto:p.data['kdyDomu.konto0']||null, evt:p.data['kdyDomu.evt']||null };
+    }
+    return null;
+  }
 
   const importFile=document.getElementById('importFile');
   const importDlg=document.getElementById('importDlg');
@@ -205,18 +231,17 @@
   importFile.addEventListener('change', ()=>{
     const f=importFile.files&&importFile.files[0]; if(!f) return;
     const r=new FileReader();
-    r.onload=()=>{ try{ const p=JSON.parse(r.result);
-        if(!p||!p.data||(p.data['kdyDomu.punch']===undefined&&p.data['kdyDomu.settings']===undefined)){ toast('Neplatná záloha'); }
-        else { importData=p; importDlg.hidden=false; }
+    r.onload=()=>{ try{ const p=JSON.parse(r.result); const ex=extractImport(p);
+        if(!ex){ toast('Neplatná záloha'); } else { importData=ex; importDlg.hidden=false; }
       }catch(e){ toast('Soubor nejde načíst'); } importFile.value=''; };
     r.readAsText(f);
   });
   function applyImport(mode){
-    const d=importData&&importData.data; importDlg.hidden=true;
-    if(!d){ importData=null; toast('Neplatný soubor'); return; }
+    const ex=importData; importDlg.hidden=true;
+    if(!ex){ importData=null; toast('Neplatný soubor'); return; }
     try{
       const cur=loadPunch();
-      const imp=d['kdyDomu.punch']?JSON.parse(d['kdyDomu.punch']):{};
+      const imp=ex.punch||{};
       if(mode==='replace'){
         // nahradit JEN měsíce obsažené v souboru, ostatní měsíce ponechat
         const months=new Set(Object.keys(imp).map(k=>k.slice(0,7)));
@@ -224,9 +249,9 @@
         for(const k of Object.keys(cur)) if(!months.has(k.slice(0,7))) res[k]=cur[k];
         Object.assign(res,imp);
         savePunch(res);
-        if(d['kdyDomu.settings']!=null) localStorage.setItem('kdyDomu.settings',d['kdyDomu.settings']);
-        if(d['kdyDomu.konto0']!=null)   localStorage.setItem('kdyDomu.konto0',d['kdyDomu.konto0']);
-        if(d['kdyDomu.evt']!=null)      localStorage.setItem('kdyDomu.evt',d['kdyDomu.evt']);
+        if(ex.settings!=null) localStorage.setItem('kdyDomu.settings',ex.settings);
+        if(ex.konto!=null)    localStorage.setItem('kdyDomu.konto0',ex.konto);
+        if(ex.evt!=null)      localStorage.setItem('kdyDomu.evt',ex.evt);
       } else {
         savePunch(Object.assign({},cur,imp));   // sloučit – přidá dny, ostatní ponechá
       }

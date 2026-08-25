@@ -229,8 +229,9 @@
   }));
 
   function backupObj(){
-    return { app:'osobni-pichacka', version:1, exported:new Date().toISOString(),
-      note:'import z PDF', data:{ 'kdyDomu.punch': JSON.stringify(store) } };
+    const months={};
+    Object.keys(store).sort().forEach(k=>{ const m=k.slice(0,7); (months[m]=months[m]||{})[k]=store[k]; });
+    return { app:'osobni-pichacka', version:2, exported:new Date().toISOString(), note:'import z PDF', months };
   }
   $('dl').addEventListener('click', ()=>{
     const blob=new Blob([JSON.stringify(backupObj(),null,2)],{type:'application/json'});
