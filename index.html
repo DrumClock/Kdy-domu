@@ -633,8 +633,9 @@
       <div class="dialog-msg">Připomínka do kalendáře<br>Odchod domů v <b id="icsTime">–</b></div>
       <div class="dialog-actions">
         <button type="button" class="act-btn" id="icsCancel">Zrušit</button>
-        <a class="act-btn primary" id="icsLink" download>Přidat</a>
+        <a class="act-btn primary" id="icsGoogle" target="_blank" rel="noopener">Přidat</a>
       </div>
+      <a id="icsDownload" download style="display:block;text-align:center;margin-top:12px;font-size:13px;color:var(--muted);text-decoration:none">Stáhnout .ics (jiný kalendář)</a>
     </div>
   </div>
 
@@ -847,24 +848,39 @@
   }
 
   const icsDlg = document.getElementById('icsDlg');
-  const icsLink = document.getElementById('icsLink');
+  const icsGoogle = document.getElementById('icsGoogle');
+  const icsDownload = document.getElementById('icsDownload');
   const icsTime = document.getElementById('icsTime');
   const icsCancel = document.getElementById('icsCancel');
   let icsUrl = null;
   function closeIcs(){ icsDlg.hidden = true; if(icsUrl){ URL.revokeObjectURL(icsUrl); icsUrl = null; } }
+  function gcalUrl(dep){
+    const end = new Date(dep.getTime() + 15*60000);
+    const f = d => '' + d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) + 'T' + pad(d.getHours()) + pad(d.getMinutes()) + '00';
+    const p = new URLSearchParams({
+      action:'TEMPLATE',
+      text:'Odchod domů 🏠',
+      dates: f(dep) + '/' + f(end),
+      details:'Konec směny – můžeš jít domů.',
+      ctz:'Europe/Prague'
+    });
+    return 'https://calendar.google.com/calendar/render?' + p.toString();
+  }
 
   calBtn.addEventListener('click', () => {
     if(endTotal === null) return;
-    const ics = buildICS();                                 // připraví jedinečný soubor (mezikrok)
+    const ics = buildICS();                                 // připraví jedinečný soubor + čas odchodu
+    icsGoogle.href = gcalUrl(ics.dep);                      // hlavní: odkaz do Google Kalendáře (spolehlivé)
     const blob = new Blob([ics.text], { type: 'text/calendar;charset=utf-8' });
     if(icsUrl) URL.revokeObjectURL(icsUrl);
     icsUrl = URL.createObjectURL(blob);
-    icsLink.href = icsUrl;
-    icsLink.download = ics.fname;
-    icsTime.textContent = resEl.textContent;                // čas odchodu HH:MM
+    icsDownload.href = icsUrl;                              // záloha: stažení .ics
+    icsDownload.download = ics.fname;
+    icsTime.textContent = resEl.textContent;               // čas odchodu HH:MM
     icsDlg.hidden = false;
   });
-  icsLink.addEventListener('click', () => { setTimeout(closeIcs, 300); });   // po stažení zavři
+  icsGoogle.addEventListener('click', () => { setTimeout(closeIcs, 300); });
+  icsDownload.addEventListener('click', () => { setTimeout(closeIcs, 300); });
   icsCancel.addEventListener('click', closeIcs);
   icsDlg.addEventListener('click', e => { if(e.target === icsDlg) closeIcs(); });
 
