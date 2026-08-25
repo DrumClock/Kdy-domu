@@ -809,7 +809,7 @@
     const end = new Date(dep.getTime() + 15 * 60000);
     const meta = eventMeta(dep);
 
-    return [
+    const text = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
       'PRODID:-//Kdy domu//CS',
@@ -831,15 +831,17 @@
       'END:VEVENT',
       'END:VCALENDAR'
     ].join('\r\n');
+    return { text, fname: 'odchod-domu-' + ymd(dep) + '.ics' };   // jiný název každý den
   }
 
   calBtn.addEventListener('click', () => {
     if(endTotal === null) return;
-    const blob = new Blob([buildICS()], { type: 'text/calendar;charset=utf-8' });
+    const ics = buildICS();
+    const blob = new Blob([ics.text], { type: 'text/calendar;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'odchod-domu.ics';
+    a.download = ics.fname;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
