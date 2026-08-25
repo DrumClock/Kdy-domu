@@ -1,10 +1,11 @@
 // Jednoduchý offline cache pro appku "Kdy můžu domů?"
-const CACHE = 'kdy-domu-v6';
+const CACHE = 'kdy-domu-v7';
 const ASSETS = [
   'index.html',
   'sdilet.html',
   'napoveda.html',
   'zaloha.html',
+  'pdf-import.html',
   'qr.png',
   'manifest.json',
   'icon-192.png',

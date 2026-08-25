@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Import PDF – Osobní píchačka</title>
+<style>
+  :root{
+    --bg:#1c1726; --panel:#251d33; --line:#3a2f4d;
+    --ink:#efe9df; --muted:#9a8fae; --amber:#ffb020;
+    --green:#43c67d; --red:#ff5c6c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{min-height:100%}
+  body{
+    background:radial-gradient(120% 60% at 50% -10%, #2a2138 0%, var(--bg) 55%);
+    background-attachment:fixed; color:var(--ink);
+    font-family:"Segoe UI",system-ui,-apple-system,sans-serif; line-height:1.5;
+    padding:calc(24px + env(safe-area-inset-top)) 18px calc(40px + env(safe-area-inset-bottom));
+  }
+  .wrap{max-width:640px;margin:0 auto}
+  .eyebrow{font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--amber);font-weight:600;text-align:center;margin-bottom:6px}
+  h1{font-size:25px;font-weight:700;text-align:center;margin-bottom:6px}
+  .lead{font-size:13.5px;color:var(--muted);text-align:center;margin-bottom:20px}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+  h2{font-size:15px;font-weight:700;margin-bottom:10px}
+  label.lbl{display:block;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:10px 0 5px}
+  .btn{width:100%;padding:12px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;color:#1c1726;background:var(--amber)}
+  .btn.sec{background:#161020;color:var(--ink);border:1px solid var(--line)}
+  .btn.rep{background:var(--red)}
+  .btn+.btn{margin-top:10px}
+  .btn:disabled{opacity:.4;cursor:default}
+  .row{display:flex;gap:10px}
+  .row>*{flex:1}
+  select,input[type=file]{width:100%;padding:10px;font-size:15px;background:#161020;color:var(--ink);border:1px solid var(--line);border-radius:10px}
+  input[type=file]{padding:9px}
+  .close{position:fixed;top:calc(env(safe-area-inset-top) + 14px);right:calc(env(safe-area-inset-right) + 16px);
+    display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:11px;
+    color:var(--muted);text-decoration:none;font-size:20px;line-height:1;border:1px solid var(--line);
+    background:rgba(22,15,32,.55);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);z-index:5}
+  .close:active{color:var(--ink);border-color:#5a4a76}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  th,td{text-align:left;padding:6px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+  td.num{font-family:"SFMono-Regular","Consolas",monospace}
+  .pos{color:var(--green)} .neg{color:var(--red)} .mut{color:var(--muted)}
+  .tablewrap{overflow-x:auto}
+  .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 22px);transform:translateX(-50%);
+    background:#0f0a17;border:1px solid var(--line);color:var(--ink);padding:11px 18px;border-radius:12px;font-size:14px;z-index:20;max-width:90%;text-align:center}
+  .toast[hidden]{display:none}
+  details{margin-top:10px}
+  summary{cursor:pointer;color:var(--muted);font-size:13px}
+  pre{white-space:pre-wrap;font-size:11px;color:var(--muted);background:#161020;border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px;max-height:240px;overflow:auto}
+  .hint{font-size:12.5px;color:var(--muted);margin-top:8px}
+  .err{color:var(--red);font-size:13px;margin-top:8px}
+</style>
+</head>
+<body>
+  <a class="close" href="index.html" aria-label="Zavřít" title="Zpět do aplikace">✕</a>
+  <div class="wrap">
+    <div class="eyebrow">Nástroj</div>
+    <h1>Import docházky z PDF</h1>
+    <p class="lead">Načte výpis „Časové zúčtování" (RSF) a udělá z něj JSON pro Osobní píchačku.</p>
+
+    <section>
+      <h2>1) Vyber PDF</h2>
+      <input type="file" id="file" accept="application/pdf,.pdf">
+      <label class="lbl">Denní plán (pracovní doba)</label>
+      <select id="plan">
+        <option value="360" selected>6 h (zkrácená)</option>
+        <option value="480">8 h</option>
+        <option value="450">7:30</option>
+        <option value="420">7:00</option>
+      </select>
+      <div class="row" style="margin-top:6px">
+        <div><label class="lbl">Měsíc</label><select id="mon"></select></div>
+        <div><label class="lbl">Rok</label><select id="year"></select></div>
+      </div>
+      <div class="hint">Měsíc a rok se z PDF vyplní samy, ale můžeš je opravit.</div>
+      <div class="err" id="err" hidden></div>
+    </section>
+
+    <section id="previewSec" hidden>
+      <h2>2) Náhled (<span id="cnt">0</span> dní)</h2>
+      <div class="tablewrap"><table id="preview"></table></div>
+      <details><summary>Zobrazit načtený text z PDF</summary><pre id="raw"></pre></details>
+    </section>
+
+    <section id="actionSec" hidden>
+      <h2>3) Ulož nebo importuj</h2>
+      <button type="button" class="btn" id="dl">Stáhnout JSON</button>
+      <button type="button" class="btn sec" id="merge">Importovat teď – Sloučit</button>
+      <button type="button" class="btn rep" id="replace">Importovat teď – Nahradit vše</button>
+      <div class="hint">„Importovat teď" zapíše data přímo, pokud je tato stránka na stejné adrese jako aplikace. Jinak použij „Stáhnout JSON" a nahraj ho v aplikaci přes Historie → Záloha → Obnovit.</div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  const $ = id => document.getElementById(id);
+  const pad = n => String(n).padStart(2,'0');
+  const toastEl = $('toast'); let tt;
+  function toast(m){ toastEl.textContent=m; toastEl.hidden=false; clearTimeout(tt); tt=setTimeout(()=>toastEl.hidden=true,2800); }
+  if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  // měsíc/rok selektory
+  const MON=['leden','únor','březen','duben','květen','červen','červenec','srpen','září','říjen','listopad','prosinec'];
+  MON.forEach((m,i)=>{ const o=document.createElement('option'); o.value=i+1; o.textContent=(i+1)+' – '+m; $('mon').appendChild(o); });
+  const nowY=new Date().getFullYear();
+  for(let y=nowY-2;y<=nowY+1;y++){ const o=document.createElement('option'); o.value=y; o.textContent=y; if(y===nowY)o.selected=true; $('year').appendChild(o); }
+  $('mon').value=new Date().getMonth()+1;
+
+  let store={};      // výsledná data
+
+  // --- výpočet dne (stejná logika jako appka) kvůli náhledu ---
+  const toMin=t=>{const[h,m]=t.split(':').map(Number);return h*60+m;};
+  const dur=m=>`${Math.floor(Math.abs(m)/60)}:${pad(Math.abs(m)%60)}`;
+  const sdur=m=>`${m<0?'-':'+'}${Math.floor(Math.abs(m)/60)}:${pad(Math.abs(m)%60)}`;
+  function daySummary(day){
+    if(day.type) return {special:true,type:day.type};
+    const arr=day.punches,plan=day.plan;
+    let mins=arr.map(p=>toMin(p.t)); for(let i=1;i<mins.length;i++){while(mins[i]<mins[i-1])mins[i]+=1440;}
+    const kinds=arr.map(p=>p.k),start=mins[0],end=mins[mins.length-1];
+    let breaks=0,paid=0;
+    for(let i=0;i<arr.length-1;i++){if(kinds[i]==='out'&&kinds[i+1]==='in'){const g=mins[i+1]-mins[i];if(arr[i].paid)paid+=g;else breaks+=g;}}
+    const wb=Math.max(0,end-start-breaks-paid),snack=(!day.paid&&wb>360)?day.brk:0,aw=Math.max(0,wb-snack);
+    const last=arr[arr.length-1],fp=last.k==='out'&&last.paid;
+    let para=paid,deficit=Math.max(0,plan-aw),credit=Math.min(paid,deficit);deficit-=credit;
+    if(fp&&deficit>0){para+=deficit;credit+=deficit;deficit=0;}
+    const over=aw+credit-plan;
+    return {start,end,worked:aw,over,para};
+  }
+
+  // --- parser textu z PDF ---
+  function parse(text, year, month){
+    const out={};
+    const lines=text.split('\n').map(s=>s.replace(/(\d{1,2})\s*:\s*(\d{2})/g,'$1:$2').replace(/\s+/g,' ').trim()).filter(Boolean);
+    const pairRe=/KO\+?\s+(\d{1,2}:\d{2})\s+GE\+?\s+(\d{1,2}:\d{2})/g;
+    const dayRe=/^(\d{1,2})(?:\s|Po|Út|St|Čt|Pá|So|Ne)/;
+    let cur=null;
+    const ymd=dd=>`${year}-${pad(month)}-${pad(dd)}`;
+    function pairs(s){ const r=[]; let m; pairRe.lastIndex=0; while((m=pairRe.exec(s))) r.push([m[1],m[2]]); return r; }
+    for(const ln of lines){
+      const dm=ln.match(dayRe);
+      const isDay = dm && (/KO|GE|Paragraf/.test(ln));
+      if(isDay){
+        const dd=+dm[1]; if(dd<1||dd>31){cur=null;continue;}
+        cur={dd,punches:[],para:null};
+        out[dd]=cur;
+        pairs(ln).forEach(([a,b])=>cur.punches.push([a,'in'],[b,'out']));
+        if(/Paragraf/.test(ln)&&!cur.punches.length) cur.para='full';
+        continue;
+      }
+      if(!cur) continue;
+      if(/^KO/.test(ln)){ pairs(ln).forEach(([a,b])=>cur.punches.push([a,'in'],[b,'out'])); }
+      else if(/^(PGF|Paragraf)/.test(ln)){ cur.para = cur.punches.length?'partial':'full'; }
+      else if(/^Týden|^Období/.test(ln)){ cur=null; }
+    }
+    const plan=+$('plan').value;
+    const store={};
+    Object.values(out).sort((a,b)=>a.dd-b.dd).forEach(info=>{
+      if(info.para==='full'&&!info.punches.length){ store[ymd(info.dd)]={type:'paragraf'}; return; }
+      if(!info.punches.length) return;
+      if(info.punches.length%2!==0) return;   // nekompletní (jen příchod)
+      const punches=info.punches.map(([t,k])=>({t,k}));
+      if(info.para==='partial') punches[punches.length-1].paid=true;
+      store[ymd(info.dd)]={punches,plan,brk:30,paid:false};
+    });
+    return store;
+  }
+
+  async function readPdf(file){
+    const buf=await file.arrayBuffer();
+    const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+    let text='';
+    for(let i=1;i<=pdf.numPages;i++){
+      const page=await pdf.getPage(i);
+      const c=await page.getTextContent();
+      const rows={};
+      c.items.forEach(it=>{ const y=Math.round(it.transform[5]); (rows[y]=rows[y]||[]).push({x:it.transform[4],s:it.str}); });
+      Object.keys(rows).map(Number).sort((a,b)=>b-a).forEach(y=>{
+        text += rows[y].sort((a,b)=>a.x-b.x).map(o=>o.s).join(' ') + '\n';
+      });
+    }
+    return text;
+  }
+
+  const DOW=['Ne','Po','Út','St','Čt','Pá','So'];
+  function renderPreview(){
+    const keys=Object.keys(store).sort();
+    $('cnt').textContent=keys.length;
+    let html='<tr><th>Datum</th><th>Den</th><th>Časy / typ</th><th>Odpr.</th><th>Přesčas</th></tr>';
+    for(const k of keys){
+      const d=store[k], wd=DOW[new Date(k+'T00:00:00').getDay()];
+      const dd=k.slice(8,10)+'.'+k.slice(5,7)+'.';
+      if(d.type){ html+=`<tr><td>${dd}</td><td>${wd}</td><td class="mut">${d.type}</td><td class="mut">–</td><td class="mut">–</td></tr>`; continue; }
+      const s=daySummary(d);
+      const times=d.punches.map(p=>p.t).join(' → ');
+      const oc=s.over>0?'pos':(s.over<0?'neg':'mut');
+      html+=`<tr><td>${dd}</td><td>${wd}</td><td class="num">${times}${s.para?' · §'+dur(s.para):''}</td><td class="num">${dur(s.worked)}</td><td class="num ${oc}">${sdur(s.over)}</td></tr>`;
+    }
+    $('preview').innerHTML=html;
+    $('previewSec').hidden=false;
+    $('actionSec').hidden = keys.length===0;
+  }
+
+  $('file').addEventListener('change', async () => {
+    const f=$('file').files&&$('file').files[0]; if(!f) return;
+    $('err').hidden=true;
+    if(!window.pdfjsLib){ $('err').textContent='Nepodařilo se načíst knihovnu pro PDF (potřebuješ internet).'; $('err').hidden=false; return; }
+    try{
+      toast('Načítám PDF…');
+      const text=await readPdf(f);
+      $('raw').textContent=text;
+      // vytáhni měsíc/rok z textu (MM/YYYY)
+      const mm=text.match(/(\d{2})\s*\/\s*(20\d{2})/);
+      if(mm){ $('mon').value=+mm[1]; $('year').value=+mm[2]; }
+      store=parse(text, +$('year').value, +$('mon').value);
+      renderPreview();
+      if(Object.keys(store).length) toast('Hotovo – '+Object.keys(store).length+' dní'); else toast('Nenašel jsem žádné dny');
+    }catch(e){ $('err').textContent='Chyba při čtení PDF: '+e.message; $('err').hidden=false; }
+  });
+  // změna plánu/měsíce/roku → přepočítej, když už je PDF načtené
+  ['plan','mon','year'].forEach(id=>$(id).addEventListener('change',()=>{
+    const raw=$('raw').textContent; if(!raw) return;
+    store=parse(raw, +$('year').value, +$('mon').value); renderPreview();
+  }));
+
+  function backupObj(){
+    return { app:'osobni-pichacka', version:1, exported:new Date().toISOString(),
+      note:'import z PDF', data:{ 'kdyDomu.punch': JSON.stringify(store) } };
+  }
+  $('dl').addEventListener('click', ()=>{
+    const blob=new Blob([JSON.stringify(backupObj(),null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob); const a=document.createElement('a');
+    a.href=url; a.download='pichacky-import-'+$('year').value+'-'+pad(+$('mon').value)+'.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
+  });
+  function loadPunch(){ try{ return JSON.parse(localStorage.getItem('kdyDomu.punch')||'{}'); }catch(e){ return {}; } }
+  $('merge').addEventListener('click', ()=>{
+    try{ const cur=loadPunch(); localStorage.setItem('kdyDomu.punch', JSON.stringify(Object.assign({},cur,store))); toast('Sloučeno do aplikace ✓'); }
+    catch(e){ toast('Nelze zapsat (jiná adresa než appka)'); }
+  });
+  $('replace').addEventListener('click', ()=>{
+    try{ localStorage.setItem('kdyDomu.punch', JSON.stringify(store)); toast('Nahrazeno v aplikaci ✓'); }
+    catch(e){ toast('Nelze zapsat (jiná adresa než appka)'); }
+  });
+</script>
+</body>
+</html>
