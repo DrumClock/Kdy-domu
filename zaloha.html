@@ -59,6 +59,8 @@
   .drow{display:flex;gap:10px}
   .drow .btn{flex:1;margin:0}
   .btn.rep{background:var(--red)}
+  .lbl{display:block;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:2px 0 6px}
+  select{width:100%;padding:11px 10px;font-size:15px;background:#161020;color:var(--ink);border:1px solid var(--line);border-radius:11px}
 </style>
 </head>
 <body>
@@ -74,9 +76,11 @@
     </section>
 
     <section>
-      <h2><span>💾</span> Kompletní záloha (JSON)</h2>
-      <p>Uloží <b>vše</b> — záznamy směn, konto i nastavení — do jednoho souboru. Hodí se na zálohu nebo přenos do jiného telefonu.</p>
-      <button type="button" class="btn" id="exportJsonBtn">Zálohovat do souboru ↓</button>
+      <h2><span>💾</span> Záloha (JSON)</h2>
+      <p>Uloží záznamy do souboru — buď <b>vše</b> (i konto a nastavení), nebo jen <b>vybraný měsíc</b>. Hodí se na zálohu nebo přenos do jiného telefonu.</p>
+      <label class="lbl" for="backupScope">Co zálohovat</label>
+      <select id="backupScope"></select>
+      <button type="button" class="btn" id="exportJsonBtn" style="margin-top:10px">Zálohovat do souboru ↓</button>
       <button type="button" class="btn sec" id="importJsonBtn">Obnovit ze souboru ↑</button>
     </section>
 
@@ -168,10 +172,30 @@
     download('pichacky.csv', csv, 'text/csv;charset=utf-8');
   });
 
+  // naplň výběr rozsahu zálohy (Vše + měsíce, které v datech jsou)
+  const MONTHS=['leden','únor','březen','duben','květen','červen','červenec','srpen','září','říjen','listopad','prosinec'];
+  (function fillScope(){
+    const sel=document.getElementById('backupScope');
+    const punch=loadPunch();
+    const months=[...new Set(Object.keys(punch).map(k=>k.slice(0,7)))].sort().reverse();
+    let html='<option value="all">Vše (i konto a nastavení)</option>';
+    months.forEach(m=>{ const [y,mo]=m.split('-'); html+='<option value="'+m+'">'+MONTHS[+mo-1]+' '+y+'</option>'; });
+    sel.innerHTML=html;
+  })();
+
   document.getElementById('exportJsonBtn').addEventListener('click', () => {
+    const scope=document.getElementById('backupScope').value;
     const out={ app:'osobni-pichacka', version:1, exported:new Date().toISOString(), data:{} };
-    BACKUP_KEYS.forEach(k=>{ const v=localStorage.getItem(k); if(v!=null) out.data[k]=v; });
-    download('pichacky-zaloha-'+ymd(new Date())+'.json', JSON.stringify(out,null,2), 'application/json');
+    if(scope==='all'){
+      BACKUP_KEYS.forEach(k=>{ const v=localStorage.getItem(k); if(v!=null) out.data[k]=v; });
+      download('pichacky-zaloha-'+ymd(new Date())+'.json', JSON.stringify(out,null,2), 'application/json');
+    } else {
+      const punch=loadPunch(); const filt={};
+      Object.keys(punch).forEach(k=>{ if(k.slice(0,7)===scope) filt[k]=punch[k]; });
+      out.note='záloha měsíce '+scope;
+      out.data['kdyDomu.punch']=JSON.stringify(filt);
+      download('pichacky-zaloha-'+scope+'.json', JSON.stringify(out,null,2), 'application/json');
+    }
   });
 
   const importFile=document.getElementById('importFile');
