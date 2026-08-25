@@ -788,17 +788,17 @@
       + 'T' + pad(dt.getUTCHours()) + pad(dt.getUTCMinutes()) + pad(dt.getUTCSeconds()) + 'Z';
   }
 
-  // stálé ID události + verze (SEQUENCE) → kalendář událost přepíše místo duplikace
-  function eventMeta(){
-    let meta = null;
-    try{ meta = JSON.parse(localStorage.getItem('kdyDomu.evt') || 'null'); }catch(e){}
-    if(!meta || !meta.uid){
-      meta = { uid: 'kdydomu-' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '@drumclock.github.io', seq: 0 };
-    } else {
-      meta.seq = (meta.seq | 0) + 1;   // každý další export = vyšší verze
-    }
-    try{ localStorage.setItem('kdyDomu.evt', JSON.stringify(meta)); }catch(e){}
-    return meta;
+  // ID události unikátní pro každý DEN (datum odchodu) → nová událost každý den,
+  // opětovný export téhož dne jen zvýší verzi (SEQUENCE) a událost daného dne přepíše
+  function eventMeta(depDate){
+    const key = ymd(depDate);
+    let map = {};
+    try{ map = JSON.parse(localStorage.getItem('kdyDomu.evt') || '{}') || {}; }catch(e){}
+    if(map && map.uid) map = {};                 // migrace ze starého formátu {uid,seq}
+    const seq = map[key] | 0;
+    map[key] = seq + 1;
+    try{ localStorage.setItem('kdyDomu.evt', JSON.stringify(map)); }catch(e){}
+    return { uid: 'kdydomu-' + key.replace(/-/g,'') + '@drumclock.github.io', seq: seq };
   }
 
   function buildICS(){
@@ -807,7 +807,7 @@
     const dep = new Date(base.getFullYear(), base.getMonth(), base.getDate(), 0, 0, 0, 0);
     dep.setMinutes(endTotal);
     const end = new Date(dep.getTime() + 15 * 60000);
-    const meta = eventMeta();
+    const meta = eventMeta(dep);
 
     return [
       'BEGIN:VCALENDAR',
