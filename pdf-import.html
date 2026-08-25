@@ -90,8 +90,8 @@
       <h2>3) Ulož nebo importuj</h2>
       <button type="button" class="btn" id="dl">Stáhnout JSON</button>
       <button type="button" class="btn sec" id="merge">Importovat teď – Sloučit</button>
-      <button type="button" class="btn rep" id="replace">Importovat teď – Nahradit vše</button>
-      <div class="hint">„Importovat teď" zapíše data přímo, pokud je tato stránka na stejné adrese jako aplikace. Jinak použij „Stáhnout JSON" a nahraj ho v aplikaci přes Historie → Záloha → Obnovit.</div>
+      <button type="button" class="btn rep" id="replace">Importovat teď – Nahradit měsíc</button>
+      <div class="hint">Nahradit přepíše jen měsíce obsažené v tomto PDF, ostatní měsíce zůstanou. „Importovat teď" zapíše data přímo, pokud je tato stránka na stejné adrese jako aplikace. Jinak použij „Stáhnout JSON" a nahraj ho v aplikaci přes Historie → Záloha → Obnovit.</div>
     </section>
   </div>
 
@@ -245,8 +245,15 @@
     catch(e){ toast('Nelze zapsat (jiná adresa než appka)'); }
   });
   $('replace').addEventListener('click', ()=>{
-    try{ localStorage.setItem('kdyDomu.punch', JSON.stringify(store)); toast('Nahrazeno v aplikaci ✓'); }
-    catch(e){ toast('Nelze zapsat (jiná adresa než appka)'); }
+    try{
+      const cur=loadPunch();
+      const months=new Set(Object.keys(store).map(k=>k.slice(0,7)));
+      const res={};
+      for(const k of Object.keys(cur)) if(!months.has(k.slice(0,7))) res[k]=cur[k];
+      Object.assign(res,store);
+      localStorage.setItem('kdyDomu.punch', JSON.stringify(res));
+      toast('Nahrazeno (jen měsíce ze souboru) ✓');
+    }catch(e){ toast('Nelze zapsat (jiná adresa než appka)'); }
   });
 </script>
 </body>

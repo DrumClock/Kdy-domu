@@ -93,7 +93,7 @@
 
   <div class="dialog" id="importDlg" hidden>
     <div class="dialog-box">
-      <div class="dialog-msg">Jak importovat zálohu?<br><span style="font-size:12.5px;color:var(--muted)">Sloučit přidá k datům, Nahradit vše přepíše.</span></div>
+      <div class="dialog-msg">Jak importovat zálohu?<br><span style="font-size:12.5px;color:var(--muted)">Sloučit přidá záznamy, Nahradit přepíše jen měsíce ze souboru (ostatní zůstanou).</span></div>
       <div class="drow">
         <button type="button" class="btn" id="importMerge">Sloučit</button>
         <button type="button" class="btn rep" id="importReplace">Nahradit</button>
@@ -191,8 +191,21 @@
     const d=importData&&importData.data; importDlg.hidden=true;
     if(!d){ importData=null; toast('Neplatný soubor'); return; }
     try{
-      if(mode==='replace'){ BACKUP_KEYS.forEach(k=>{ if(d[k]!=null) localStorage.setItem(k,d[k]); }); }
-      else { const cur=loadPunch(); const imp=d['kdyDomu.punch']?JSON.parse(d['kdyDomu.punch']):{}; savePunch(Object.assign({},cur,imp)); }
+      const cur=loadPunch();
+      const imp=d['kdyDomu.punch']?JSON.parse(d['kdyDomu.punch']):{};
+      if(mode==='replace'){
+        // nahradit JEN měsíce obsažené v souboru, ostatní měsíce ponechat
+        const months=new Set(Object.keys(imp).map(k=>k.slice(0,7)));
+        const res={};
+        for(const k of Object.keys(cur)) if(!months.has(k.slice(0,7))) res[k]=cur[k];
+        Object.assign(res,imp);
+        savePunch(res);
+        if(d['kdyDomu.settings']!=null) localStorage.setItem('kdyDomu.settings',d['kdyDomu.settings']);
+        if(d['kdyDomu.konto0']!=null)   localStorage.setItem('kdyDomu.konto0',d['kdyDomu.konto0']);
+        if(d['kdyDomu.evt']!=null)      localStorage.setItem('kdyDomu.evt',d['kdyDomu.evt']);
+      } else {
+        savePunch(Object.assign({},cur,imp));   // sloučit – přidá dny, ostatní ponechá
+      }
     }catch(e){ toast('Chyba importu'); importData=null; return; }
     importData=null; toast('Import hotov — vrať se do aplikace');
   }
