@@ -398,6 +398,7 @@
   .dialog-msg{ font-size:15px; color:var(--ink); line-height:1.5; text-align:center; margin-bottom:20px; }
   .dialog-actions{ display:flex; gap:10px; }
   .dialog-actions .act-btn{ flex:1; }
+  a.act-btn{ text-decoration:none; display:inline-flex; align-items:center; justify-content:center; }
   .act-btn.danger-solid{ background:var(--red); border-color:var(--red); color:#1c1726; }
   .foot{
     margin-top:18px;
@@ -627,6 +628,16 @@
     </div>
   </div>
 
+  <div class="dialog" id="icsDlg" hidden>
+    <div class="dialog-box">
+      <div class="dialog-msg">Připomínka do kalendáře<br>Odchod domů v <b id="icsTime">–</b></div>
+      <div class="dialog-actions">
+        <button type="button" class="act-btn" id="icsCancel">Zrušit</button>
+        <a class="act-btn primary" id="icsLink" download>Přidat</a>
+      </div>
+    </div>
+  </div>
+
 <script>
   const startEl = document.getElementById('start');
   const segEl   = document.getElementById('seg');
@@ -791,10 +802,10 @@
   // ID události unikátní pro každý DEN (datum odchodu) → nová událost každý den,
   // opětovný export téhož dne jen zvýší verzi (SEQUENCE) a událost daného dne přepíše
   function eventMeta(depDate){
-    const key = ymd(depDate);
+    const key = ymd(depDate) + '-' + pad(depDate.getHours()) + pad(depDate.getMinutes());
     let map = {};
     try{ map = JSON.parse(localStorage.getItem('kdyDomu.evt') || '{}') || {}; }catch(e){}
-    if(map && map.uid) map = {};                 // migrace ze starého formátu {uid,seq}
+    if(map && map.uid) map = {};                 // migrace ze starého formátu
     const seq = map[key] | 0;
     map[key] = seq + 1;
     try{ localStorage.setItem('kdyDomu.evt', JSON.stringify(map)); }catch(e){}
@@ -832,24 +843,30 @@
       'END:VCALENDAR'
     ].join('\r\n');
     const depH = pad(dep.getHours()), depM = pad(dep.getMinutes());
-    return { text, fname: 'odchod-domu-' + ymd(dep) + '-' + depH + depM + '.ics' };   // stejný pro daný odchod → 1 ťuknutí; jiný když se odchod změní
+    return { text, fname: 'odchod-domu-' + ymd(dep) + '-' + depH + depM + '.ics', dep };
   }
+
+  const icsDlg = document.getElementById('icsDlg');
+  const icsLink = document.getElementById('icsLink');
+  const icsTime = document.getElementById('icsTime');
+  const icsCancel = document.getElementById('icsCancel');
+  let icsUrl = null;
+  function closeIcs(){ icsDlg.hidden = true; if(icsUrl){ URL.revokeObjectURL(icsUrl); icsUrl = null; } }
 
   calBtn.addEventListener('click', () => {
     if(endTotal === null) return;
-    const ics = buildICS();
+    const ics = buildICS();                                 // připraví jedinečný soubor (mezikrok)
     const blob = new Blob([ics.text], { type: 'text/calendar;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = ics.fname;
-    a.rel = 'noopener';
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    // úklid až se zpožděním – jinak mobil první stažení občas zruší
-    setTimeout(() => { try{ document.body.removeChild(a); }catch(e){} URL.revokeObjectURL(url); }, 4000);
+    if(icsUrl) URL.revokeObjectURL(icsUrl);
+    icsUrl = URL.createObjectURL(blob);
+    icsLink.href = icsUrl;
+    icsLink.download = ics.fname;
+    icsTime.textContent = resEl.textContent;                // čas odchodu HH:MM
+    icsDlg.hidden = false;
   });
+  icsLink.addEventListener('click', () => { setTimeout(closeIcs, 300); });   // po stažení zavři
+  icsCancel.addEventListener('click', closeIcs);
+  icsDlg.addEventListener('click', e => { if(e.target === icsDlg) closeIcs(); });
 
   // ===== Píchačky: příchod / odchod / přerušení =====
   const PUNCH_KEY = 'kdyDomu.punch';
