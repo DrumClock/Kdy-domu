@@ -844,10 +844,12 @@
     const a = document.createElement('a');
     a.href = url;
     a.download = ics.fname;
+    a.rel = 'noopener';
+    a.style.display = 'none';
     document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    // úklid až se zpožděním – jinak mobil první stažení občas zruší
+    setTimeout(() => { try{ document.body.removeChild(a); }catch(e){} URL.revokeObjectURL(url); }, 4000);
   });
 
   // ===== Píchačky: příchod / odchod / přerušení =====
