@@ -164,6 +164,7 @@ Tlačítka se sama zapínají/vypínají podle stavu, takže se nedá přihlási
 - **Export CSV** — přehled dnů pro Excel (`pichacky.csv`).
 - **Záloha JSON ↓** — kompletní záloha (záznamy + konto + nastavení) do `pichacky-zaloha-RRRR-MM-DD.json`.
 - **Obnovit ↑** — načte JSON a nabídne **Sloučit** (přidá záznamy) nebo **Nahradit** (přepíše vše). Ideální pro přenos na jiný telefon.
+- **Import z PDF** — firemní výpis „Časové zúčtování" (RSF) převede přímo na záznamy: vybereš PDF, nastavíš denní plán, zkontroluješ náhled (odpracováno i přesčas) a buď stáhneš JSON, nebo rovnou naimportuješ. PDF se čte přes knihovnu pdf.js (vyžaduje připojení k internetu).
 
 Poznámky:
 - Data jsou **jen v tvém telefonu** (`localStorage`) — osobní přehled, ne oficiální evidence pro zaměstnavatele. Přesnost odpovídá tomu, kdy píchneš.
@@ -184,6 +185,7 @@ Appka je čistá **PWA** bez frameworků — jeden HTML soubor s vloženým CSS 
 | `sdilet.html` | Sdílecí stránka s QR kódem a návodem |
 | `napoveda.html` | Nápověda k aplikaci |
 | `zaloha.html` | Záloha/obnova (JSON) a export CSV |
+| `pdf-import.html` | Převod firemního PDF výpisu na záznamy |
 | `qr.png` | QR kód s adresou aplikace |
 | `nfc.png` | Ikonka NFC pro README |
 | `screenshot-app.png`, `screenshot-history.png`, `screenshot-help.png`, `screenshot-qr.png` | Náhledy do README |
