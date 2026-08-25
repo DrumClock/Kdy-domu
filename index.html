@@ -1181,12 +1181,14 @@
       const range = hhmm(s.start) + ' → ' + (s.open ? '<span class="live">běží</span>' : hhmm(s.end));
       const off = s.breaks + s.snack;
       const line3 = range + (off ? ' · pauza ' + dur(off) : '');
+      const PLAN_NAME = { 360:'zkrácená', 480:'ranní', 450:'odpolední', 420:'noční' };
+      const shiftName = PLAN_NAME[s.plan] ? ' <span class="d-sub">· ' + PLAN_NAME[s.plan] + '</span>' : '';
       const badges = (s.paidBreaks ? typeBadge('paragraf') : '') + (s.nv ? typeBadge('nahradni') : '');
       const over = (s.open || s.over == null)
         ? '<span class="df zero">–</span>'
         : '<span class="df ' + diffClass(s.over) + '">' + sdur(s.over) + '</span>';
       return '<div class="rec">' + editBtn + dowLabel(k) +
-             '<div class="rec-main"><div class="d">' + fmtDate(k) + '</div>' +
+             '<div class="rec-main"><div class="d">' + fmtDate(k) + shiftName + '</div>' +
              '<div class="t">odpracováno ' + dur(s.worked) + '</div>' +
              '<div class="t">' + line3 + '</div></div>' +
              '<div class="rec-actions"><span class="rec-badges">' + badges + '</span>' + over + delBtn + '</div></div>';
