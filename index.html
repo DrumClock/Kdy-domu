@@ -1123,13 +1123,25 @@
     let mWork = 0, mOver = 0;
     inMonth.forEach(({s}) => { if(s.open || s.neutral) return; mWork += s.worked; if(s.over!=null) mOver += s.over; });
 
-    // kumulativní konto ke konci zvoleného měsíce = počáteční stav + přesčasy všech dnů do konce měsíce
+    // konto (NV banka): klasická směna přispívá celým přesčasem;
+    // zkrácená 6h jen prací nad plnou směnu (8h), odchod dřív z konta neubere
+    const FULL_SHIFT = 480;
+    function kontoDelta(s){
+      if(s.neutral || s.over == null) return 0;
+      if(s.type === 'nahradni') return s.over;            // celodenní náhradní volno čerpá
+      const plan = s.plan; if(plan == null) return 0;
+      const base = s.over + plan;                         // actualWork + paragraf credit
+      if(plan <= 360) return Math.max(0, base - FULL_SHIFT);  // zkrácená → jen nad 8h
+      return s.over;                                      // klasická → celý přesčas
+    }
+
+    // kumulativní konto ke konci zvoleného měsíce = počáteční stav + příspěvky všech dnů do konce měsíce
     const konto0 = loadKonto();
     let konto = konto0;
     items.forEach(({k,s}) => {
-      if(s.open || s.neutral || s.over == null) return;
+      if(s.open) return;
       const d = new Date(k + 'T00:00:00');
-      if(d.getFullYear() < y || (d.getFullYear() === y && d.getMonth() <= m)) konto += s.over;
+      if(d.getFullYear() < y || (d.getFullYear() === y && d.getMonth() <= m)) konto += kontoDelta(s);
     });
 
     totalsEl.innerHTML =
