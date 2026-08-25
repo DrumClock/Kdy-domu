@@ -327,6 +327,9 @@
   .rec .d-sub{ font-weight:400; color:var(--muted); }
   .rec .t{ font-size:12px; color:var(--muted); margin-top:2px; }
   .rec-main{ flex:1; min-width:0; }
+  .rec-dow{ flex:none; width:26px; text-align:center; font-size:12.5px; font-weight:700; color:var(--muted); }
+  .rec-dow.dow-sa{ color:var(--green); }
+  .rec-dow.dow-ne{ color:var(--red); }
   .rec-actions{ display:flex; align-items:center; gap:6px; }
   .rec-badges{ display:flex; align-items:center; justify-content:center; gap:3px; min-width:26px; flex:none; }
   .badge{ display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px;
@@ -1048,6 +1051,13 @@
   const MONTHS = ['leden','únor','březen','duben','květen','červen','červenec','srpen','září','říjen','listopad','prosinec'];
   function monthLabel(y,m){ return MONTHS[m] + ' ' + y; }
 
+  function dowLabel(k){
+    const names = ['Ne','Po','Út','St','Čt','Pá','So'];
+    const wd = new Date(k + 'T00:00:00').getDay();
+    const cls = wd === 6 ? ' dow-sa' : (wd === 0 ? ' dow-ne' : '');
+    return '<span class="rec-dow' + cls + '">' + names[wd] + '</span>';
+  }
+
   function renderHistory(){
     if(editArr) renderEdit(); else renderList();
   }
@@ -1148,7 +1158,7 @@
           ? '<span class="df ' + diffClass(s.over) + '">' + sdur(s.over) + '</span>'
           : '<span class="df zero">–</span>';
         const sub = (s.type === 'nahradni') ? ('odpracováno ' + dur(s.worked)) : 'celý den';
-        return '<div class="rec">' + editBtn +
+        return '<div class="rec">' + editBtn + dowLabel(k) +
                '<div class="rec-main"><div class="d">' + fmtDate(k) + '</div>' +
                '<div class="t">' + names[s.type] + ' · ' + sub + '</div></div>' +
                '<div class="rec-actions"><span class="rec-badges">' + typeBadge(s.type) + '</span>' + right + delBtn + '</div></div>';
@@ -1161,7 +1171,7 @@
       const over = (s.open || s.over == null)
         ? '<span class="df zero">–</span>'
         : '<span class="df ' + diffClass(s.over) + '">' + sdur(s.over) + '</span>';
-      return '<div class="rec">' + editBtn +
+      return '<div class="rec">' + editBtn + dowLabel(k) +
              '<div class="rec-main"><div class="d">' + fmtDate(k) + '</div>' +
              '<div class="t">odpracováno ' + dur(s.worked) + '</div>' +
              '<div class="t">' + line3 + '</div></div>' +
