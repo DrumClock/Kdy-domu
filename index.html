@@ -309,6 +309,7 @@
   .konto-v{ font-family:"SFMono-Regular","Consolas",monospace; font-size:22px; font-weight:700; }
   .konto-v.pos{ color:var(--green); } .konto-v.neg{ color:var(--red); } .konto-v.zero{ color:var(--ink); }
   .dov-days{ font-size:14px; font-weight:600; color:var(--muted); }
+  .dov-val.pos, .dov-val.zero{ color:#4aa3ff; }
   .init-row{ display:flex; gap:10px; }
   .init-item{ flex:1; display:flex; flex-direction:column; gap:5px; }
   .init-lbl{ font-size:11px; color:var(--muted); }
@@ -1234,7 +1235,7 @@
       '</div>' +
       '<div class="konto-card">' +
         '<div class="konto-k">Dovolená</div>' +
-        '<div class="konto-v ' + dovCls + '"><span class="dov-days">' + days + ' dní · </span>' + hm(dovBal) + '</div>' +
+        '<div class="konto-v dov-val ' + dovCls + '"><span class="dov-days">' + days + ' dní · </span>' + hm(dovBal) + '</div>' +
       '</div>';
 
     if(!inMonth.length){ logListEl.innerHTML = '<div class="log-empty">V tomto měsíci žádné záznamy.</div>'; return; }
