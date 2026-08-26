@@ -310,6 +310,12 @@
   .konto-v.pos{ color:var(--green); } .konto-v.neg{ color:var(--red); } .konto-v.zero{ color:var(--ink); }
   .dov-days{ font-size:14px; font-weight:600; color:var(--muted); }
   .dov-val.pos, .dov-val.zero{ color:#4aa3ff; }
+  .dov-card{ flex-direction:column; align-items:stretch; gap:8px; }
+  .dov-head{ display:flex; align-items:center; justify-content:space-between; }
+  .dov-sub{ display:flex; align-items:center; justify-content:space-between;
+    font-size:12.5px; color:var(--muted); padding-top:6px; border-top:1px solid var(--line); }
+  .dov-sub span:last-child{ font-family:"SFMono-Regular","Consolas",monospace; font-weight:600; }
+  .dov-sub .sub-blue{ color:#4aa3ff; } .dov-sub .sub-neg{ color:var(--red); }
   .init-row{ display:flex; gap:10px; }
   .init-item{ flex:1; display:flex; flex-direction:column; gap:5px; }
   .init-lbl{ font-size:11px; color:var(--muted); }
@@ -1207,15 +1213,19 @@
 
     // dovolená: počáteční stav (hodiny) − vyčerpané dny (× délka směny ze setupu)
     const dov0 = loadDov();
-    let dovDays = 0;
+    let dovDays = 0, dovFuture = 0;
     items.forEach(({k,s}) => {
       if(s.type !== 'dovolena') return;
       const d = new Date(k + 'T00:00:00');
       if(d.getFullYear() < y || (d.getFullYear() === y && d.getMonth() <= m)) dovDays++;
+      else dovFuture++;                            // dovolená v pozdějších měsících (naplánováno dál)
     });
     const perDay = workMin || 360;                 // hodin/den dle nastavené směny
-    const dovBal = dov0 - dovDays * perDay;         // zbývá (min)
+    const dovBal = dov0 - dovDays * perDay;         // zbývá ke konci zobrazeného měsíce (min)
+    const dovRes = dovFuture * perDay;              // rezervace = dovolená naplánovaná dál
+    const dovRest = dovBal - dovRes;                // zbytek po vyčerpání všeho zadaného
     const hm = m2 => (m2 < 0 ? '−' : '') + Math.floor(Math.abs(m2)/60) + ':' + pad(Math.abs(m2)%60);
+    const fmtDov = mm => (mm/perDay).toFixed(1).replace('.', ',') + ' dní · ' + hm(mm);
     const days = (dovBal / perDay).toFixed(1).replace('.', ',');
     const dovCls = dovBal < 0 ? 'neg' : (dovBal > 0 ? 'pos' : 'zero');
 
@@ -1233,9 +1243,13 @@
         '<div class="konto-k">Konto</div>' +
         '<div class="konto-v ' + diffClass(konto) + '">' + sdur(konto) + '</div>' +
       '</div>' +
-      '<div class="konto-card">' +
-        '<div class="konto-k">Dovolená</div>' +
-        '<div class="konto-v dov-val ' + dovCls + '"><span class="dov-days">' + days + ' dní · </span>' + hm(dovBal) + '</div>' +
+      '<div class="konto-card dov-card">' +
+        '<div class="dov-head"><div class="konto-k">Dovolená</div>' +
+          '<div class="konto-v dov-val ' + dovCls + '"><span class="dov-days">' + days + ' dní · </span>' + hm(dovBal) + '</div></div>' +
+        (dovFuture > 0 ?
+          '<div class="dov-sub"><span>Rezervace</span><span>' + fmtDov(dovRes) + '</span></div>' +
+          '<div class="dov-sub"><span>Zbytek</span><span class="' + (dovRest < 0 ? 'sub-neg' : 'sub-blue') + '">' + fmtDov(dovRest) + '</span></div>'
+          : '') +
       '</div>';
 
     if(!inMonth.length){ logListEl.innerHTML = '<div class="log-empty">V tomto měsíci žádné záznamy.</div>'; return; }
