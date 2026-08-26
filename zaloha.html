@@ -115,7 +115,7 @@
 
   const PUNCH_KEY = 'kdyDomu.punch';
   const SET_KEY   = 'kdyDomu.settings';
-  const BACKUP_KEYS = ['kdyDomu.punch','kdyDomu.settings','kdyDomu.konto0','kdyDomu.evt'];
+  const BACKUP_KEYS = ['kdyDomu.punch','kdyDomu.settings','kdyDomu.konto0','kdyDomu.dov0','kdyDomu.evt'];
   function loadPunch(){ try{ return JSON.parse(localStorage.getItem(PUNCH_KEY) || '{}'); }catch(e){ return {}; } }
   function savePunch(o){ try{ localStorage.setItem(PUNCH_KEY, JSON.stringify(o)); }catch(e){} }
 
@@ -196,6 +196,7 @@
     if(scope==='all'){
       try{ const s=localStorage.getItem('kdyDomu.settings'); if(s!=null) out.settings=JSON.parse(s); }catch(e){}
       const konto=localStorage.getItem('kdyDomu.konto0'); if(konto!=null) out.konto0=parseInt(konto,10)||0;
+      const dov=localStorage.getItem('kdyDomu.dov0'); if(dov!=null) out.dov0=parseInt(dov,10)||0;
       try{ const e=localStorage.getItem('kdyDomu.evt'); if(e!=null) out.evt=JSON.parse(e); }catch(e){}
     } else out.note='záloha měsíce '+scope;
     return out;
@@ -215,11 +216,12 @@
       return { punch,
         settings: p.settings!=null?JSON.stringify(p.settings):null,
         konto: p.konto0!=null?String(p.konto0|0):null,
+        dov: p.dov0!=null?String(p.dov0|0):null,
         evt: p.evt!=null?JSON.stringify(p.evt):null };
     }
     if(p && p.data){                                        // starý formát v1
       let punch={}; try{ punch=p.data['kdyDomu.punch']?JSON.parse(p.data['kdyDomu.punch']):{}; }catch(e){}
-      return { punch, settings:p.data['kdyDomu.settings']||null, konto:p.data['kdyDomu.konto0']||null, evt:p.data['kdyDomu.evt']||null };
+      return { punch, settings:p.data['kdyDomu.settings']||null, konto:p.data['kdyDomu.konto0']||null, dov:p.data['kdyDomu.dov0']||null, evt:p.data['kdyDomu.evt']||null };
     }
     return null;
   }
@@ -251,6 +253,7 @@
         savePunch(res);
         if(ex.settings!=null) localStorage.setItem('kdyDomu.settings',ex.settings);
         if(ex.konto!=null)    localStorage.setItem('kdyDomu.konto0',ex.konto);
+        if(ex.dov!=null)      localStorage.setItem('kdyDomu.dov0',ex.dov);
         if(ex.evt!=null)      localStorage.setItem('kdyDomu.evt',ex.evt);
       } else {
         savePunch(Object.assign({},cur,imp));   // sloučit – přidá dny, ostatní ponechá

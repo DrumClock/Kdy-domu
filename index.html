@@ -308,6 +308,12 @@
   .konto-k{ font-size:12px; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
   .konto-v{ font-family:"SFMono-Regular","Consolas",monospace; font-size:22px; font-weight:700; }
   .konto-v.pos{ color:var(--green); } .konto-v.neg{ color:var(--red); } .konto-v.zero{ color:var(--ink); }
+  .dov-days{ font-size:14px; font-weight:600; color:var(--muted); }
+  .init-row{ display:flex; gap:10px; }
+  .init-item{ flex:1; display:flex; flex-direction:column; gap:5px; }
+  .init-lbl{ font-size:11px; color:var(--muted); }
+  .init-item input{ width:100%; padding:10px; font-size:15px; text-align:right;
+    background:#161020; color:var(--ink); border:1px solid var(--line); border-radius:10px; }
   .konto-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px; }
   .konto-row label{ font-size:12px; color:var(--muted); }
   .konto-row input{ width:90px; padding:7px 10px; font-size:15px; text-align:right;
@@ -591,6 +597,20 @@
         <span class="box"></span>
         <span>Placená pauza <span class="state" id="paidState">(neplacená → přičítá se)</span></span>
       </label>
+    </div>
+
+    <div class="field">
+      <label>Počáteční stavy</label>
+      <div class="init-row">
+        <div class="init-item">
+          <span class="init-lbl">Konto přesčasů</span>
+          <input type="text" id="kontoInit" inputmode="text" placeholder="+0:00">
+        </div>
+        <div class="init-item">
+          <span class="init-lbl">Dovolená (hod)</span>
+          <input type="text" id="dovInit" inputmode="text" placeholder="0:00">
+        </div>
+      </div>
     </div>
   </main>
 
@@ -942,6 +962,9 @@
   const KONTO_KEY = 'kdyDomu.konto0';
   function loadKonto(){ const v = parseInt(localStorage.getItem(KONTO_KEY) || '0', 10); return isNaN(v) ? 0 : v; }
   function saveKonto(min){ try{ localStorage.setItem(KONTO_KEY, String(min|0)); }catch(e){} }
+  const DOV_KEY = 'kdyDomu.dov0';
+  function loadDov(){ const v = parseInt(localStorage.getItem(DOV_KEY) || '0', 10); return isNaN(v) ? 0 : v; }
+  function saveDov(min){ try{ localStorage.setItem(DOV_KEY, String(min|0)); }catch(e){} }
   function parseSigned(str){                         // "+12:00" / "-1:30" / "12:00" / "12" → minuty
     str = (str || '').trim().replace(',', ':');
     if(!str) return 0;
@@ -1180,6 +1203,20 @@
       if(d.getFullYear() < y || (d.getFullYear() === y && d.getMonth() <= m)) konto += kontoDelta(s);
     });
 
+    // dovolená: počáteční stav (hodiny) − vyčerpané dny (× délka směny ze setupu)
+    const dov0 = loadDov();
+    let dovDays = 0;
+    items.forEach(({k,s}) => {
+      if(s.type !== 'dovolena') return;
+      const d = new Date(k + 'T00:00:00');
+      if(d.getFullYear() < y || (d.getFullYear() === y && d.getMonth() <= m)) dovDays++;
+    });
+    const perDay = workMin || 360;                 // hodin/den dle nastavené směny
+    const dovBal = dov0 - dovDays * perDay;         // zbývá (min)
+    const hm = m2 => (m2 < 0 ? '−' : '') + Math.floor(Math.abs(m2)/60) + ':' + pad(Math.abs(m2)%60);
+    const days = (dovBal / perDay).toFixed(1).replace('.', ',');
+    const dovCls = dovBal < 0 ? 'neg' : (dovBal > 0 ? 'pos' : 'zero');
+
     totalsEl.innerHTML =
       '<div class="month-nav">' +
         '<button type="button" class="mnav" data-dir="-1" aria-label="Předchozí měsíc">◀</button>' +
@@ -1194,8 +1231,10 @@
         '<div class="konto-k">Konto ke konci ' + monthLabel(y,m).split(' ')[0] + '</div>' +
         '<div class="konto-v ' + diffClass(konto) + '">' + sdur(konto) + '</div>' +
       '</div>' +
-      '<div class="konto-row"><label for="kontoInput">Počáteční stav konta</label>' +
-        '<input type="text" id="kontoInput" inputmode="text" placeholder="+0:00" value="' + (konto0 ? sdur(konto0) : '') + '"></div>';
+      '<div class="konto-card">' +
+        '<div class="konto-k">Dovolená ke konci ' + monthLabel(y,m).split(' ')[0] + '</div>' +
+        '<div class="konto-v ' + dovCls + '">' + hm(dovBal) + ' <span class="dov-days">· ' + days + ' dní</span></div>' +
+      '</div>';
 
     if(!inMonth.length){ logListEl.innerHTML = '<div class="log-empty">V tomto měsíci žádné záznamy.</div>'; return; }
     logListEl.innerHTML = inMonth.map(({k,s}) => {
@@ -1412,10 +1451,15 @@
     histMonth = { y, m };
     renderList();
   });
-  totalsEl.addEventListener('change', e => {
-    const inp = e.target.closest('#kontoInput');
-    if(inp){ saveKonto(parseSigned(inp.value)); renderList(); }
-  });
+  const kontoInit = document.getElementById('kontoInit');
+  const dovInit   = document.getElementById('dovInit');
+  function refreshInitInputs(){
+    const k = loadKonto(); kontoInit.value = k ? sdur(k) : '';
+    const d = loadDov();   dovInit.value   = d ? (Math.floor(d/60) + ':' + pad(d%60)) : '';
+  }
+  kontoInit.addEventListener('change', () => { saveKonto(parseSigned(kontoInit.value)); refreshInitInputs(); if(!histEl.hidden && !editArr) renderList(); });
+  dovInit.addEventListener('change',   () => { saveDov(Math.abs(parseSigned(dovInit.value))); refreshInitInputs(); if(!histEl.hidden && !editArr) renderList(); });
+  refreshInitInputs();
 
   logListEl.addEventListener('click', e => {
     const editB = e.target.closest('.rec-edit'); if(editB){ openEdit(editB.dataset.date); return; }
