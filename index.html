@@ -1110,6 +1110,7 @@
 
   function fmtDate(k){ return k.slice(8,10) + '.' + k.slice(5,7) + '.'; }
   const MONTHS = ['leden','únor','březen','duben','květen','červen','červenec','srpen','září','říjen','listopad','prosinec'];
+  const MONTHS_GEN = ['ledna','února','března','dubna','května','června','července','srpna','září','října','listopadu','prosince'];
   function monthLabel(y,m){ return MONTHS[m] + ' ' + y; }
 
   function dowLabel(k){
@@ -1228,12 +1229,12 @@
         '<div class="tot"><div class="k">Přesčas</div><div class="v ' + diffClass(mOver) + '">' + sdur(mOver) + '</div></div>' +
       '</div>' +
       '<div class="konto-card">' +
-        '<div class="konto-k">Konto ke konci ' + monthLabel(y,m).split(' ')[0] + '</div>' +
+        '<div class="konto-k">Konto</div>' +
         '<div class="konto-v ' + diffClass(konto) + '">' + sdur(konto) + '</div>' +
       '</div>' +
       '<div class="konto-card">' +
-        '<div class="konto-k">Dovolená ke konci ' + monthLabel(y,m).split(' ')[0] + '</div>' +
-        '<div class="konto-v ' + dovCls + '">' + hm(dovBal) + ' <span class="dov-days">· ' + days + ' dní</span></div>' +
+        '<div class="konto-k">Dovolená</div>' +
+        '<div class="konto-v ' + dovCls + '"><span class="dov-days">' + days + ' dní · </span>' + hm(dovBal) + '</div>' +
       '</div>';
 
     if(!inMonth.length){ logListEl.innerHTML = '<div class="log-empty">V tomto měsíci žádné záznamy.</div>'; return; }
