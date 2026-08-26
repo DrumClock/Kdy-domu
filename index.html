@@ -615,7 +615,7 @@
         </div>
         <div class="init-item">
           <span class="init-lbl">Dovolená (hod)</span>
-          <input type="text" id="dovInit" inputmode="text" placeholder="0:00">
+          <input type="text" id="dovInit" inputmode="numeric" placeholder="0">
         </div>
       </div>
     </div>
@@ -1224,7 +1224,7 @@
     const dovBal = dov0 - dovDays * perDay;         // zbývá ke konci zobrazeného měsíce (min)
     const dovRes = dovFuture * perDay;              // rezervace = dovolená naplánovaná dál
     const dovRest = dovBal - dovRes;                // zbytek po vyčerpání všeho zadaného
-    const hm = m2 => (m2 < 0 ? '−' : '') + Math.floor(Math.abs(m2)/60) + ':' + pad(Math.abs(m2)%60);
+    const hm = m2 => (m2 < 0 ? '−' : '') + Math.round(Math.abs(m2)/60) + ' h';   // dovolená jen v celých hodinách
     const fmtDov = mm => (mm/perDay).toFixed(1).replace('.', ',') + ' dní · ' + hm(mm);
     const days = (dovBal / perDay).toFixed(1).replace('.', ',');
     const dovCls = dovBal < 0 ? 'neg' : (dovBal > 0 ? 'pos' : 'zero');
@@ -1471,7 +1471,7 @@
   const dovInit   = document.getElementById('dovInit');
   function refreshInitInputs(){
     const k = loadKonto(); kontoInit.value = k ? sdur(k) : '';
-    const d = loadDov();   dovInit.value   = d ? (Math.floor(d/60) + ':' + pad(d%60)) : '';
+    const d = loadDov();   dovInit.value   = d ? String(Math.round(d/60)) : '';
   }
   kontoInit.addEventListener('change', () => { saveKonto(parseSigned(kontoInit.value)); refreshInitInputs(); if(!histEl.hidden && !editArr) renderList(); });
   dovInit.addEventListener('change',   () => { saveDov(Math.abs(parseSigned(dovInit.value))); refreshInitInputs(); if(!histEl.hidden && !editArr) renderList(); });
