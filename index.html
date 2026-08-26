@@ -1019,11 +1019,11 @@
 
   // klíč aktivní směny (i přes půlnoc); null = žádná aktivní
   function activeShiftKey(store){
-    const keys = Object.keys(store).sort();
+    // ber jen dny se směnou (píchnutími); celodenní typy (dovolená, svátek…) přeskoč
+    const keys = Object.keys(store).filter(k => store[k] && store[k].punches && store[k].punches.length).sort();
     if(!keys.length) return null;
     const k = keys[keys.length-1];
-    const arr = store[k] && store[k].punches;
-    if(!arr || !arr.length) return null;
+    const arr = store[k].punches;
     let mins = arr.map(p => toMin(p.t));
     for(let i=1;i<mins.length;i++){ while(mins[i] < mins[i-1]) mins[i] += 1440; }
     const lastTs = new Date(k + 'T00:00:00').getTime() + mins[mins.length-1]*60000;
