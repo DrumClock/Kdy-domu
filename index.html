@@ -315,7 +315,7 @@
   .dov-sub{ display:flex; align-items:center; justify-content:space-between;
     font-size:12.5px; color:var(--muted); padding-top:6px; border-top:1px solid var(--line); }
   .dov-sub span:last-child{ font-family:"SFMono-Regular","Consolas",monospace; font-weight:600; }
-  .dov-sub .sub-blue{ color:#4aa3ff; } .dov-sub .sub-neg{ color:var(--red); }
+  .dov-sub .sub-blue{ color:#4aa3ff; } .dov-sub .sub-neg{ color:var(--red); } .dov-sub .sub-pos{ color:var(--green); }
   .init-row{ display:flex; gap:10px; }
   .init-item{ flex:1; display:flex; flex-direction:column; gap:5px; }
   .init-lbl{ font-size:11px; color:var(--muted); }
@@ -1247,8 +1247,8 @@
         '<div class="dov-head"><div class="konto-k">Dovolená</div>' +
           '<div class="konto-v dov-val ' + dovCls + '"><span class="dov-days">' + days + ' dní · </span>' + hm(dovBal) + '</div></div>' +
         (dovFuture > 0 ?
-          '<div class="dov-sub"><span>Rezervace</span><span>' + fmtDov(dovRes) + '</span></div>' +
-          '<div class="dov-sub"><span>Zbytek</span><span class="' + (dovRest < 0 ? 'sub-neg' : 'sub-blue') + '">' + fmtDov(dovRest) + '</span></div>'
+          '<div class="dov-sub"><span>Rezervace</span><span class="sub-neg">' + (dovRes/perDay).toFixed(1).replace('.', ',') + ' dní · −' + Math.round(dovRes/60) + ' h</span></div>' +
+          '<div class="dov-sub"><span>Zbytek</span><span class="' + (dovRest < 0 ? 'sub-neg' : 'sub-pos') + '">' + fmtDov(dovRest) + '</span></div>'
           : '') +
       '</div>';
 
