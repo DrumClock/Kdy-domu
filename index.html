@@ -124,8 +124,8 @@
     border-color:var(--amber);
     color:#1c1726;
   }
-  .seg button .h{display:block;font-size:19px;line-height:1}
-  .seg button .t{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-top:4px;opacity:.75}
+  .seg button .h{display:block;font-size:18px;line-height:1}
+  .seg button .t{display:block;font-size:10px;letter-spacing:.04em;text-transform:uppercase;margin-top:4px;opacity:.75}
 
   .row{display:flex;gap:14px;align-items:flex-end}
   .row .field{flex:1;margin-bottom:0}
@@ -578,21 +578,11 @@
 
     <div class="field">
       <label>Pracovní doba</label>
-      <div class="seg-group" id="seg" role="group" aria-label="Pracovní doba">
-        <div class="seg-block">
-          <span class="seg-cap">Zkrácená</span>
-          <div class="seg">
-            <button type="button" data-min="360"><span class="h">6</span><span class="t">hodin</span></button>
-          </div>
-        </div>
-        <div class="seg-block">
-          <span class="seg-cap">Klasická</span>
-          <div class="seg">
-            <button type="button" data-min="480"><span class="h">8</span><span class="t">ranní</span></button>
-            <button type="button" data-min="450"><span class="h">7:30</span><span class="t">odpolední</span></button>
-            <button type="button" data-min="420"><span class="h">7:00</span><span class="t">noční</span></button>
-          </div>
-        </div>
+      <div class="seg" id="seg" role="group" aria-label="Pracovní doba">
+        <button type="button" data-min="360"><span class="h">6</span><span class="t">zkrácená</span></button>
+        <button type="button" data-min="480"><span class="h">8</span><span class="t">ranní</span></button>
+        <button type="button" data-min="450"><span class="h">7:30</span><span class="t">odpol.</span></button>
+        <button type="button" data-min="420"><span class="h">7:00</span><span class="t">noční</span></button>
       </div>
     </div>
 
