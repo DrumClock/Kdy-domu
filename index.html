@@ -382,6 +382,9 @@
   .nv-toggle{ flex:none; background:transparent; border:1px solid var(--line); border-radius:8px;
     color:var(--muted); font-weight:700; font-size:12px; cursor:pointer; padding:6px 8px; }
   .nv-toggle.on{ background:var(--green); border-color:var(--green); color:#1c1726; }
+  .dov-toggle{ flex:none; background:transparent; border:1px solid var(--line); border-radius:8px;
+    color:var(--muted); font-weight:700; font-size:12px; cursor:pointer; padding:6px 8px; }
+  .dov-toggle.on{ background:#1e88e5; border-color:#1e88e5; color:#fff; }
   .add-punch{ margin-top:4px; }
   .sheet-actions{ display:flex; gap:10px; }
   .sheet-actions[hidden]{ display:none; }
@@ -992,7 +995,8 @@
         return { special:true, type:'nahradni', worked:amt, breaks:0, paidBreaks:0, snack:0, over:-amt, open:false, plan:amt, punches:[] };
       }
       // paragraf / nemoc / dovolená / svátek → nepočítá se do odpracováno ani přesčasu
-      return { special:true, neutral:true, type:day.type, worked:0, breaks:0, paidBreaks:0, snack:0, over:null, open:false, punches:[] };
+      const dovMin = (day.type === 'dovolena') ? (day.plan != null ? day.plan : workMin) : 0;
+      return { special:true, neutral:true, type:day.type, worked:0, breaks:0, paidBreaks:0, snack:0, over:null, open:false, dovMin, punches:[] };
     }
     const arr = (day && day.punches) || [];
     if(!arr.length) return null;
@@ -1002,12 +1006,13 @@
     const kinds = arr.map(p => p.k);
     const open = kinds[kinds.length-1] === 'in';
     const start = mins[0];
-    let breaks = 0, paidBreaks = 0, nvBreaks = 0;
+    let breaks = 0, paidBreaks = 0, nvBreaks = 0, dovBreaks = 0;
     for(let i=0;i<arr.length-1;i++){
       if(kinds[i]==='out' && kinds[i+1]==='in'){
         const g = mins[i+1]-mins[i];
         if(arr[i].paid) paidBreaks += g;        // §paragraf (přerušení)
         else if(arr[i].nv) nvBreaks += g;       // náhradní volno (přerušení)
+        else if(arr[i].dov) dovBreaks += g;     // dovolená (přerušení)
         else breaks += g;                       // neplacené přerušení → odečítá se
       }
     }
@@ -1018,28 +1023,31 @@
     const snackMin = hasOwn ? day.brk : breakMinutes();        // jinak vezmi aktuální nastavení
     const isPaid   = hasOwn ? !!day.paid : paidEl.checked;
 
-    // čistá práce = přítomnost − neplacená přerušení − §paragraf − NV přerušení
-    const workBefore = Math.max(0, end - start - breaks - paidBreaks - nvBreaks);
+    // čistá práce = přítomnost − neplacená přerušení − §paragraf − NV − dovolená
+    const workBefore = Math.max(0, end - start - breaks - paidBreaks - nvBreaks - dovBreaks);
     // svačina se odečítá jen když je čistá práce nad 6 h a není placená (zákoník práce)
     const snack = (!isPaid && workBefore > 360) ? snackMin : 0;
     const actualWork = Math.max(0, workBefore - snack);
     const last = arr[arr.length-1];
     const finalPara = !open && last.k === 'out' && !!last.paid;   // § na posledním odchodu = zbytek směny paragraf
     const finalNV   = !open && last.k === 'out' && !!last.nv;     // NV na posledním odchodu = zbytek náhradní volno
+    const finalDov  = !open && last.k === 'out' && !!last.dov;    // D na posledním odchodu = zbytek dovolená
 
     let paraTotal = paidBreaks;
+    let dovTotal = dovBreaks;
     let over = null;
     let nvFill = nvBreaks;                       // NV přerušení se počítají jako odpracováno
     if(plan != null){
       let deficit = Math.max(0, plan - actualWork);
-      let credit = Math.min(paidBreaks, deficit);               // §přerušení zaplní plán
-      deficit -= credit;
-      if(finalPara && deficit > 0){ paraTotal += deficit; credit += deficit; deficit = 0; }  // zbytek do plánu = paragraf
-      over = actualWork + credit - plan;
-      if(finalNV && over < 0) nvFill += (-over);                 // zbytek do plánu = náhradní volno
+      let credit = Math.min(paidBreaks, deficit); deficit -= credit;   // §přerušení zaplní plán
+      let dcredit = Math.min(dovBreaks, deficit); deficit -= dcredit;  // dovolená přerušení zaplní plán
+      if(finalPara && deficit > 0){ paraTotal += deficit; credit += deficit; deficit = 0; }      // zbytek = paragraf
+      else if(finalDov && deficit > 0){ dovTotal += deficit; dcredit += deficit; deficit = 0; }  // zbytek = dovolená
+      over = actualWork + credit + dcredit - plan;              // § i dovolená plní plán (netvoří přesčas)
+      if(finalNV && over < 0) nvFill += (-over);                // zbytek do plánu = náhradní volno
     }
-    const worked = actualWork + nvFill;                          // NV se přičte do odpracováno
-    return { start, end: open?null:mins[mins.length-1], worked, breaks, paidBreaks: paraTotal, snack, open, plan, over, nv: (nvFill > 0), punches: arr };
+    const worked = actualWork + nvFill;                          // NV se přičte do odpracováno (dovolená ne)
+    return { start, end: open?null:mins[mins.length-1], worked, breaks, paidBreaks: paraTotal, snack, open, plan, over, nv: (nvFill > 0), dovMin: dovTotal, punches: arr };
   }
 
   // klíč aktivní směny (i přes půlnoc); null = žádná aktivní
@@ -1206,18 +1214,19 @@
       if(d.getFullYear() < y || (d.getFullYear() === y && d.getMonth() <= m)) konto += kontoDelta(s);
     });
 
-    // dovolená: počáteční stav (hodiny) − vyčerpané dny (× délka směny ze setupu)
+    // dovolená: počáteční stav (hodiny) − vyčerpané hodiny (celodenní i částečné „D")
     const dov0 = loadDov();
-    let dovDays = 0, dovFuture = 0;
+    let dovUsedMin = 0, dovFutureMin = 0;
     items.forEach(({k,s}) => {
-      if(s.type !== 'dovolena') return;
+      const dm = s.dovMin || 0; if(!dm) return;
       const d = new Date(k + 'T00:00:00');
-      if(d.getFullYear() < y || (d.getFullYear() === y && d.getMonth() <= m)) dovDays++;
-      else dovFuture++;                            // dovolená v pozdějších měsících (naplánováno dál)
+      if(d.getFullYear() < y || (d.getFullYear() === y && d.getMonth() <= m)) dovUsedMin += dm;
+      else dovFutureMin += dm;                     // dovolená v pozdějších měsících (rezervace)
     });
     const perDay = workMin || 360;                 // hodin/den dle nastavené směny
-    const dovBal = dov0 - dovDays * perDay;         // zbývá ke konci zobrazeného měsíce (min)
-    const dovRes = dovFuture * perDay;              // rezervace = dovolená naplánovaná dál
+    const dovBal = dov0 - dovUsedMin;               // zbývá ke konci zobrazeného měsíce (min)
+    const dovRes = dovFutureMin;                    // rezervace = dovolená naplánovaná dál
+    const dovFuture = dovFutureMin;                 // (pro podmínku zobrazení)
     const dovRest = dovBal - dovRes;                // zbytek po vyčerpání všeho zadaného
     const hm = m2 => (m2 < 0 ? '−' : '') + Math.round(Math.abs(m2)/60) + ' h';   // dovolená jen v celých hodinách
     const fmtDov = mm => (mm/perDay).toFixed(1).replace('.', ',') + ' dní · ' + hm(mm);
@@ -1269,7 +1278,7 @@
       const line3 = range + (off ? ' · pauza ' + dur(off) : '');
       const PLAN_NAME = { 360:'zkrácená', 480:'ranní', 450:'odpolední', 420:'noční' };
       const shiftName = PLAN_NAME[s.plan] ? ' <span class="d-sub">· ' + PLAN_NAME[s.plan] + '</span>' : '';
-      const badges = (s.paidBreaks ? typeBadge('paragraf') : '') + (s.nv ? typeBadge('nahradni') : '');
+      const badges = (s.paidBreaks ? typeBadge('paragraf') : '') + (s.nv ? typeBadge('nahradni') : '') + ((s.dovMin > 0) ? typeBadge('dovolena') : '');
       const over = (s.open || s.over == null)
         ? '<span class="df zero">–</span>'
         : '<span class="df ' + diffClass(s.over) + '">' + sdur(s.over) + '</span>';
@@ -1298,6 +1307,7 @@
         '<input type="time" class="edit-time" data-idx="' + i + '" value="' + p.t + '">' +
         (isOut ? '<button type="button" class="para-toggle ' + (p.paid?'on':'') + '" data-idx="' + i + '" title="Paragraf (placený)">§</button>' : '') +
         (isOut ? '<button type="button" class="nv-toggle ' + (p.nv?'on':'') + '" data-idx="' + i + '" title="Náhradní volno">NV</button>' : '') +
+        (isOut ? '<button type="button" class="dov-toggle ' + (p.dov?'on':'') + '" data-idx="' + i + '" title="Dovolená">D</button>' : '') +
         '<button type="button" class="row-del" data-idx="' + i + '" aria-label="Smazat">✕</button>' +
       '</div>';
     }).join('');
@@ -1354,7 +1364,7 @@
     const d = store[date] || {};
     editDate = date; editKey = date; editKeyTo = date;
     editType = d.type || 'smena';
-    editArr = (d.punches || []).map(p => ({ t: p.t, k: p.k, paid: p.paid, nv: p.nv }));
+    editArr = (d.punches || []).map(p => ({ t: p.t, k: p.k, paid: p.paid, nv: p.nv, dov: p.dov }));
     if(!editArr.length && editType === 'smena') editArr = [ { t:'08:00', k:'in' }, { t:'16:30', k:'out' } ];
     editBrk = d.brk != null ? d.brk : breakMinutes();
     editPaid = d.brk != null ? !!d.paid : paidEl.checked;
@@ -1498,9 +1508,11 @@
     const topt = e.target.closest('.type-opt');
     if(topt){ editType = topt.dataset.type; renderEdit(); return; }
     const pt = e.target.closest('.para-toggle');
-    if(pt){ const i=+pt.dataset.idx; editArr[i].paid = !editArr[i].paid; if(editArr[i].paid) editArr[i].nv = false; renderEdit(); return; }
+    if(pt){ const i=+pt.dataset.idx; editArr[i].paid = !editArr[i].paid; if(editArr[i].paid){ editArr[i].nv = false; editArr[i].dov = false; } renderEdit(); return; }
     const nv = e.target.closest('.nv-toggle');
-    if(nv){ const i=+nv.dataset.idx; editArr[i].nv = !editArr[i].nv; if(editArr[i].nv) editArr[i].paid = false; renderEdit(); return; }
+    if(nv){ const i=+nv.dataset.idx; editArr[i].nv = !editArr[i].nv; if(editArr[i].nv){ editArr[i].paid = false; editArr[i].dov = false; } renderEdit(); return; }
+    const dv = e.target.closest('.dov-toggle');
+    if(dv){ const i=+dv.dataset.idx; editArr[i].dov = !editArr[i].dov; if(editArr[i].dov){ editArr[i].paid = false; editArr[i].nv = false; } renderEdit(); return; }
   });
   logListEl.addEventListener('input', e => {
     const inp = e.target.closest('.edit-time');
