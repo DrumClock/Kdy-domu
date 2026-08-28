@@ -1284,7 +1284,7 @@
       if(s.special){
         const names = { paragraf:'Paragraf', nemoc:'Nemoc', dovolena:'Dovolená', svatek:'Svátek', nahradni:'Náhradní volno', pulden:'Půl dne' };
         if(s.type === 'pulden'){
-          const hb = { prace:'', paragraf:typeBadge('paragraf'), dovolena:typeBadge('dovolena'), nahradni:typeBadge('nahradni') };
+          const hb = { prace:typeBadge('smena'), paragraf:typeBadge('paragraf'), dovolena:typeBadge('dovolena'), nahradni:typeBadge('nahradni') };
           const mid = (s.start!=null) ? hhmm(s.start + s.half) : '', st = (s.start!=null)?hhmm(s.start):'', en = (s.end!=null)?hhmm(s.end):'';
           const rng = (s.start!=null) ? (st + ' → ' + mid + ' → ' + en) : (HALF_LABELS[s.a] + ' + ' + HALF_LABELS[s.b]);
           const badges = (hb[s.a]||'') + (hb[s.b]||'');
