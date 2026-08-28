@@ -19,9 +19,10 @@ Jednoduchá webová appka (PWA), která spočítá, kdy můžeš odejít z prác
 - **Svačina** s nastavitelnou délkou a přepínačem **placená / neplacená**. Neplacená se z odpracované doby odečítá jen když je čistá práce **nad 6 h** (podle zákoníku práce).
 - **Živý odpočet** — kolik zbývá (červeně) nebo kolik je přesčas (zeleně), aktualizace každou vteřinu.
 - **[Píchačky](#píchačky)** — Příchod / Odchod (i přes NFC) evidují začátek, konec, přerušení a přesčas směny.
-- **Typy dnů** — vedle běžné směny i **paragraf (§)**, **náhradní volno (NV)**, **nemoc**, **dovolená** (od–do) a **svátek**.
+- **Typy dnů** — vedle běžné směny i **paragraf (§)**, **náhradní volno (NV)**, **dovolená (D)**, **nemoc**, **dovolená** (od–do), **svátek** a **půl dne** (den složený ze dvou půlek).
 - **Historie** po měsících s úpravou, dodatečným dopsáním a exportem do CSV.
-- **Konto přesčasů** — kumulativní banka napříč měsíci s ručním počátečním stavem; náhradní volno z ní čerpá.
+- **Konto přesčasů** — kumulativní banka napříč měsíci s ručním počátečním stavem; náhradní volno z ní čerpá (u zkrácené 6h směny se přesčas do konta počítá až nad 8 h).
+- **Konto dovolené** — počáteční stav v hodinách, čerpá celodenní i částečná dovolená; zobrazení v hodinách i dnech, s rezervací a zbytkem pro naplánovanou dovolenou.
 - **Záloha** — kompletní export/import do JSON souboru (přenos na jiný telefon) a export do CSV pro Excel.
 - **Připomínka do kalendáře** — vytvoří v telefonu událost na čas odchodu s upozorněním (funguje i při zavřené appce a zamčeném telefonu).
 - **Zapamatování** — délka směny a nastavení svačiny se drží natrvalo.
@@ -139,9 +140,12 @@ Appka funguje jako jednoduché píchačky včetně přerušení.
 - Odpracováno = (konec − začátek) − přerušení − neplacená svačina; přesčas = odpracováno − zvolená délka směny.
 - **Svačina** se odečítá jen když je čistá práce **nad 6 h** (zákoník práce). Do 6:00 včetně se neodečítá, od 6:01 se odečte celá (např. 6:01 → 5:31).
 
-**Paragraf (§) a náhradní volno (NV)** — v editaci dne má každý **Odchod** přepínače **§** a **NV** (vzájemně se vylučují):
-- **§ paragraf** — u přerušení = placená pauza; u posledního Odchodu = zbytek směny je paragraf. Do odpracované doby se **nepočítá**, ale **zaplní plán** (netvoří přesčas).
-- **NV náhradní volno** — u přerušení nebo posledního Odchodu. **Přičte se do odpracované doby** (doplní den do plné směny) a **odečte z přesčasu**.
+**Paragraf (§), náhradní volno (NV) a dovolená (D)** — v editaci dne má každý **Odchod** přepínače **§**, **NV** a **D** (vzájemně se vylučují); platí pro dobu **po tom odchodu** (zbytek do plné směny):
+- **§ paragraf** — do odpracované doby se **nepočítá**, ale **zaplní plán** (netvoří přesčas). Neutrální ke kontu.
+- **NV náhradní volno** — **přičte se do odpracované doby** (doplní den do plné směny) a **čerpá z konta přesčasů**.
+- **D dovolená** — zaplní plán (netvoří přesčas), do odpracováno se nepočítá a **odečte hodiny z konta dovolené**. Ideální na část směny (např. práce 8–11, pak D → 3 h dovolené).
+
+**Půl dne** (typ dne) — den složený ze **dvou půlek** plánu. Vybereš první a druhou půlku z **Práce / Paragraf / Dovolená / Náhradní volno**, zadáš **Začátek** a appka ukáže časy (např. 08:00 → 11:00 → 14:00). Např. *Paragraf + Dovolená* = § půl směny + dovolená půl směny (−z konta), přesčas 0; *Práce + NV* = plná směna odpracováno, přesčas −půl (čerpá konto).
 
 **Celodenní typy** (v editaci přes „Typ dne", nebo § / ✚ na hlavní obrazovce pro dnešek):
 - **Paragraf**, **Nemoc**, **Dovolená**, **Svátek** — nepočítají se do odpracováno ani přesčasu. **Dovolená a Nemoc** jdou zadat **od–do** (soboty a neděle se přeskočí).
@@ -153,12 +157,15 @@ Tlačítka se sama zapínají/vypínají podle stavu, takže se nedá přihlási
 
 **Historie** (ikona hodin nahoře uprostřed) se otevře jako panel přes celou výšku: **nahoře** přepínač měsíce (◀ ▶) se souhrnem *Odpracováno* a *Přesčas* za zvolený měsíc, **uprostřed** scrollovací seznam dní, **dole** tlačítka. Listovat jde i do budoucích měsíců (kde máš záznam, např. dovolenou).
 
-- Každý den má vpravo barevné **ikony** podle obsahu: **§** (paragraf), **NV** (náhradní volno), křížek (nemoc), sluníčko (dovolená), kalendář s fajfkou (svátek).
-- **Úprava záznamu** — tužka ✎ otevře editor: **typ dne** (dlaždice s ikonami), časy a typ píchnutí, datum, pracovní doba, svačina, § a NV.
+- Každý den má vpravo barevné **ikony** podle obsahu: hodiny (práce), **§** (paragraf), **NV** (náhradní volno), sluníčko (dovolená), křížek (nemoc), kalendář s fajfkou (svátek), **½** (půl dne). U složených dní se ikony skládají pod sebe.
+- **Úprava záznamu** — tužka ✎ otevře editor: **typ dne** (dlaždice s ikonami), časy a typ píchnutí (**§ / NV / D**), datum, pracovní doba, svačina.
 - **Dodatečné dopsání** — tlačítko ➕ v záhlaví (vybereš datum a typ).
+- **Počáteční stavy** konta a dovolené se zadávají na **hlavní obrazovce** dole (pod Svačinou).
 - Záznamy jde jednotlivě mazat (✕). **Vymazat měsíc** smaže jen právě zobrazený měsíc.
 
-**Konto přesčasů** — pod souhrnem je karta **Konto ke konci [měsíce]** = kumulativní součet všech přesčasů až do konce zobrazeného měsíce plus ruční **počáteční stav konta** (zadáš třeba `+12:00`, klidně i mínus). Přesčas konto zvyšuje, náhradní volno z něj čerpá — a protože je součet průběžný, **NV v jednom měsíci ubere z konta našetřeného v jiném**. Konto může jít i do mínusu.
+**Konto přesčasů** — karta **Konto** = kumulativní součet přesčasů do konce zobrazeného měsíce plus ruční **počáteční stav** (zadáš třeba `+12:00`, klidně i mínus). Náhradní volno z konta čerpá — a protože je součet průběžný, **NV v jednom měsíci ubere z konta našetřeného v jiném**. U **klasické směny** jde do konta celý přesčas; u **zkrácené 6h** směny se do konta počítá **jen práce nad 8 h** (plná směna) a jen ten rozdíl — práce 6–8 h ani dřívější odchod kontem nehýbou. Zobrazený „přesčas" u dne je vždy proti plánu dne. Konto může jít i do mínusu.
+
+**Konto dovolené** — karta **Dovolená** = **počáteční stav v hodinách** (zadáš na hlavní obrazovce) − vyčerpaná dovolená; ukazuje se v **hodinách i dnech** (dny podle délky směny 6/8 h). Ubírá celodenní **Dovolená** i částečná přes **D** u odchodu nebo **Půl dne**. Když máš dovolenou i v pozdějších měsících, přibudou řádky **Rezervace** (kolik ještě ubyde) a **Zbytek** (co reálně zůstane).
 
 **Záloha a export** (tlačítko **Záloha** v Historii → stránka Záloha):
 - **Export CSV** — přehled dnů pro Excel (`pichacky.csv`).
