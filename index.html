@@ -283,6 +283,8 @@
   .head-btn:active{ border-color:#5a4a76; }
   .edit-lbl{ font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:2px 0 6px; }
   .edit-date{ width:100%; padding:9px 10px; font-size:16px; margin-bottom:14px; }
+  .edit-pulstart{ width:100%; padding:9px 10px; font-size:16px; margin-bottom:14px; background:#161020; color:var(--ink); border:1px solid var(--line); border-radius:10px; }
+  .edit-half{ width:100%; padding:11px 10px; font-size:16px; margin-bottom:14px; background:#161020; color:var(--ink); border:1px solid var(--line); border-radius:10px; }
   .plan-row{ display:flex; gap:6px; margin-bottom:14px; }
   .plan-btn{ flex:1; padding:8px 3px; border:1px solid var(--line); border-radius:10px;
     background:#161020; color:var(--muted); cursor:pointer; text-align:center; line-height:1.15; }
@@ -348,6 +350,7 @@
   .badge{ display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px;
     padding:0 5px; border-radius:6px; font-size:12px; font-weight:700; color:#1c1726; }
   .b-para{ background:var(--amber); } .b-nv{ background:var(--green); } .b-nemoc{ background:#fff; }
+  .b-pul{ background:#6b5bd0; color:#fff; }
   .b-dov{ background:#1e88e5; } .b-sva{ background:#2a2138; border:1px solid var(--line); }
   .b-smena{ background:#2a2138; border:1px solid var(--line); }
   .badge svg{ display:block; }
@@ -949,8 +952,10 @@
   const addDayBtn    = document.getElementById('addDayBtn');
   let editDate = null, editKey = null, editArr = null, editBrk = 30, editPaid = false, editPlan = 480;
   let editType = 'smena', editKeyTo = null;
+  let editPulStart = '08:00', editHalfA = 'prace', editHalfB = 'dovolena';
   let histMonth = null;
-  const TYPE_LABELS = { smena:'Směna', paragraf:'Paragraf', nemoc:'Nemoc', dovolena:'Dovolená', svatek:'Svátek', nahradni:'Náhradní volno' };
+  const TYPE_LABELS = { smena:'Směna', paragraf:'Paragraf', nemoc:'Nemoc', dovolena:'Dovolená', svatek:'Svátek', nahradni:'Náhradní volno', pulden:'Půl dne' };
+  const HALF_LABELS = { prace:'Práce', paragraf:'Paragraf', dovolena:'Dovolená', nahradni:'Náhradní volno' };
 
   function ymd(d){ return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
   function hhmm(min){ min=((min%1440)+1440)%1440; return pad(Math.floor(min/60)) + ':' + pad(min%60); }
@@ -993,6 +998,21 @@
       if(day.type === 'nahradni'){                 // náhradní volno = délka směny; +do práce, −z přesčasu
         const amt = day.plan != null ? day.plan : workMin;
         return { special:true, type:'nahradni', worked:amt, breaks:0, paidBreaks:0, snack:0, over:-amt, open:false, plan:amt, punches:[] };
+      }
+      if(day.type === 'pulden'){                    // den složený ze dvou půlek plánu
+        const plan = day.plan != null ? day.plan : workMin;
+        const half = Math.round(plan/2);
+        let work=0, para=0, dov=0, nv=0;
+        [day.a, day.b].forEach(t => {
+          if(t==='prace') work += half; else if(t==='paragraf') para += half;
+          else if(t==='dovolena') dov += half; else if(t==='nahradni') nv += half;
+        });
+        const worked = work + nv;
+        const over = work + para + dov - plan;
+        const st = day.start ? toMin(day.start) : null;
+        return { special:true, type:'pulden', worked, breaks:0, paidBreaks:para, snack:0, over,
+                 open:false, plan, dovMin:dov, nv:(nv>0), a:day.a, b:day.b, half,
+                 start: st, end: (st!=null ? st+plan : null), punches:[] };
       }
       // paragraf / nemoc / dovolená / svátek → nepočítá se do odpracováno ani přesčasu
       const dovMin = (day.type === 'dovolena') ? (day.plan != null ? day.plan : workMin) : 0;
@@ -1159,7 +1179,7 @@
         '<path d="M5.6 12.4l3 3 6-6.2" fill="none" stroke="#43c67d" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>' +
         '</svg></span>';
     }
-    const m = { paragraf:['§','b-para'], nahradni:['NV','b-nv'] };
+    const m = { paragraf:['§','b-para'], nahradni:['NV','b-nv'], pulden:['½','b-pul'] };
     const b = m[type]; return b ? '<span class="badge ' + b[1] + '">' + b[0] + '</span>' : '';
   }
 
@@ -1198,7 +1218,7 @@
     const FULL_SHIFT = 480;
     function kontoDelta(s){
       if(s.neutral || s.over == null) return 0;
-      if(s.type === 'nahradni') return s.over;            // celodenní náhradní volno čerpá
+      if(s.type === 'nahradni' || s.type === 'pulden') return s.over;   // NV / půlden čerpá konto
       const plan = s.plan; if(plan == null) return 0;
       const base = s.over + plan;                         // actualWork + paragraf credit
       if(plan <= 360) return Math.max(0, base - FULL_SHIFT);  // zkrácená → jen nad 8h
@@ -1262,7 +1282,19 @@
       const delBtn  = '<button class="rec-del" data-date="' + k + '" aria-label="Smazat">✕</button>';
 
       if(s.special){
-        const names = { paragraf:'Paragraf', nemoc:'Nemoc', dovolena:'Dovolená', svatek:'Svátek', nahradni:'Náhradní volno' };
+        const names = { paragraf:'Paragraf', nemoc:'Nemoc', dovolena:'Dovolená', svatek:'Svátek', nahradni:'Náhradní volno', pulden:'Půl dne' };
+        if(s.type === 'pulden'){
+          const hb = { prace:'', paragraf:typeBadge('paragraf'), dovolena:typeBadge('dovolena'), nahradni:typeBadge('nahradni') };
+          const mid = (s.start!=null) ? hhmm(s.start + s.half) : '', st = (s.start!=null)?hhmm(s.start):'', en = (s.end!=null)?hhmm(s.end):'';
+          const rng = (s.start!=null) ? (st + ' → ' + mid + ' → ' + en) : (HALF_LABELS[s.a] + ' + ' + HALF_LABELS[s.b]);
+          const badges = (hb[s.a]||'') + (hb[s.b]||'');
+          const right = '<span class="df ' + diffClass(s.over) + '">' + sdur(s.over) + '</span>';
+          return '<div class="rec">' + editBtn + dowLabel(k) +
+                 '<div class="rec-main"><div class="d">' + fmtDate(k) + ' <span class="d-sub">· půl dne</span></div>' +
+                 '<div class="t">odpracováno ' + dur(s.worked) + '</div>' +
+                 '<div class="t">' + rng + '</div></div>' +
+                 '<div class="rec-actions"><span class="rec-badges">' + badges + '</span>' + right + delBtn + '</div></div>';
+        }
         const right = (s.type === 'nahradni')
           ? '<span class="df ' + diffClass(s.over) + '">' + sdur(s.over) + '</span>'
           : '<span class="df zero">–</span>';
@@ -1319,7 +1351,7 @@
     viewActions.hidden = true; editActions.hidden = false;
     addDayBtn.hidden = true;
 
-    const typeOrder = ['smena','paragraf','nemoc','dovolena','svatek','nahradni'];
+    const typeOrder = ['smena','paragraf','nemoc','dovolena','svatek','nahradni','pulden'];
     const typeGrid = typeOrder.map(t =>
       '<button type="button" class="type-opt' + (editType===t?' on':'') + '" data-type="' + t + '">' +
         '<span class="type-opt-ic">' + typeBadge(t) + '</span>' +
@@ -1342,6 +1374,22 @@
       html += '<div class="edit-lbl">Délka (dle směny)</div>' +
               '<div class="plan-row">' + plansHtml() + '</div>' +
               '<div class="edit-head">Náhradní volno se přičte do odpracováno a odečte z přesčasu.</div>';
+    } else if(editType === 'pulden'){
+      const opts = sel => Object.keys(HALF_LABELS).map(k =>
+        '<option value="' + k + '"' + (sel===k?' selected':'') + '>' + HALF_LABELS[k] + '</option>').join('');
+      const plan = editPlan, half = Math.round(plan/2);
+      const st = (editPulStart && editPulStart.indexOf(':') > 0) ? editPulStart : '08:00';
+      const mid = hhmm(toMin(st) + half), endT = hhmm(toMin(st) + plan);
+      html += '<div class="edit-lbl">Pracovní doba</div>' +
+              '<div class="plan-row">' + plansHtml() + '</div>' +
+              '<div class="edit-lbl">Začátek</div>' +
+              '<input type="time" class="edit-pulstart" value="' + st + '">' +
+              '<div class="edit-lbl">První půlka</div>' +
+              '<select class="edit-half" id="halfA">' + opts(editHalfA) + '</select>' +
+              '<div class="edit-lbl">Druhá půlka</div>' +
+              '<select class="edit-half" id="halfB">' + opts(editHalfB) + '</select>' +
+              '<div class="edit-head">' + st + ' → ' + mid + ' <b>' + HALF_LABELS[editHalfA] + '</b> · ' +
+                mid + ' → ' + endT + ' <b>' + HALF_LABELS[editHalfB] + '</b></div>';
     } else {   // směna
       html += '<div class="edit-lbl">Pracovní doba</div>' +
               '<div class="plan-row">' + plansHtml() + '</div>' +
@@ -1369,6 +1417,9 @@
     editBrk = d.brk != null ? d.brk : breakMinutes();
     editPaid = d.brk != null ? !!d.paid : paidEl.checked;
     editPlan = d.plan != null ? d.plan : workMin;
+    editPulStart = d.start || '08:00';
+    editHalfA = d.a || 'prace';
+    editHalfB = d.b || 'dovolena';
     renderHistory();
   }
   function openNewDay(){
@@ -1379,6 +1430,7 @@
     editBrk  = breakMinutes();
     editPaid = paidEl.checked;
     editPlan = workMin;
+    editPulStart = '08:00'; editHalfA = 'prace'; editHalfB = 'dovolena';
     renderHistory();
   }
   function saveEdit(){
@@ -1407,6 +1459,8 @@
       store[key] = { type: editType };
     } else if(editType === 'nahradni'){
       store[key] = { type: 'nahradni', plan: editPlan };
+    } else if(editType === 'pulden'){
+      store[key] = { type: 'pulden', start: editPulStart, plan: editPlan, a: editHalfA, b: editHalfB };
     } else {   // směna
       const clean = editArr.filter(p => /^\d{1,2}:\d{2}$/.test(p.t));
       if(!clean.length){ delete store[key]; }
@@ -1523,6 +1577,10 @@
     if(dto){ editKeyTo = dto.value; return; }
     const bk = e.target.closest('.edit-brk');
     if(bk){ const [h,m]=(bk.value||'0:0').split(':').map(Number); editBrk = (h||0)*60 + (m||0); return; }
+    const ps = e.target.closest('.edit-pulstart');
+    if(ps){ editPulStart = ps.value; renderEdit(); return; }
+    const hf = e.target.closest('.edit-half');
+    if(hf){ if(hf.id==='halfA') editHalfA = hf.value; else editHalfB = hf.value; renderEdit(); return; }
   });
 
   // ===== parametry v URL (pro NFC tag) =====
