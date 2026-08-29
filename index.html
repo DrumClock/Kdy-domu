@@ -284,7 +284,7 @@
   .edit-lbl{ font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:2px 0 6px; }
   .edit-date{ width:100%; padding:9px 10px; font-size:16px; margin-bottom:14px; }
   .edit-pulstart{ width:100%; padding:9px 10px; font-size:16px; margin-bottom:14px; background:#161020; color:var(--ink); border:1px solid var(--line); border-radius:10px; }
-  .edit-half{ width:100%; padding:11px 10px; font-size:16px; margin-bottom:14px; background:#161020; color:var(--ink); border:1px solid var(--line); border-radius:10px; }
+  .edit-half, .edit-fill{ width:100%; padding:11px 10px; font-size:16px; margin-bottom:14px; background:#161020; color:var(--ink); border:1px solid var(--line); border-radius:10px; }
   .plan-row{ display:flex; gap:6px; margin-bottom:14px; }
   .plan-btn{ flex:1; padding:8px 3px; border:1px solid var(--line); border-radius:10px;
     background:#161020; color:var(--muted); cursor:pointer; text-align:center; line-height:1.15; }
@@ -958,6 +958,7 @@
   let editDate = null, editKey = null, editArr = null, editBrk = 30, editPaid = false, editPlan = 480;
   let editType = 'smena', editKeyTo = null;
   let editPulStart = '08:00', editHalfA = 'prace', editHalfB = 'dovolena';
+  let editFill = '';   // zbytek do plné směny: ''|paragraf|dovolena|nahradni|svatek|nemoc
   let histMonth = null;
   const TYPE_LABELS = { smena:'Směna', paragraf:'Paragraf', nemoc:'Nemoc', dovolena:'Dovolená', svatek:'Svátek', nahradni:'Náhradní volno', pulden:'Půl dne' };
   const HALF_LABELS = { prace:'Práce', paragraf:'Paragraf', dovolena:'Dovolená', nahradni:'Náhradní volno' };
@@ -1032,8 +1033,47 @@
     const open = kinds[kinds.length-1] === 'in';
     const start = mins[0];
 
-    // NOVÝ MODEL: typ úseku (Příchod→Odchod) uložený na odchodu jako `seg`
+    // NOVÝ MODEL: čistá práce (Příchod/Odchod) + denní „zbytek do plné směny" (fill)
     const hasSeg = arr.some(p => p.k === 'out' && p.seg && p.seg !== 'prace');
+    const hasOldFlag = arr.some(p => p.k === 'out' && (p.paid || p.nv || p.dov));
+    if(!hasSeg && !hasOldFlag){
+      let endN;
+      if(open){ let n=nowMin(); while(n < mins[mins.length-1]) n += 1440; endN = n; }
+      else endN = mins[mins.length-1];
+      let work=0, breaks=0;
+      for(let i=0;i<arr.length-1;i++){
+        const d = mins[i+1]-mins[i];
+        if(kinds[i]==='in' && kinds[i+1]==='out') work += d;
+        else if(kinds[i]==='out' && kinds[i+1]==='in') breaks += d;
+      }
+      if(open) work += endN - mins[mins.length-1];
+      const hasOwn = day && day.brk != null;
+      const snackMin = hasOwn ? day.brk : breakMinutes();
+      const isPaid = hasOwn ? !!day.paid : paidEl.checked;
+      const snack = (!isPaid && work > 360) ? snackMin : 0;
+      const actualWork = Math.max(0, work - snack);
+      const fill = day && day.fill;
+      let over=null, nvFill=0, dovMin=0, paraTotal=0, kd=0;
+      if(plan != null){
+        const deficit = Math.max(0, plan - actualWork);
+        if(fill && deficit > 0){
+          if(fill==='nahradni'){ nvFill = deficit; over = actualWork - plan; }
+          else if(fill==='dovolena'){ dovMin = deficit; over = 0; }
+          else { paraTotal = deficit; over = 0; }          // paragraf / svátek / nemoc
+        } else over = actualWork - plan;
+        if(fill==='nahradni' && deficit>0) kd = -deficit;
+        else if(over > 0) kd = (plan<=360) ? Math.max(0, actualWork-480) : over;
+        else if(over < 0) kd = (plan<=360) ? 0 : over;
+      }
+      const worked = actualWork + nvFill;
+      const dfl = (fill && plan!=null && (plan-actualWork)>0) ? fill : null;
+      return { start, end: open?null:mins[mins.length-1], worked, breaks, paidBreaks: paraTotal, snack,
+               open, plan, over, nv:(nvFill>0), dovMin, kd, fill:dfl, seg:true,
+               segTypes: { prace:actualWork>0, paragraf:dfl==='paragraf', dovolena:dfl==='dovolena', nahradni:dfl==='nahradni', svatek:dfl==='svatek', nemoc:dfl==='nemoc' },
+               punches: arr };
+    }
+
+    // ZPĚTNÁ KOMPATIBILITA: starý úsekový model (typ na odchodu `seg`)
     if(hasSeg){
       let endN;
       if(open){ let n=nowMin(); while(n < mins[mins.length-1]) n += 1440; endN = n; }
@@ -1388,25 +1428,21 @@
       '<button type="button" class="plan-btn ' + (editPlan===m?'on':'') + '" data-plan="' + m + '">' +
         '<span class="ph">' + l + '</span><span class="pc">' + c + '</span></button>').join('');
   }
-  const SEG_TYPES = ['paragraf','nahradni','dovolena','svatek','nemoc'];
-  function segPickerHtml(p, i){
-    const cur = p.seg || 'prace';
-    return '<div class="seg-pick" data-idx="' + i + '">' +
-      SEG_TYPES.map(t =>
-        '<button type="button" class="seg-btn' + (cur===t?' on':'') + '" data-idx="' + i + '" data-seg="' + t + '" title="' + TYPE_LABELS[t] + '">' + typeBadge(t) + '</button>'
-      ).join('') + '</div>';
-  }
   function punchRowsHtml(){
-    return editArr.map((p,i) => {
-      const isOut = p.k === 'out';
-      return '<div class="edit-row" data-idx="' + i + '">' +
+    return editArr.map((p,i) =>
+      '<div class="edit-row" data-idx="' + i + '">' +
         '<button type="button" class="type-toggle ' + (p.k==='in'?'in':'out') + '" data-idx="' + i + '">' +
           (p.k==='in' ? 'Příchod' : 'Odchod') + '</button>' +
         '<input type="time" class="edit-time" data-idx="' + i + '" value="' + p.t + '">' +
         '<button type="button" class="row-del" data-idx="' + i + '" aria-label="Smazat">✕</button>' +
-      '</div>' +
-      (isOut ? segPickerHtml(p, i) : '');
-    }).join('');
+      '</div>').join('');
+  }
+  function fillPickerHtml(){
+    const opts = [['','Nic (jen práce)'],['paragraf','§ Paragraf'],['dovolena','Dovolená'],['nahradni','Náhradní volno'],['svatek','Svátek'],['nemoc','Nemoc']];
+    return '<div class="edit-lbl">Zbytek do plné směny</div>' +
+      '<select class="edit-fill" id="fillSel">' +
+      opts.map(([v,l]) => '<option value="' + v + '"' + (editFill===v?' selected':'') + '>' + l + '</option>').join('') +
+      '</select>';
   }
 
   function renderEdit(){
@@ -1464,9 +1500,10 @@
                   (editPaid ? 'Placená' : 'Neplacená') + '</button>' +
               '</div>' +
               '<div class="edit-lbl">Píchnutí</div>' +
-              '<div class="edit-head">Uprav čas. Pod každým <b>Odchodem</b> vyber typ úseku (Příchod→Odchod): §, NV, ☀ dovolená, ★ svátek, ✚ nemoc. Nic = práce.</div>' +
+              '<div class="edit-head">Zadej <b>Příchod/Odchod</b> odpracované doby. Když nedosáhneš plné směny, vyber dole <b>Zbytek do plné směny</b> — schodek se dopočítá sám.</div>' +
               punchRowsHtml() +
-              '<button type="button" class="act-btn add-punch" id="addPunchBtn">+ Přidat píchnutí</button>';
+              '<button type="button" class="act-btn add-punch" id="addPunchBtn">+ Přidat píchnutí</button>' +
+              fillPickerHtml();
     }
     logListEl.innerHTML = html;
   }
@@ -1476,11 +1513,15 @@
     const d = store[date] || {};
     editDate = date; editKey = date; editKeyTo = date;
     editType = d.type || 'smena';
-    editArr = (d.punches || []).map(p => {
-      let seg = p.seg;
-      if(!seg && p.k === 'out'){ seg = p.paid ? 'paragraf' : p.nv ? 'nahradni' : p.dov ? 'dovolena' : 'prace'; }
-      return { t: p.t, k: p.k, seg: seg || 'prace' };
-    });
+    editArr = (d.punches || []).map(p => ({ t: p.t, k: p.k }));
+    editFill = d.fill || '';
+    if(!editFill){                                   // migrace ze starých značek/úseků
+      const outs = (d.punches || []).filter(p => p.k === 'out');
+      const seg = outs.map(p => p.seg).find(s => s && s !== 'prace');
+      const fl = outs.find(p => p.paid || p.nv || p.dov);
+      if(seg) editFill = seg;
+      else if(fl) editFill = fl.paid ? 'paragraf' : fl.nv ? 'nahradni' : 'dovolena';
+    }
     if(!editArr.length && editType === 'smena') editArr = [ { t:'08:00', k:'in' }, { t:'16:30', k:'out' } ];
     editBrk = d.brk != null ? d.brk : breakMinutes();
     editPaid = d.brk != null ? !!d.paid : paidEl.checked;
@@ -1498,7 +1539,7 @@
     editBrk  = breakMinutes();
     editPaid = paidEl.checked;
     editPlan = workMin;
-    editPulStart = '08:00'; editHalfA = 'prace'; editHalfB = 'dovolena';
+    editPulStart = '08:00'; editHalfA = 'prace'; editHalfB = 'dovolena'; editFill = '';
     renderHistory();
   }
   function saveEdit(){
@@ -1520,7 +1561,7 @@
         d.setDate(d.getDate()+1); n++;
       }
       savePunch(store);
-      editDate = editKey = editKeyTo = editArr = null; editType = 'smena';
+      editDate = editKey = editKeyTo = editArr = null; editType = 'smena'; editFill = '';
       renderHistory(); renderStatus(); toast('Uloženo'); return;
     }
     if(editType === 'paragraf' || editType === 'svatek'){
@@ -1530,16 +1571,16 @@
     } else if(editType === 'pulden'){
       store[key] = { type: 'pulden', start: editPulStart, plan: editPlan, a: editHalfA, b: editHalfB };
     } else {   // směna
-      const clean = editArr.filter(p => /^\d{1,2}:\d{2}$/.test(p.t)).map(p => {
-        const o = { t: p.t, k: p.k };
-        if(p.k === 'out' && p.seg && p.seg !== 'prace') o.seg = p.seg;   // typ úseku jen když není práce
-        return o;
-      });
+      const clean = editArr.filter(p => /^\d{1,2}:\d{2}$/.test(p.t)).map(p => ({ t: p.t, k: p.k }));
       if(!clean.length){ delete store[key]; }
-      else { store[key] = { punches: clean, plan: editPlan, brk: editBrk, paid: editPaid }; }
+      else {
+        const rec = { punches: clean, plan: editPlan, brk: editBrk, paid: editPaid };
+        if(editFill) rec.fill = editFill;
+        store[key] = rec;
+      }
     }
     savePunch(store);
-    editDate = editKey = editKeyTo = editArr = null; editType = 'smena';
+    editDate = editKey = editKeyTo = editArr = null; editType = 'smena'; editFill = '';
     renderHistory(); renderStatus(); toast('Uloženo');
   }
   function cancelEdit(){ editDate = editKey = editArr = null; renderHistory(); }
@@ -1635,8 +1676,7 @@
     if(topt){ editType = topt.dataset.type; renderEdit(); return; }
     const sb = e.target.closest('.seg-btn');
     if(sb){ const i=+sb.dataset.idx, t=sb.dataset.seg;
-      editArr[i].seg = (editArr[i].seg === t) ? 'prace' : t;   // druhý klik = zpět na práci
-      renderEdit(); return; }
+      editArr[i].seg = (editArr[i].seg === t) ? 'prace' : t; renderEdit(); return; }
   });
   logListEl.addEventListener('input', e => {
     const inp = e.target.closest('.edit-time');
@@ -1651,6 +1691,8 @@
     if(ps){ editPulStart = ps.value; renderEdit(); return; }
     const hf = e.target.closest('.edit-half');
     if(hf){ if(hf.id==='halfA') editHalfA = hf.value; else editHalfB = hf.value; renderEdit(); return; }
+    const fs = e.target.closest('.edit-fill');
+    if(fs){ editFill = fs.value; renderEdit(); return; }
   });
 
   // ===== parametry v URL (pro NFC tag) =====
