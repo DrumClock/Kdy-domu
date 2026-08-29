@@ -1054,11 +1054,23 @@
       const isPaid = hasOwn ? !!day.paid : paidEl.checked;
       const snack = (!isPaid && work > 360) ? snackMin : 0;
       const actualWork = Math.max(0, work - snack);
-      const fill = para + dov + svatek + nemoc;
-      const over = (plan != null) ? (actualWork + fill - plan) : null;
-      const worked = actualWork + nv;
+
+      let over = null, nvFill = 0, dovUsed = 0, kd = 0;
+      if(plan != null){
+        // §/svátek/nemoc = neutrální doplnění; dovolená doplní a čerpá; NV doplní a čerpá konto
+        let deficit = Math.max(0, plan - actualWork);
+        const neutral = para + svatek + nemoc;
+        const credit  = Math.min(neutral, deficit); deficit -= credit;
+        dovUsed = Math.min(dov, deficit); deficit -= dovUsed;
+        over = actualWork + credit + dovUsed - plan;       // ≤0 = schodek, >0 = práce nad plán
+        nvFill = Math.min(nv, Math.max(0, -over));           // NV doplní zbytek schodku
+        // konto: klasická = celý přesčas i schodek; zkrácená = jen práce nad 8 h, NV čerpá vždy
+        if(plan <= 360) kd = (over > 0) ? Math.max(0, actualWork - 480) : -nvFill;
+        else            kd = over;
+      }
+      const worked = actualWork + nvFill;
       return { start, end: open?null:mins[mins.length-1], worked, breaks, paidBreaks: para, snack,
-               open, plan, over, nv:(nv>0), dovMin: dov, seg:true,
+               open, plan, over, nv:(nvFill>0), dovMin: dovUsed, kd, seg:true,
                segTypes: { prace:work>0, nahradni:nv>0, paragraf:para>0, dovolena:dov>0, svatek:svatek>0, nemoc:nemoc>0 },
                punches: arr };
     }
@@ -1256,7 +1268,7 @@
     function kontoDelta(s){
       if(s.neutral || s.over == null) return 0;
       if(s.type === 'nahradni' || s.type === 'pulden') return s.over;   // NV / půlden čerpá konto
-      if(s.seg && s.nv) return s.over;                                   // úsekový den s NV = čerpání
+      if(s.seg) return s.kd || 0;                                       // úsekový den: předpočítané konto
       const plan = s.plan; if(plan == null) return 0;
       const base = s.over + plan;                         // actualWork + paragraf credit
       if(plan <= 360) return Math.max(0, base - FULL_SHIFT);  // zkrácená → jen nad 8h
