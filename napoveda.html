@@ -71,21 +71,14 @@
         <li>Noční směna <b>přes půlnoc</b> se spáruje sama.</li>
       </ul>
 
-      <h2><span class="ic">§</span> Paragraf, náhradní volno, dovolená</h2>
+      <h2><span class="ic">§</span> Zbytek do plné směny</h2>
       <ul>
-        <li>V úpravě dne má každý <b>Odchod</b> přepínače <b>§</b>, <b>NV</b> a <b>D</b> (vylučují se) — platí pro dobu <b>po tom odchodu</b> (zbytek do plné směny).</li>
-        <li><b>§ paragraf</b> — nepočítá se do odpracováno, ale <b>zaplní plán</b> (netvoří přesčas). Je neutrální ke kontu.</li>
-        <li><b>NV náhradní volno</b> — <b>přičte se do odpracováno</b> (doplní den do plné směny) a <b>čerpá z konta přesčasů</b>.</li>
-        <li><b>D dovolená</b> — zaplní plán (netvoří přesčas), nepočítá se do odpracováno a <b>odečte hodiny z konta dovolené</b>. Hodí se na půl/část směny (např. práce 8–11, pak D → 3 h dovolené).</li>
-      </ul>
-    </section>
-
-    <section>
-      <h2><span class="ic">½</span> Půl dne (složený den)</h2>
-      <ul>
-        <li>Typ dne <b>Půl dne</b> složí den ze <b>dvou půlek</b> plánu — první a druhou půlku vybereš z: <b>Práce / Paragraf / Dovolená / Náhradní volno</b>.</li>
-        <li>Zadáš jen <b>Začátek</b>; appka rozdělí směnu na dvě půlky a ukáže <b>časy</b> (např. 08:00 → 11:00 → 14:00).</li>
-        <li>Např. <b>Paragraf + Dovolená</b>: odpracováno 0, § půl směny, dovolená půl směny (−z konta), přesčas 0. <b>Práce + NV</b>: odpracováno plná směna, přesčas −půl (čerpá konto).</li>
+        <li>V úpravě <b>Směny</b> zadáš <b>Příchod/Odchod</b> odpracované doby. Pod píchnutími je řádek ikon <b>Zbytek do plné směny</b>: <b>—</b> (nic), <b>§</b>, <b>☀ dovolená</b>, <b>NV</b>, <b>★ svátek</b>, <b>✚ nemoc</b>.</li>
+        <li>Když neodpracuješ plnou směnu, vybereš, čím se <b>schodek dopočítá do plánu</b> — appka to spočítá sama. Přesčas dělá <b>jen práce nad plán</b>.</li>
+        <li><b>§ / svátek / nemoc</b> — doplní do plánu, neutrální (netvoří přesčas, nesahá na konta).</li>
+        <li><b>Dovolená</b> — doplní do plánu a <b>odečte hodiny z konta dovolené</b>.</li>
+        <li><b>Náhradní volno</b> — doplní do plánu, <b>přičte se do odpracováno</b> a <b>čerpá z konta přesčasů</b>.</li>
+        <li>Příklad (plán 6 h, práce 5:05): <b>§</b> → §0:55 doplní, přesčas 0 · <b>NV</b> → odpracováno 6:00, přesčas −0:55.</li>
       </ul>
     </section>
 
@@ -99,8 +92,8 @@
       <h2><span class="ic">🕘</span> Historie</h2>
       <ul>
         <li>Nahoře <b>přepínač měsíce</b> (◀ ▶) se souhrnem <b>Odpracováno</b> a <b>Přesčas</b>; uprostřed seznam dní. Listovat jde i do budoucích měsíců (kde máš záznam).</li>
-        <li>Každý den má vpravo <b>ikony</b> podle obsahu: <b>§</b> paragraf, <b>NV</b> náhradní volno, hodiny = práce, křížek = nemoc, sluníčko = dovolená, kalendář s fajfkou = svátek, <b>½</b> = půl dne.</li>
-        <li>Tužka <b>✎</b> u dne = úprava: typ dne (dlaždice), časy a typ píchnutí (<b>§ / NV / D</b>), datum, pracovní doba, svačina.</li>
+        <li>Každý den má vpravo <b>ikony</b> podle obsahu: hodiny = práce, <b>§</b> paragraf, <b>NV</b> náhradní volno, sluníčko = dovolená, kalendář s fajfkou = svátek, křížek = nemoc. U složeného dne se skládají pod sebe.</li>
+        <li>Tužka <b>✎</b> u dne = úprava: typ dne (dlaždice), časy, pracovní doba, svačina a <b>Zbytek do plné směny</b>.</li>
         <li><b>➕</b> nahoře = dodatečně dopsat den (vybereš datum a typ).</li>
         <li><b>Počáteční stavy</b> konta a dovolené zadáš na <b>hlavní obrazovce</b> dole (pod Svačinou).</li>
         <li><b>Vymazat měsíc</b> smaže jen zobrazený měsíc. Mazání se potvrzuje.</li>
@@ -117,13 +110,13 @@
       <h2><span class="ic">🏖️</span> Konto dovolené</h2>
       <ul>
         <li>Karta <b>Dovolená</b> = <b>počáteční stav</b> (na hlavní obrazovce dole, v hodinách) − vyčerpaná dovolená. Ukazuje se v <b>hodinách i dnech</b> (dny podle délky směny 6/8 h).</li>
-        <li>Ubírá celodenní <b>Dovolená</b> i částečná přes <b>D</b> u odchodu nebo <b>Půl dne</b>.</li>
+        <li>Ubírá celodenní <b>Dovolená</b> i částečná (u směny <b>Zbytek do plné směny → Dovolená</b>).</li>
         <li>Když máš dovolenou i v pozdějších měsících: <b>Rezervace</b> (kolik ještě ubyde, červeně) a <b>Zbytek</b> (co reálně zůstane, zeleně).</li>
       </ul>
 
       <h2><span class="ic">📅</span> Typy dnů</h2>
       <ul>
-        <li>V úpravě přes <b>Typ dne</b> (dlaždice s ikonami): Směna, Paragraf, Nemoc, Dovolená, Svátek, Náhradní volno, <b>Půl dne</b>.</li>
+        <li>V úpravě přes <b>Typ dne</b> (dlaždice s ikonami): Směna, Paragraf, Nemoc, Dovolená, Svátek, Náhradní volno.</li>
         <li><b>Dovolená</b> a <b>Nemoc</b> jdou zadat <b>od–do</b> (soboty a neděle se přeskočí).</li>
         <li><b>Paragraf / Nemoc / Dovolená / Svátek</b> se nepočítají do odpracováno ani přesčasu.</li>
         <li><b>Náhradní volno (celý den)</b> přičte délku směny do odpracováno a odečte z přesčasu.</li>
