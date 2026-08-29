@@ -285,6 +285,12 @@
   .edit-date{ width:100%; padding:9px 10px; font-size:16px; margin-bottom:14px; }
   .edit-pulstart{ width:100%; padding:9px 10px; font-size:16px; margin-bottom:14px; background:#161020; color:var(--ink); border:1px solid var(--line); border-radius:10px; }
   .edit-half, .edit-fill{ width:100%; padding:11px 10px; font-size:16px; margin-bottom:14px; background:#161020; color:var(--ink); border:1px solid var(--line); border-radius:10px; }
+  .fill-pick{ display:flex; gap:6px; margin-bottom:14px; }
+  .fill-btn{ flex:1; background:transparent; border:1px solid var(--line); border-radius:10px;
+    cursor:pointer; padding:8px 0; display:flex; align-items:center; justify-content:center; opacity:.5; min-height:44px; }
+  .fill-btn .badge{ min-width:26px; width:26px; height:26px; }
+  .fill-none{ color:var(--muted); font-size:20px; font-weight:700; }
+  .fill-btn.on{ opacity:1; border-color:#6a5a86; background:#2c2340; }
   .plan-row{ display:flex; gap:6px; margin-bottom:14px; }
   .plan-btn{ flex:1; padding:8px 3px; border:1px solid var(--line); border-radius:10px;
     background:#161020; color:var(--muted); cursor:pointer; text-align:center; line-height:1.15; }
@@ -1438,11 +1444,12 @@
       '</div>').join('');
   }
   function fillPickerHtml(){
-    const opts = [['','Nic (jen práce)'],['paragraf','§ Paragraf'],['dovolena','Dovolená'],['nahradni','Náhradní volno'],['svatek','Svátek'],['nemoc','Nemoc']];
+    const none = '<button type="button" class="fill-btn fill-none' + (editFill===''?' on':'') + '" data-fill="" title="Nic (jen práce)">—</button>';
+    const icons = ['paragraf','dovolena','nahradni','svatek','nemoc'].map(t =>
+      '<button type="button" class="fill-btn' + (editFill===t?' on':'') + '" data-fill="' + t + '" title="' + TYPE_LABELS[t] + '">' + typeBadge(t) + '</button>'
+    ).join('');
     return '<div class="edit-lbl">Zbytek do plné směny</div>' +
-      '<select class="edit-fill" id="fillSel">' +
-      opts.map(([v,l]) => '<option value="' + v + '"' + (editFill===v?' selected':'') + '>' + l + '</option>').join('') +
-      '</select>';
+      '<div class="fill-pick">' + none + icons + '</div>';
   }
 
   function renderEdit(){
@@ -1677,6 +1684,8 @@
     const sb = e.target.closest('.seg-btn');
     if(sb){ const i=+sb.dataset.idx, t=sb.dataset.seg;
       editArr[i].seg = (editArr[i].seg === t) ? 'prace' : t; renderEdit(); return; }
+    const fb = e.target.closest('.fill-btn');
+    if(fb){ editFill = fb.dataset.fill; renderEdit(); return; }
   });
   logListEl.addEventListener('input', e => {
     const inp = e.target.closest('.edit-time');
@@ -1691,8 +1700,6 @@
     if(ps){ editPulStart = ps.value; renderEdit(); return; }
     const hf = e.target.closest('.edit-half');
     if(hf){ if(hf.id==='halfA') editHalfA = hf.value; else editHalfB = hf.value; renderEdit(); return; }
-    const fs = e.target.closest('.edit-fill');
-    if(fs){ editFill = fs.value; renderEdit(); return; }
   });
 
   // ===== parametry v URL (pro NFC tag) =====
