@@ -305,10 +305,11 @@
   .paid-toggle.unpaid{ background:var(--red); }
   .totals{ margin-bottom:14px; }
   .month-nav{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
-  .mnav{ background:#161020; border:1px solid var(--line); border-radius:10px; color:var(--ink);
-    font-size:15px; cursor:pointer; padding:7px 16px; }
-  .mnav:disabled{ opacity:.32; cursor:default; }
-  .mnav:active:not(:disabled){ border-color:#5a4a76; }
+  .mnav{ background:#eaf2ff; border:1px solid #bcd4ff; border-radius:11px; color:#1565c0;
+    cursor:pointer; padding:8px 16px; display:inline-flex; align-items:center; justify-content:center; }
+  .mnav svg{ width:20px; height:20px; display:block; }
+  .mnav:disabled{ opacity:.3; cursor:default; }
+  .mnav:active:not(:disabled){ background:#d4e6ff; }
   .mlabel{ font-size:15px; font-weight:700; text-transform:capitalize; }
   .totals-cards{ display:flex; gap:10px; }
   .konto-card{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px;
@@ -1284,13 +1285,12 @@
     const items = Object.keys(store).sort().reverse()
       .map(k => ({ k, s: daySummary(store[k]) })).filter(x => x.s);
 
-    // nejzazší měsíc dopředu = aktuální nebo poslední záznam (kvůli dovolené v budoucnu)
-    let maxY = now.getFullYear(), maxM = now.getMonth();
-    Object.keys(store).forEach(k => {
-      const d = new Date(k + 'T00:00:00');
-      if(d.getFullYear() > maxY || (d.getFullYear() === maxY && d.getMonth() > maxM)){ maxY = d.getFullYear(); maxM = d.getMonth(); }
-    });
-    const atMax = (y === maxY && m === maxM);
+    // listování jen po měsících se záznamem (+ aktuální měsíc je vždy dostupný)
+    const curRealKey = now.getFullYear() + '-' + pad(now.getMonth()+1);
+    const reachMonths = [...new Set([...Object.keys(store).map(k => k.slice(0,7)), curRealKey])].sort();
+    const curKey = y + '-' + pad(m+1);
+    const atMin = !reachMonths.some(mm => mm < curKey);
+    const atMax = !reachMonths.some(mm => mm > curKey);
 
     const inMonth = items.filter(({k}) => {
       const d = new Date(k + 'T00:00:00');
@@ -1343,9 +1343,9 @@
 
     totalsEl.innerHTML =
       '<div class="month-nav">' +
-        '<button type="button" class="mnav" data-dir="-1" aria-label="Předchozí měsíc">◀</button>' +
+        '<button type="button" class="mnav" data-dir="-1" aria-label="Předchozí měsíc"' + (atMin?' disabled':'') + '><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>' +
         '<div class="mlabel">' + monthLabel(y,m) + '</div>' +
-        '<button type="button" class="mnav" data-dir="1" aria-label="Další měsíc"' + (atMax?' disabled':'') + '>▶</button>' +
+        '<button type="button" class="mnav" data-dir="1" aria-label="Další měsíc"' + (atMax?' disabled':'') + '><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>' +
       '</div>' +
       '<div class="totals-cards">' +
         '<div class="tot"><div class="k">Odpracováno</div><div class="v">' + dur(mWork) + '</div></div>' +
@@ -1658,15 +1658,17 @@
   totalsEl.addEventListener('click', e => {
     const b = e.target.closest('.mnav'); if(!b || b.disabled) return;
     const now = new Date();
-    let { y, m } = histMonth || { y: now.getFullYear(), m: now.getMonth() };
-    m += (+b.dataset.dir);
-    if(m < 0){ m = 11; y--; } else if(m > 11){ m = 0; y++; }
-    // nejzazší povolený měsíc dopředu = aktuální nebo poslední záznam
+    const { y, m } = histMonth || { y: now.getFullYear(), m: now.getMonth() };
     const store = loadPunch();
-    let maxY = now.getFullYear(), maxM = now.getMonth();
-    Object.keys(store).forEach(k => { const d=new Date(k+'T00:00:00'); if(d.getFullYear()>maxY||(d.getFullYear()===maxY&&d.getMonth()>maxM)){maxY=d.getFullYear();maxM=d.getMonth();} });
-    if(y > maxY || (y === maxY && m > maxM)) return;
-    histMonth = { y, m };
+    const curRealKey = now.getFullYear() + '-' + pad(now.getMonth()+1);
+    const reach = [...new Set([...Object.keys(store).map(k => k.slice(0,7)), curRealKey])].sort();
+    const curKey = y + '-' + pad(m+1);
+    let target;
+    if((+b.dataset.dir) < 0) target = reach.filter(mm => mm < curKey).pop();   // nejbližší dřívější se záznamem
+    else target = reach.find(mm => mm > curKey);                              // nejbližší pozdější se záznamem
+    if(!target) return;
+    const [ty, tm] = target.split('-');
+    histMonth = { y: +ty, m: +tm - 1 };
     renderList();
   });
   const kontoInit = document.getElementById('kontoInit');
