@@ -1607,6 +1607,38 @@
   }
   histBtn.addEventListener('click', () => { editDate=editKey=editArr=null; histMonth=null; renderHistory(); histEl.hidden = false; });
   histClose.addEventListener('click', () => { editDate=editKey=editArr=null; histEl.hidden = true; });
+
+  // otevři historii, když se sem přišlo swipem z nápovědy
+  if(new URLSearchParams(location.search).get('open') === 'historie'){
+    editDate=editKey=editArr=null; histMonth=null; renderHistory(); histEl.hidden = false;
+  }
+
+  // --- swipe navigace: historie → nápověda → index (cyklicky) ---
+  (function(){
+    const ORDER = ['historie','napoveda','index'];
+    const go = t => {
+      if(t === 'napoveda'){ location.href = 'napoveda.html'; }
+      else if(t === 'historie'){ if(histEl.hidden){ editDate=editKey=editArr=null; histMonth=null; renderHistory(); histEl.hidden = false; } }
+      else if(t === 'index'){ if(!histEl.hidden){ editDate=editKey=editArr=null; histEl.hidden = true; } }
+    };
+    const blocked = el => el && el.closest && el.closest('input,select,textarea,button,a,[contenteditable]');
+    let sx=0, sy=0, on=false;
+    document.addEventListener('touchstart', e => {
+      if(e.touches.length !== 1){ on=false; return; }
+      const t = e.touches[0];
+      if(t.clientX < 24 || t.clientX > window.innerWidth - 24){ on=false; return; }   // hrana = systémové zpět
+      if(blocked(e.target)){ on=false; return; }
+      sx=t.clientX; sy=t.clientY; on=true;
+    }, {passive:true});
+    document.addEventListener('touchend', e => {
+      if(!on){ return; } on=false;
+      const t=e.changedTouches[0], dx=t.clientX-sx, dy=t.clientY-sy;
+      if(Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)*1.7) return;   // hlavně vodorovné
+      if(!histEl.hidden && editDate) return;                            // needituj den → nenaviguj
+      const cur = histEl.hidden ? 2 : 0;
+      go(ORDER[ dx < 0 ? (cur+1)%3 : (cur+2)%3 ]);
+    }, {passive:true});
+  })();
   histEl.addEventListener('click', e => { if(e.target === histEl){ editDate=editKey=editArr=null; histEl.hidden = true; } });
   addDayBtn.addEventListener('click', openNewDay);
   clearBtn.addEventListener('click', () => {
