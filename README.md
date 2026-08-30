@@ -18,7 +18,7 @@ Jednoduchá webová appka (PWA), která spočítá, kdy můžeš odejít z prác
 - **Pracovní doba** na jedno ťuknutí: 6 h (zkrácená) nebo klasická 8 h / 7:30 / 7:00 (ranní / odpolední / noční).
 - **Svačina** s nastavitelnou délkou a přepínačem **placená / neplacená**. Neplacená se z odpracované doby odečítá jen když je čistá práce **nad 6 h** (podle zákoníku práce).
 - **Živý odpočet** — kolik zbývá (červeně) nebo kolik je přesčas (zeleně), aktualizace každou vteřinu.
-- **Přejíždění (swipe)** — vodorovné tažení přepíná obrazovky cyklicky: Historie → Nápověda → Hlavní (a zpět).
+- **Přejíždění (swipe)** — vodorovné tažení přepíná mezi Hlavní obrazovkou a Historií.
 - **[Píchačky](#píchačky)** — Příchod / Odchod (i přes NFC) evidují začátek, konec, přerušení a přesčas směny.
 - **Typy dnů** — vedle běžné směny i **paragraf (§)**, **náhradní volno (NV)**, **nemoc**, **dovolená** (od–do) a **svátek**. U směny lze navíc jedním klikem doplnit **zbytek do plné směny** (§ / dovolená / NV / svátek / nemoc).
 - **Historie** po měsících s úpravou, dodatečným dopsáním a exportem do CSV.
@@ -130,7 +130,7 @@ Po přiložení se píchnutí zapíše, appka aktualizuje stav a parametr se z a
 
 ## Ovládání a přejíždění
 
-Nahoře jsou čtyři tlačítka (kalendář, historie, QR, nápověda). Mezi obrazovkami jde přepínat i **vodorovným tažením prstu (swipe)** — cyklicky v pořadí **Historie → Nápověda → Hlavní** (a stejně i zpět). Gesto musí být hlavně vodorovné (aby nepřekáželo scrollování v historii) a nezačínat úplně u kraje obrazovky (koliduje se systémovým „zpět").
+Nahoře jsou čtyři tlačítka (kalendář, historie, QR, nápověda). Mezi **Hlavní obrazovkou** a **Historií** jde přepínat i **vodorovným tažením prstu (swipe)**, libovolným směrem. Gesto musí být hlavně vodorovné (aby nepřekáželo scrollování v historii) a nezačínat úplně u kraje obrazovky (koliduje se systémovým „zpět").
 
 ## Píchačky
 

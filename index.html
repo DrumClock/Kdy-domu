@@ -1613,17 +1613,12 @@
     editDate=editKey=editArr=null; histMonth=null; renderHistory(); histEl.hidden = false;
   }
 
-  // --- swipe navigace: historie → nápověda → index (cyklicky) ---
+  // --- swipe: přepíná Hlavní ↔ Historie ---
   (function(){
-    const ORDER = ['historie','napoveda','index'];
     const MIN_DX = 45;    // min. vodorovná vzdálenost (px) — nižší = citlivější
     const RATIO  = 1.15;  // kolikrát musí být vodorovné > svislé — nižší = tolerantnější
-    const go = t => {
-      if(t === 'napoveda'){ location.href = 'napoveda.html'; }
-      else if(t === 'historie'){ if(histEl.hidden){ editDate=editKey=editArr=null; histMonth=null; renderHistory(); histEl.hidden = false; } }
-      else if(t === 'index'){ if(!histEl.hidden){ editDate=editKey=editArr=null; histEl.hidden = true; } }
-    };
-    // tažení nezačínej jen v polích, kde vadí (textová pole) – tlačítka jsou OK
+    const openHist  = () => { editDate=editKey=editArr=null; histMonth=null; renderHistory(); histEl.hidden = false; };
+    const closeHist = () => { editDate=editKey=editArr=null; histEl.hidden = true; };
     const noStart = el => el && el.closest && el.closest('input[type=text],input[type=number],textarea,[contenteditable]');
     let sx=0, sy=0, on=false, swiped=false;
     document.addEventListener('touchstart', e => {
@@ -1637,10 +1632,9 @@
       if(!on){ return; } on=false;
       const t=e.changedTouches[0], dx=t.clientX-sx, dy=t.clientY-sy;
       if(Math.abs(dx) < MIN_DX || Math.abs(dx) < Math.abs(dy)*RATIO) return;   // hlavně vodorovné
-      if(!histEl.hidden && editDate) return;                                    // needituj den → nenaviguj
+      if(!histEl.hidden && (editDate || editKey)) return;                       // otevřená editace dne → nepřepínej
       swiped = true; setTimeout(()=>{ swiped=false; }, 500);                    // potlač následný klik
-      const cur = histEl.hidden ? 2 : 0;
-      go(ORDER[ dx < 0 ? (cur+1)%3 : (cur+2)%3 ]);
+      if(histEl.hidden) openHist(); else closeHist();                           // libovolný směr = přepnutí
     }, {passive:true});
     document.addEventListener('click', e => {
       if(swiped){ e.preventDefault(); e.stopPropagation(); swiped=false; }
