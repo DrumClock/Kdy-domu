@@ -189,26 +189,31 @@
   // --- swipe navigace: historie → nápověda → index (cyklicky) ---
   (function(){
     const ORDER = ['historie','napoveda','index'];
+    const MIN_DX = 45, RATIO = 1.15;
     const go = t => {
       if(t === 'index'){ location.href = 'index.html'; }
       else if(t === 'historie'){ location.href = 'index.html?open=historie'; }
     };
-    const blocked = el => el && el.closest && el.closest('input,select,textarea,button,a,[contenteditable]');
-    let sx=0, sy=0, on=false;
+    const noStart = el => el && el.closest && el.closest('input[type=text],input[type=number],textarea,[contenteditable]');
+    let sx=0, sy=0, on=false, swiped=false;
     document.addEventListener('touchstart', e => {
       if(e.touches.length !== 1){ on=false; return; }
       const t = e.touches[0];
-      if(t.clientX < 24 || t.clientX > window.innerWidth - 24){ on=false; return; }
-      if(blocked(e.target)){ on=false; return; }
-      sx=t.clientX; sy=t.clientY; on=true;
+      if(t.clientX < 22 || t.clientX > window.innerWidth - 22){ on=false; return; }
+      if(noStart(e.target)){ on=false; return; }
+      sx=t.clientX; sy=t.clientY; on=true; swiped=false;
     }, {passive:true});
     document.addEventListener('touchend', e => {
       if(!on){ return; } on=false;
       const t=e.changedTouches[0], dx=t.clientX-sx, dy=t.clientY-sy;
-      if(Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)*1.7) return;
+      if(Math.abs(dx) < MIN_DX || Math.abs(dx) < Math.abs(dy)*RATIO) return;
+      swiped = true; setTimeout(()=>{ swiped=false; }, 500);
       const cur = 1;   // nápověda
       go(ORDER[ dx < 0 ? (cur+1)%3 : (cur+2)%3 ]);
     }, {passive:true});
+    document.addEventListener('click', e => {
+      if(swiped){ e.preventDefault(); e.stopPropagation(); swiped=false; }
+    }, true);
   })();
 </script>
 </body>
