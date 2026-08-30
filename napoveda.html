@@ -39,6 +39,14 @@
   .tag{font-family:"SFMono-Regular","Consolas",monospace;font-size:13px;background:#160f20;border:1px solid var(--line);border-radius:6px;padding:1px 6px}
   .pill{display:inline-block;font-weight:700;font-size:12px;border-radius:6px;padding:1px 8px;color:#1c1726}
   .pill.in{background:var(--green)} .pill.out{background:var(--red)}
+  .bdg{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;font-weight:700;font-size:12px;vertical-align:middle;color:#1c1726}
+  .bdg.para{background:var(--amber)} .bdg.nv{background:var(--green)}
+  .bdg.dov{background:#1e88e5;color:#fff} .bdg.svatek{background:#43c67d}
+  .bdg.nemoc{background:#fff;color:#c0143c}
+  .bdg.smena{background:#2a2138;border:1px solid var(--line)}
+  .bdg svg{width:15px;height:15px}
+  .leg{list-style:none;padding:0}
+  .leg li{display:flex;align-items:center;gap:10px;margin:7px 0}
   .back{display:inline-block;margin-top:8px;color:var(--amber);text-decoration:none;font-size:14px;font-weight:600;text-align:center;width:100%}
   .close{
     position:fixed;
@@ -70,16 +78,6 @@
         <li><b>Svačina</b> se odečítá jen když je čistá práce <b>nad 6 h</b> (zákoník práce). Do 6:00 se neodečítá, od 6:01 se odečte celá.</li>
         <li>Noční směna <b>přes půlnoc</b> se spáruje sama.</li>
       </ul>
-
-      <h2><span class="ic">§</span> Zbytek do plné směny</h2>
-      <ul>
-        <li>V úpravě <b>Směny</b> zadáš <b>Příchod/Odchod</b> odpracované doby. Pod píchnutími je řádek ikon <b>Zbytek do plné směny</b>: <b>—</b> (nic), <b>§</b>, <b>☀ dovolená</b>, <b>NV</b>, <b>★ svátek</b>, <b>✚ nemoc</b>.</li>
-        <li>Když neodpracuješ plnou směnu, vybereš, čím se <b>schodek dopočítá do plánu</b> — appka to spočítá sama. Přesčas dělá <b>jen práce nad plán</b>.</li>
-        <li><b>§ / svátek / nemoc</b> — doplní do plánu, neutrální (netvoří přesčas, nesahá na konta).</li>
-        <li><b>Dovolená</b> — doplní do plánu a <b>odečte hodiny z konta dovolené</b>.</li>
-        <li><b>Náhradní volno</b> — doplní do plánu, <b>přičte se do odpracováno</b> a <b>čerpá z konta přesčasů</b>.</li>
-        <li>Příklad (plán 6 h, práce 5:05): <b>§</b> → §0:55 doplní, přesčas 0 · <b>NV</b> → odpracováno 6:00, přesčas −0:55.</li>
-      </ul>
     </section>
 
     <section>
@@ -89,15 +87,25 @@
     </section>
 
     <section>
-      <h2><span class="ic">🕘</span> Historie</h2>
+      <h2><span class="ic">🕘</span> Historie a editace</h2>
       <ul>
         <li>Nahoře <b>přepínač měsíce</b> (◀ ▶) se souhrnem <b>Odpracováno</b> a <b>Přesčas</b>; uprostřed seznam dní. Listovat jde i do budoucích měsíců (kde máš záznam).</li>
-        <li>Každý den má vpravo <b>ikony</b> podle obsahu: hodiny = práce, <b>§</b> paragraf, <b>NV</b> náhradní volno, sluníčko = dovolená, kalendář s fajfkou = svátek, křížek = nemoc. U složeného dne se skládají pod sebe.</li>
+        <li>Každý den má vpravo <b>ikony</b> podle obsahu: <span class="bdg smena"><svg viewBox="0 0 24 24" fill="none" stroke="#ffb020" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span> práce, <span class="bdg para">§</span> paragraf, <span class="bdg nv">NV</span> náhradní volno, <span class="bdg dov"><svg viewBox="0 0 24 24" fill="none" stroke="#ffd54a" stroke-width="2"><circle cx="12" cy="12" r="4" fill="#ffd54a"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.5 1.5M17.6 17.6l1.5 1.5M19.1 4.9l-1.5 1.5M6.4 17.6l-1.5 1.5"/></svg></span> dovolená, <span class="bdg svatek"><svg viewBox="0 0 24 24" fill="none" stroke="#0f2e1c" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 3v3M16 3v3M8.5 14l2.2 2.2 4.3-4.4"/></svg></span> svátek, <span class="bdg nemoc"><svg viewBox="0 0 24 24" fill="#c0143c"><path d="M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z"/></svg></span> nemoc. U složeného dne se skládají pod sebe.</li>
         <li>Tužka <b>✎</b> u dne = úprava: typ dne (dlaždice), časy, pracovní doba, svačina a <b>Zbytek do plné směny</b>.</li>
         <li><b>➕</b> nahoře = dodatečně dopsat den (vybereš datum a typ).</li>
         <li><b>Počáteční stavy</b> konta a dovolené zadáš na <b>hlavní obrazovce</b> dole (pod Svačinou).</li>
         <li><b>Vymazat měsíc</b> smaže jen zobrazený měsíc. Mazání se potvrzuje.</li>
       </ul>
+
+      <p><b>Zbytek do plné směny</b> — v úpravě <b>Směny</b> zadáš Příchod/Odchod odpracované doby a pod píchnutími je řádek ikon. Když neodpracuješ plnou směnu, vybereš, čím se schodek <b>dopočítá do plánu</b> — spočítá se sám. Přesčas dělá <b>jen práce nad plán</b>.</p>
+      <ul class="leg">
+        <li><span class="bdg para">§</span> <span><b>Paragraf</b> — doplní do plánu, neutrální (netvoří přesčas, nesahá na konta).</span></li>
+        <li><span class="bdg dov"><svg viewBox="0 0 24 24" fill="none" stroke="#ffd54a" stroke-width="2"><circle cx="12" cy="12" r="4" fill="#ffd54a"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.5 1.5M17.6 17.6l1.5 1.5M19.1 4.9l-1.5 1.5M6.4 17.6l-1.5 1.5"/></svg></span> <span><b>Dovolená</b> — doplní do plánu a <b>odečte hodiny z konta dovolené</b>.</span></li>
+        <li><span class="bdg nv">NV</span> <span><b>Náhradní volno</b> — doplní do plánu, <b>přičte se do odpracováno</b> a <b>čerpá z konta přesčasů</b>.</span></li>
+        <li><span class="bdg svatek"><svg viewBox="0 0 24 24" fill="none" stroke="#0f2e1c" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 3v3M16 3v3M8.5 14l2.2 2.2 4.3-4.4"/></svg></span> <span><b>Svátek</b> — doplní do plánu, neutrální.</span></li>
+        <li><span class="bdg nemoc"><svg viewBox="0 0 24 24" fill="#c0143c"><path d="M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z"/></svg></span> <span><b>Nemoc</b> — doplní do plánu, neutrální.</span></li>
+      </ul>
+      <p class="muted">Příklad (plán 6 h, práce 5:05): <b>§</b> → §0:55 doplní, přesčas 0 · <b>NV</b> → odpracováno 6:00, přesčas −0:55.</p>
 
       <h2><span class="ic">💰</span> Konto přesčasů</h2>
       <ul>
