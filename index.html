@@ -577,10 +577,6 @@
       <button type="button" class="punch-btn in" id="inBtn">Příchod</button>
       <button type="button" class="punch-btn out" id="outBtn">Odchod</button>
     </div>
-    <div class="punch2">
-      <button type="button" class="mark-btn para" id="paraBtn">§ Paragraf</button>
-      <button type="button" class="mark-btn nemoc" id="nemocBtn">✚ Nemoc</button>
-    </div>
     <div class="punch-bar">
       <span class="status-txt" id="statusTxt"></span>
     </div>
@@ -935,8 +931,6 @@
   const clearBtn = document.getElementById('clearBtn');
   const toastEl  = document.getElementById('toast');
   const statusTxt= document.getElementById('statusTxt');
-  const paraBtn  = document.getElementById('paraBtn');
-  const nemocBtn = document.getElementById('nemocBtn');
   const confirmDlg   = document.getElementById('confirmDlg');
   const confirmMsg   = document.getElementById('confirmMsg');
   const confirmOk    = document.getElementById('confirmOk');
@@ -1210,8 +1204,6 @@
   function renderStatus(){
     const store = loadPunch();
     const today = store[ymd(new Date())];
-    paraBtn.classList.toggle('active',  !!(today && today.type === 'paragraf'));
-    nemocBtn.classList.toggle('active', !!(today && today.type === 'nemoc'));
 
     const s = daySummary(store[currentKey(store)]);
     if(s && s.special){
@@ -1613,8 +1605,6 @@
         .then(ok => { if(ok) apply(); });
     } else { apply(); }
   }
-  paraBtn.addEventListener('click',  () => setDayType('paragraf'));
-  nemocBtn.addEventListener('click', () => setDayType('nemoc'));
   histBtn.addEventListener('click', () => { editDate=editKey=editArr=null; histMonth=null; renderHistory(); histEl.hidden = false; });
   histClose.addEventListener('click', () => { editDate=editKey=editArr=null; histEl.hidden = true; });
   histEl.addEventListener('click', e => { if(e.target === histEl){ editDate=editKey=editArr=null; histEl.hidden = true; } });

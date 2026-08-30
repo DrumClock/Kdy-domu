@@ -147,7 +147,7 @@ Appka funguje jako jednoduché píchačky včetně přerušení.
 
 Přesčas dělá **jen práce nad plán**. Příklad (plán 6 h, práce 5:05): **§** → §0:55 doplní, přesčas 0; **NV** → odpracováno 6:00, přesčas −0:55; **bez doplnění** → přesčas −0:55 (schodek).
 
-**Celodenní typy** (v editaci přes „Typ dne", nebo § / ✚ na hlavní obrazovce pro dnešek):
+**Celodenní typy** (v editaci přes „Typ dne"):
 - **Paragraf**, **Nemoc**, **Dovolená**, **Svátek** — nepočítají se do odpracováno ani přesčasu. **Dovolená a Nemoc** jdou zadat **od–do** (soboty a neděle se přeskočí).
 - **Náhradní volno (celý den)** — přičte délku směny do odpracováno a odečte z přesčasu.
 
