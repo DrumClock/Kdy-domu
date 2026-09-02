@@ -22,7 +22,7 @@ Jednoduchá webová appka (PWA), která spočítá, kdy můžeš odejít z prác
 - **[Píchačky](#píchačky)** — Příchod / Odchod (i přes NFC) evidují začátek, konec, přerušení a přesčas směny.
 - **Typy dnů** — vedle běžné směny i **paragraf (§)**, **náhradní volno (NV)**, **nemoc**, **dovolená** (od–do) a **svátek**. U směny lze navíc jedním klikem doplnit **zbytek do plné směny** (§ / dovolená / NV / svátek / nemoc).
 - **Historie** po měsících s úpravou, dodatečným dopsáním a exportem do CSV.
-- **Konto přesčasů** — kumulativní banka napříč měsíci s ručním počátečním stavem; náhradní volno z ní čerpá (u zkrácené 6h směny se přesčas do konta počítá až nad 8 h).
+- **Konto přesčasů** — kumulativní banka napříč měsíci s ručním počátečním stavem; náhradní volno z ní čerpá (u zkrácené 6h směny se přesčas do konta počítá až nad 8 h). **Víkendová práce** jde celá do konta; **práce ve svátek** se počítá do odpracováno, ale ne do konta.
 - **Konto dovolené** — počáteční stav v hodinách, čerpá celodenní i částečná dovolená; zobrazení v hodinách i dnech, s rezervací a zbytkem pro naplánovanou dovolenou.
 - **Záloha** — kompletní export/import do JSON souboru (přenos na jiný telefon) a export do CSV pro Excel.
 - **Připomínka do kalendáře** — vytvoří v telefonu událost na čas odchodu s upozorněním (funguje i při zavřené appce a zamčeném telefonu).
@@ -169,6 +169,8 @@ Tlačítka se sama zapínají/vypínají podle stavu, takže se nedá přihlási
 - Záznamy jde jednotlivě mazat (✕). **Vymazat měsíc** smaže jen právě zobrazený měsíc.
 
 **Konto přesčasů** — karta **Konto** = kumulativní součet přesčasů do konce zobrazeného měsíce plus ruční **počáteční stav** (zadáš třeba `+12:00`, klidně i mínus). Náhradní volno z konta čerpá — a protože je součet průběžný, **NV v jednom měsíci ubere z konta našetřeného v jiném**. U **klasické směny** jde do konta celý přesčas; u **zkrácené 6h** směny se do konta počítá **jen práce nad 8 h** (plná směna) a jen ten rozdíl — práce 6–8 h ani dřívější odchod kontem nehýbou. Zobrazený „přesčas" u dne je vždy proti plánu dne. Konto může jít i do mínusu.
+
+**Víkend a svátek** — o **víkendu (So/Ne)** appka pozná z data, že není plán, takže **celá odpracovaná doba je přesčas a jde celá do konta** (i pod 8 h). **Práci ve svátek** označíš v úpravě směny přepínačem **Práce ve svátek** — hodiny se započtou do **odpracováno**, ale **ne do přesčasu ani konta**. Nepracovní svátek zadej jako celodenní typ **Svátek** (neutrální).
 
 **Konto dovolené** — karta **Dovolená** = **počáteční stav v hodinách** (zadáš na hlavní obrazovce) − vyčerpaná dovolená; ukazuje se v **hodinách i dnech** (dny podle délky směny 6/8 h). Ubírá celodenní **Dovolená** i částečná (u směny **Zbytek do plné směny → Dovolená**). Když máš dovolenou i v pozdějších měsících, přibudou řádky **Rezervace** (kolik ještě ubyde) a **Zbytek** (co reálně zůstane).
 
