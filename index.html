@@ -1053,13 +1053,15 @@
       const hasOwn = day && day.brk != null;
       const snackMin = hasOwn ? day.brk : breakMinutes();
       const isPaid = hasOwn ? !!day.paid : paidEl.checked;
-      const snack = (!isPaid && work > 360) ? snackMin : 0;
-      const actualWork = Math.max(0, work - snack);
-
-      // víkend (So/Ne) = celá práce přesčas do konta; svátek = do odpracováno, ale NE do konta/přesčasu
       const wd = dateKey ? new Date(dateKey + 'T00:00:00').getDay() : -1;
       const isHoliday = !!(day && day.holiday);
       const isWeekend = (wd === 0 || wd === 6);
+      // svačina: zkrácená (≤6h) a víkend/svátek → jen když práce > 6h; klasická (8/7:30/7h) → i pod 6h
+      const classicWeekday = !isWeekend && !isHoliday && plan != null && plan > 360;
+      const snackThr = classicWeekday ? 0 : 360;
+      const snack = (!isPaid && work > snackThr) ? snackMin : 0;
+      const actualWork = Math.max(0, work - snack);
+
       if((isHoliday || isWeekend) && !open){
         if(isHoliday){
           return { start, end: mins[mins.length-1], worked: actualWork, breaks, paidBreaks: 0, snack,
