@@ -274,7 +274,8 @@
     padding:calc(env(safe-area-inset-top) + 18px) 20px calc(env(safe-area-inset-bottom) + 18px);
   }
   .sheet-head, .totals, .sheet-actions{ flex:none; }
-  .sheet-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .sheet-head{ position:relative; display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .head-add{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); }
   .sheet-head h2{ font-size:18px; font-weight:700; }
   .sheet-close{ background:transparent; border:none; color:var(--muted); font-size:18px; cursor:pointer; padding:4px 8px; }
   .head-actions{ display:flex; align-items:center; gap:6px; }
@@ -636,10 +637,8 @@
     <div class="sheet-inner">
       <div class="sheet-head">
         <h2 id="sheetTitle">Historie</h2>
-        <div class="head-actions">
-          <button type="button" class="head-btn" id="addDayBtn" aria-label="Přidat den" title="Přidat den">＋</button>
-          <button type="button" class="sheet-close" id="histClose" aria-label="Zavřít">✕</button>
-        </div>
+        <button type="button" class="head-btn head-add" id="addDayBtn" aria-label="Přidat den" title="Přidat den">＋</button>
+        <button type="button" class="sheet-close" id="histClose" aria-label="Zavřít">✕</button>
       </div>
       <div class="totals" id="totals"></div>
       <div class="log" id="logList"></div>
