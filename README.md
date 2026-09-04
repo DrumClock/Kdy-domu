@@ -23,7 +23,7 @@ Jednoduchá webová appka (PWA), která spočítá, kdy můžeš odejít z prác
 - **Typy dnů** — vedle běžné směny i **paragraf (§)**, **náhradní volno (NV)**, **nemoc**, **dovolená** (od–do) a **svátek**. U směny lze navíc jedním klikem doplnit **zbytek do plné směny** (§ / dovolená / NV / svátek / nemoc).
 - **Historie** po měsících s úpravou, dodatečným dopsáním a exportem do CSV.
 - **Konto přesčasů** — kumulativní banka napříč měsíci s ručním počátečním stavem; náhradní volno z ní čerpá (u zkrácené 6h směny se přesčas do konta počítá až nad 8 h). **Víkendová práce** jde celá do konta; **práce ve svátek** se počítá do odpracováno, ale ne do konta.
-- **Konto dovolené** — počáteční stav v hodinách, čerpá celodenní i částečná dovolená; zobrazení v hodinách i dnech, s rezervací a zbytkem pro naplánovanou dovolenou.
+- **Konto dovolené** — počáteční stav v hodinách zadaný jako snímky podle data (roční navýšení sedí i zpětně), čerpá celodenní i částečná dovolená; zobrazení v hodinách i dnech, s rezervací a zbytkem.
 - **Záloha** — kompletní export/import do JSON souboru (přenos na jiný telefon) a export do CSV pro Excel.
 - **Připomínka do kalendáře** — vytvoří v telefonu událost na čas odchodu s upozorněním (funguje i při zavřené appce a zamčeném telefonu).
 - **Zapamatování** — délka směny a nastavení svačiny se drží natrvalo.
@@ -165,14 +165,16 @@ Tlačítka se sama zapínají/vypínají podle stavu, takže se nedá přihlási
 - Každý den má vpravo barevné **ikony** podle obsahu: hodiny (práce), **§** (paragraf), **NV** (náhradní volno), sluníčko (dovolená), kalendář s fajfkou (svátek), křížek (nemoc). U složených dní se ikony skládají pod sebe.
 - **Úprava záznamu** — tužka ✎ otevře editor: **typ dne** (dlaždice s ikonami), časy, pracovní doba, svačina a **Zbytek do plné směny**.
 - **Dodatečné dopsání** — tlačítko ➕ v záhlaví (vybereš datum a typ).
-- **Počáteční stavy** konta a dovolené se zadávají na **hlavní obrazovce** dole (pod Svačinou).
+- **Počáteční stavy** konta a dovolené se zadávají tlačítkem **⚙ Počáteční stavy** na hlavní obrazovce — na vlastní stránce jako **snímky „stav k datu"** (stačí 1–2× ročně).
 - Záznamy jde jednotlivě mazat (✕). **Vymazat měsíc** smaže jen právě zobrazený měsíc.
 
-**Konto přesčasů** — karta **Konto** = kumulativní součet přesčasů do konce zobrazeného měsíce plus ruční **počáteční stav** (zadáš třeba `+12:00`, klidně i mínus). Náhradní volno z konta čerpá — a protože je součet průběžný, **NV v jednom měsíci ubere z konta našetřeného v jiném**. U **klasické směny** jde do konta celý přesčas; u **zkrácené 6h** směny se do konta počítá **jen práce nad 8 h** (plná směna) a jen ten rozdíl — práce 6–8 h ani dřívější odchod kontem nehýbou. Zobrazený „přesčas" u dne je vždy proti plánu dne. Konto může jít i do mínusu.
+**Konto přesčasů** — karta **Konto** = kumulativní součet přesčasů do konce zobrazeného měsíce plus **počáteční stav** (tlačítko ⚙ Počáteční stavy, zadáš třeba `+12:00`, klidně i mínus). Náhradní volno z konta čerpá — a protože je součet průběžný, **NV v jednom měsíci ubere z konta našetřeného v jiném**. U **klasické směny** jde do konta celý přesčas; u **zkrácené 6h** směny se do konta počítá **jen práce nad 8 h** (plná směna) a jen ten rozdíl — práce 6–8 h ani dřívější odchod kontem nehýbou. Zobrazený „přesčas" u dne je vždy proti plánu dne. Konto může jít i do mínusu.
 
 **Víkend a svátek** — o **víkendu (So/Ne)** appka pozná z data, že není plán, takže **celá odpracovaná doba je přesčas a jde celá do konta** (i pod 8 h). **Práci ve svátek** označíš v úpravě směny přepínačem **Práce ve svátek** — hodiny se započtou do **odpracováno**, ale **ne do přesčasu ani konta**. Nepracovní svátek zadej jako celodenní typ **Svátek** (neutrální).
 
-**Konto dovolené** — karta **Dovolená** = **počáteční stav v hodinách** (zadáš na hlavní obrazovce) − vyčerpaná dovolená; ukazuje se v **hodinách i dnech** (dny podle délky směny 6/8 h). Ubírá celodenní **Dovolená** i částečná (u směny **Zbytek do plné směny → Dovolená**). Když máš dovolenou i v pozdějších měsících, přibudou řádky **Rezervace** (kolik ještě ubyde) a **Zbytek** (co reálně zůstane).
+**Konto dovolené** — karta **Dovolená** = **počáteční stav v hodinách** (tlačítko ⚙ Počáteční stavy) − vyčerpaná dovolená; ukazuje se v **hodinách i dnech** (dny podle délky směny 6/8 h). Ubírá celodenní **Dovolená** i částečná (u směny **Zbytek do plné směny → Dovolená**). Když máš dovolenou i v pozdějších měsících, přibudou řádky **Rezervace** (kolik ještě ubyde) a **Zbytek** (co reálně zůstane).
+
+**Snímky počátečních stavů** — počáteční stavy konta i dovolené se zadávají jako **snímky „stav k datu"** na stránce ⚙ Počáteční stavy. Appka pro každý měsíc vezme **nejbližší předchozí snímek** a od něj počítá. Roční navýšení dovolené (leden) tak zadáš novým snímkem a **zpětně to nerozhodí** starší měsíce.
 
 **Záloha a export** (tlačítko **Záloha** v Historii → stránka Záloha):
 - **Export CSV** — přehled dnů pro Excel (`pichacky.csv`).
@@ -200,6 +202,7 @@ Appka je čistá **PWA** bez frameworků — jeden HTML soubor s vloženým CSS 
 | `napoveda.html` | Nápověda k aplikaci |
 | `zaloha.html` | Záloha/obnova (JSON) a export CSV |
 | `pdf-import.html` | Převod firemního PDF výpisu na záznamy |
+| `stavy.html` | Počáteční stavy konta a dovolené (snímky) |
 | `qr.png` | QR kód s adresou aplikace |
 | `nfc.png` | Ikonka NFC pro README |
 | `screenshot-app.png`, `screenshot-history.png`, `screenshot-help.png`, `screenshot-qr.png` | Náhledy do README |
