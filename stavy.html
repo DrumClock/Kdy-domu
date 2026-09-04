@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Počáteční stavy – Osobní píchačka</title>
+<style>
+  :root{ --bg:#1c1726; --panel:#251d33; --line:#3a2f4d; --ink:#efe9df; --muted:#9a8fae;
+    --amber:#ffb020; --green:#43c67d; --red:#ff5c6c; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{min-height:100%}
+  body{ background:radial-gradient(120% 60% at 50% -10%, #2a2138 0%, var(--bg) 55%); background-attachment:fixed;
+    color:var(--ink); font-family:"Segoe UI",system-ui,-apple-system,sans-serif; line-height:1.5;
+    padding:calc(24px + env(safe-area-inset-top)) 18px calc(40px + env(safe-area-inset-bottom)); }
+  .wrap{max-width:520px;margin:0 auto}
+  .eyebrow{font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--amber);font-weight:600;text-align:center;margin-bottom:6px}
+  h1{font-size:24px;font-weight:700;text-align:center;margin-bottom:8px}
+  .lead{font-size:13.5px;color:var(--muted);text-align:center;margin-bottom:20px}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+  h2{font-size:16px;font-weight:700;margin-bottom:4px}
+  .hint{font-size:12.5px;color:var(--muted);margin-bottom:12px}
+  .snap{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+  .snap:first-of-type{border-top:none}
+  .snap .d{font-family:"SFMono-Regular","Consolas",monospace;font-size:14px;flex:none;width:110px}
+  .snap .v{flex:1;font-weight:700;font-size:16px}
+  .snap .v.dov{color:#4aa3ff} .snap .v.pos{color:var(--green)} .snap .v.neg{color:var(--red)}
+  .snap .del{flex:none;background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px 8px}
+  .empty{font-size:13px;color:var(--muted);padding:8px 0}
+  .add{display:flex;gap:8px;margin-top:12px}
+  .add input{padding:10px;font-size:15px;background:#161020;color:var(--ink);border:1px solid var(--line);border-radius:10px}
+  .add input[type=date]{flex:1;min-width:0}
+  .add input.val{width:110px}
+  .add button{flex:none;padding:10px 16px;border:none;border-radius:10px;background:var(--amber);color:#1c1726;font-weight:700;font-size:15px;cursor:pointer}
+  .close{position:fixed;top:calc(env(safe-area-inset-top) + 14px);right:calc(env(safe-area-inset-right) + 16px);
+    display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:11px;
+    color:var(--muted);text-decoration:none;font-size:20px;line-height:1;border:1px solid var(--line);
+    background:rgba(22,15,32,.55);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);z-index:5}
+  .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 22px);transform:translateX(-50%);
+    background:#0f0a17;border:1px solid var(--line);color:var(--ink);padding:11px 18px;border-radius:12px;font-size:14px;z-index:20}
+  .toast[hidden]{display:none}
+</style>
+</head>
+<body>
+  <a class="close" href="index.html" aria-label="Zavřít" title="Zpět do aplikace">✕</a>
+  <div class="wrap">
+    <div class="eyebrow">Nastavení</div>
+    <h1>Počáteční stavy</h1>
+    <p class="lead">Snímek = stav k danému datu. Appka pro každý měsíc vezme nejbližší předchozí snímek a od něj počítá. Stačí 1–2× ročně (např. lednové navýšení dovolené).</p>
+
+    <section>
+      <h2>Konto přesčasů</h2>
+      <div class="hint">Zadej stav konta k datu, např. <b>+12:00</b> nebo <b>-3:30</b>.</div>
+      <div id="kontoList"></div>
+      <div class="add">
+        <input type="date" id="kontoDate">
+        <input type="text" class="val" id="kontoVal" inputmode="text" placeholder="+0:00">
+        <button type="button" id="kontoAdd">Přidat</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Dovolená</h2>
+      <div class="hint">Zadej zůstatek dovolené <b>v hodinách</b> k datu, např. <b>165</b>.</div>
+      <div id="dovList"></div>
+      <div class="add">
+        <input type="date" id="dovDate">
+        <input type="text" class="val" id="dovVal" inputmode="numeric" placeholder="0">
+        <button type="button" id="dovAdd">Přidat</button>
+      </div>
+    </section>
+  </div>
+  <div class="toast" id="toast" hidden></div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const pad = n => String(n).padStart(2,'0');
+  const toastEl = $('toast'); let tt;
+  const toast = m => { toastEl.textContent=m; toastEl.hidden=false; clearTimeout(tt); tt=setTimeout(()=>toastEl.hidden=true,2200); };
+
+  const parseSigned = str => {
+    str = (str||'').trim().replace(',', '.'); if(!str) return 0;
+    const neg = str[0]==='-' || str[0]==='−'; str = str.replace(/^[-−+]/,'');
+    let min;
+    if(str.indexOf(':')>=0){ const [h,m]=str.split(':'); min = (parseInt(h,10)||0)*60 + (parseInt(m,10)||0); }
+    else { min = Math.round((parseFloat(str)||0)*60); }
+    return neg ? -min : min;
+  };
+  const sdur = m => (m<0?'−':'+') + Math.floor(Math.abs(m)/60) + ':' + pad(Math.abs(m)%60);
+  const dhm = m => (m<0?'−':'') + Math.round(Math.abs(m)/60) + ' h';
+  const fmtDate = d => { const [y,mo,da]=d.split('-'); return da+'.'+mo+'.'+y; };
+  const today = () => { const n=new Date(); return n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate()); };
+
+  function load(key, oldKey){
+    let arr=[]; try{ arr=JSON.parse(localStorage.getItem(key)||'[]')||[]; }catch(e){}
+    if(!Array.isArray(arr)) arr=[];
+    if(!arr.length){ const ov=parseInt(localStorage.getItem(oldKey)||'0',10); if(ov) arr=[{d:'2000-01-01',m:ov}]; }
+    return arr.filter(x=>x&&x.d).sort((a,b)=> a.d<b.d?-1:a.d>b.d?1:0);
+  }
+  function save(key, arr){ try{ localStorage.setItem(key, JSON.stringify(arr)); }catch(e){} }
+
+  function render(){
+    // konto
+    const ks = load('kdyDomu.kontoSnaps','kdyDomu.konto0');
+    $('kontoList').innerHTML = ks.length ? ks.slice().reverse().map((s,i)=>{
+      const idx = ks.length-1-i;
+      return '<div class="snap"><span class="d">'+fmtDate(s.d)+'</span>'+
+        '<span class="v '+(s.m<0?'neg':'pos')+'">'+sdur(s.m)+'</span>'+
+        '<button class="del" data-t="k" data-i="'+idx+'" aria-label="Smazat">✕</button></div>';
+    }).join('') : '<div class="empty">Zatím žádný snímek.</div>';
+    // dovolená
+    const ds = load('kdyDomu.dovSnaps','kdyDomu.dov0');
+    $('dovList').innerHTML = ds.length ? ds.slice().reverse().map((s,i)=>{
+      const idx = ds.length-1-i;
+      return '<div class="snap"><span class="d">'+fmtDate(s.d)+'</span>'+
+        '<span class="v dov">'+dhm(s.m)+'</span>'+
+        '<button class="del" data-t="d" data-i="'+idx+'" aria-label="Smazat">✕</button></div>';
+    }).join('') : '<div class="empty">Zatím žádný snímek.</div>';
+  }
+
+  function addSnap(key, oldKey, dateEl, valEl, toMin){
+    const d = dateEl.value || today();
+    const m = toMin(valEl.value);
+    if(!valEl.value.trim()){ toast('Zadej hodnotu'); return; }
+    const arr = load(key, oldKey).filter(s => s.d !== d);   // stejné datum přepíše
+    arr.push({ d, m });
+    arr.sort((a,b)=> a.d<b.d?-1:a.d>b.d?1:0);
+    save(key, arr);
+    valEl.value=''; render(); toast('Uloženo');
+  }
+
+  $('kontoAdd').addEventListener('click', ()=> addSnap('kdyDomu.kontoSnaps','kdyDomu.konto0',$('kontoDate'),$('kontoVal'), parseSigned));
+  $('dovAdd').addEventListener('click',  ()=> addSnap('kdyDomu.dovSnaps','kdyDomu.dov0',$('dovDate'),$('dovVal'), v=>Math.abs(parseSigned(v))));
+
+  document.addEventListener('click', e=>{
+    const b = e.target.closest('.del'); if(!b) return;
+    const key = b.dataset.t==='k' ? 'kdyDomu.kontoSnaps' : 'kdyDomu.dovSnaps';
+    const oldKey = b.dataset.t==='k' ? 'kdyDomu.konto0' : 'kdyDomu.dov0';
+    const arr = load(key, oldKey); arr.splice(+b.dataset.i, 1); save(key, arr); render();
+  });
+
+  // předvyplň dnešní datum
+  $('kontoDate').value = today(); $('dovDate').value = today();
+  render();
+</script>
+</body>
+</html>

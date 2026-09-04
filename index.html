@@ -329,6 +329,9 @@
   .dov-sub span:last-child{ font-family:"SFMono-Regular","Consolas",monospace; font-weight:600; }
   .dov-sub .sub-blue{ color:#4aa3ff; } .dov-sub .sub-neg{ color:var(--red); } .dov-sub .sub-pos{ color:var(--green); }
   .init-row{ display:flex; gap:10px; }
+  .init-btn{ display:block; text-align:center; text-decoration:none; padding:12px; border-radius:12px;
+    background:#161020; color:var(--ink); border:1px solid var(--line); font-size:15px; font-weight:600; }
+  .init-btn:active{ border-color:#5a4a76; }
   .init-item{ flex:1; display:flex; flex-direction:column; gap:5px; }
   .init-lbl{ font-size:11px; color:var(--muted); }
   .init-item input{ width:100%; padding:10px; font-size:15px; text-align:right;
@@ -619,17 +622,7 @@
     </div>
 
     <div class="field">
-      <label>Počáteční stavy</label>
-      <div class="init-row">
-        <div class="init-item">
-          <span class="init-lbl">Konto přesčasů</span>
-          <input type="text" id="kontoInit" inputmode="text" placeholder="+0:00">
-        </div>
-        <div class="init-item">
-          <span class="init-lbl">Dovolená (hod)</span>
-          <input type="text" id="dovInit" inputmode="numeric" placeholder="0">
-        </div>
-      </div>
+      <a class="init-btn" href="stavy.html">⚙ Počáteční stavy (konto, dovolená)</a>
     </div>
   </main>
 
@@ -983,6 +976,28 @@
   const DOV_KEY = 'kdyDomu.dov0';
   function loadDov(){ const v = parseInt(localStorage.getItem(DOV_KEY) || '0', 10); return isNaN(v) ? 0 : v; }
   function saveDov(min){ try{ localStorage.setItem(DOV_KEY, String(min|0)); }catch(e){} }
+
+  // snímky počátečních stavů: [{d:'YYYY-MM-DD', m:minuty}], seřazené vzestupně dle data
+  function loadSnaps(key, oldMin){
+    let arr = [];
+    try{ arr = JSON.parse(localStorage.getItem(key) || '[]') || []; }catch(e){ arr = []; }
+    if(!Array.isArray(arr)) arr = [];
+    if(!arr.length && oldMin){ arr = [{ d:'2000-01-01', m: oldMin }]; }   // migrace z jedné hodnoty
+    return arr.filter(x => x && x.d).sort((a,b)=> a.d < b.d ? -1 : a.d > b.d ? 1 : 0);
+  }
+  function loadKontoSnaps(){ return loadSnaps('kdyDomu.kontoSnaps', loadKonto()); }
+  function loadDovSnaps(){ return loadSnaps('kdyDomu.dovSnaps', loadDov()); }
+  // základní snímek platný ke konci daného měsíce (poslední s datem ≤ konec měsíce)
+  function baseSnap(snaps, y, m){
+    const endKey = y + '-' + pad(m+1) + '-31';
+    let base = null;
+    for(const s of snaps){ if(s.d <= endKey) base = s; else break; }
+    return base || snaps[0] || { d:'2000-01-01', m:0 };
+  }
+  function nextSnapDate(snaps, afterDate){
+    for(const s of snaps){ if(s.d > afterDate) return s.d; }
+    return null;
+  }
   function parseSigned(str){                         // "+12:00" / "-1:30" / "12:00" / "12" → minuty
     str = (str || '').trim().replace(',', ':');
     if(!str) return 0;
@@ -1332,26 +1347,30 @@
       return s.over;                                      // klasická → celý přesčas
     }
 
-    // kumulativní konto ke konci zvoleného měsíce = počáteční stav + příspěvky všech dnů do konce měsíce
-    const konto0 = loadKonto();
-    let konto = konto0;
+    // konto ke konci měsíce = základní snímek (nejbližší předchozí) + příspěvky dnů od data snímku
+    const kontoSnaps = loadKontoSnaps();
+    const kBase = baseSnap(kontoSnaps, y, m);
+    const endKey = y + '-' + pad(m+1) + '-31';
+    let konto = kBase.m;
     items.forEach(({k,s}) => {
       if(s.open) return;
-      const d = new Date(k + 'T00:00:00');
-      if(d.getFullYear() < y || (d.getFullYear() === y && d.getMonth() <= m)) konto += kontoDelta(s);
+      if(k >= kBase.d && k <= endKey) konto += kontoDelta(s);
     });
 
-    // dovolená: počáteční stav (hodiny) − vyčerpané hodiny (celodenní i částečné „D")
-    const dov0 = loadDov();
+    // dovolená = základní snímek − vyčerpáno od data snímku; rezervace = budoucí čerpání do dalšího snímku
+    const dovSnaps = loadDovSnaps();
+    const dBase = baseSnap(dovSnaps, y, m);
+    const dNext = nextSnapDate(dovSnaps, dBase.d);   // datum dalšího snímku (reset), nebo null
     let dovUsedMin = 0, dovFutureMin = 0;
     items.forEach(({k,s}) => {
       const dm = s.dovMin || 0; if(!dm) return;
-      const d = new Date(k + 'T00:00:00');
-      if(d.getFullYear() < y || (d.getFullYear() === y && d.getMonth() <= m)) dovUsedMin += dm;
-      else dovFutureMin += dm;                     // dovolená v pozdějších měsících (rezervace)
+      if(k < dBase.d) return;                        // patří pod dřívější snímek
+      if(dNext && k >= dNext) return;                // patří pod pozdější snímek (reset)
+      if(k <= endKey) dovUsedMin += dm;
+      else dovFutureMin += dm;                       // budoucí čerpání v rámci tohoto snímku
     });
     const perDay = workMin || 360;                 // hodin/den dle nastavené směny
-    const dovBal = dov0 - dovUsedMin;               // zbývá ke konci zobrazeného měsíce (min)
+    const dovBal = dBase.m - dovUsedMin;            // zbývá ke konci zobrazeného měsíce (min)
     const dovRes = dovFutureMin;                    // rezervace = dovolená naplánovaná dál
     const dovFuture = dovFutureMin;                 // (pro podmínku zobrazení)
     const dovRest = dovBal - dovRes;                // zbytek po vyčerpání všeho zadaného
@@ -1693,15 +1712,7 @@
     histMonth = { y: +ty, m: +tm - 1 };
     renderList();
   });
-  const kontoInit = document.getElementById('kontoInit');
-  const dovInit   = document.getElementById('dovInit');
-  function refreshInitInputs(){
-    const k = loadKonto(); kontoInit.value = k ? sdur(k) : '';
-    const d = loadDov();   dovInit.value   = d ? String(Math.round(d/60)) : '';
-  }
-  kontoInit.addEventListener('change', () => { saveKonto(parseSigned(kontoInit.value)); refreshInitInputs(); if(!histEl.hidden && !editArr) renderList(); });
-  dovInit.addEventListener('change',   () => { saveDov(Math.abs(parseSigned(dovInit.value))); refreshInitInputs(); if(!histEl.hidden && !editArr) renderList(); });
-  refreshInitInputs();
+  // počáteční stavy se zadávají na samostatné stránce stavy.html
 
   logListEl.addEventListener('click', e => {
     const editB = e.target.closest('.rec-edit'); if(editB){ openEdit(editB.dataset.date); return; }
