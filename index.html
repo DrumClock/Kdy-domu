@@ -354,14 +354,14 @@
   .log-empty{ color:var(--muted); font-size:14px; text-align:center; padding:16px 0; }
   .rec{ display:flex; align-items:center; justify-content:space-between; gap:8px;
     background:#161020; border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
-  .rec .d{ font-size:13px; color:var(--ink); font-weight:600; }
+  .rec .d{ font-size:13px; color:var(--ink); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .rec .d-sub{ font-weight:400; color:var(--muted); }
-  .rec .t{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .rec .t{ font-size:11.5px; color:var(--muted); margin-top:3px; }
   .rec-main{ flex:1; min-width:0; }
-  .rec-dow{ flex:none; width:26px; text-align:center; font-size:12.5px; font-weight:700; color:var(--muted); }
+  .rec-dow{ flex:none; width:24px; text-align:center; font-size:12.5px; font-weight:700; color:var(--muted); }
   .rec-dow.dow-sa{ color:var(--green); }
   .rec-dow.dow-ne{ color:var(--red); }
-  .rec-actions{ display:flex; align-items:center; gap:6px; }
+  .rec-actions{ display:flex; align-items:center; gap:6px; flex:none; }
   .rec-badges{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; min-width:26px; flex:none; }
   .badge{ display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px;
     padding:0 5px; border-radius:6px; font-size:12px; font-weight:700; color:#1c1726; }
@@ -380,11 +380,11 @@
   .type-opt-l{ font-size:11px; font-weight:600; text-align:center; line-height:1.15; }
   .type-opt-ic .badge{ min-width:30px; height:30px; }
   .type-opt-ic .badge:not(.ico){ font-size:16px; }
-  .rec .df{ font-family:"SFMono-Regular","Consolas",monospace; font-weight:700; font-size:15px; min-width:58px; text-align:right; }
+  .rec .df{ font-family:"SFMono-Regular","Consolas",monospace; font-weight:700; font-size:14px; min-width:52px; text-align:right; }
   .df.pos{ color:var(--green); } .df.neg{ color:var(--red); } .df.zero{ color:var(--muted); }
-  .rec-edit, .rec-del{ background:#161020; border:1px solid var(--line); border-radius:10px; cursor:pointer;
-    font-size:19px; line-height:1; padding:9px 11px; flex:none; display:inline-flex; align-items:center; justify-content:center; }
-  .rec-edit{ margin-right:4px; color:var(--amber); }
+  .rec-edit, .rec-del{ background:#161020; border:1px solid var(--line); border-radius:9px; cursor:pointer;
+    font-size:16px; line-height:1; padding:7px 9px; flex:none; display:inline-flex; align-items:center; justify-content:center; }
+  .rec-edit{ margin-right:2px; color:var(--amber); }
   .rec-del{ color:var(--red); }
   .rec-edit:active, .rec-del:active{ filter:brightness(1.25); border-color:#5a4a76; }
 
@@ -1447,9 +1447,9 @@
                '<div class="rec-actions"><span class="rec-badges">' + typeBadge(s.type) + '</span>' + right + delBtn + '</div></div>';
       }
 
-      const range = hhmm(s.start) + ' → ' + (s.open ? '<span class="live">běží</span>' : hhmm(s.end));
       const off = s.breaks + s.snack;
-      const line3 = range + (off ? ' · pauza ' + dur(off) : '');
+      const range = hhmm(s.start) + ' → ' + (s.open ? '<span class="live">běží</span>' : hhmm(s.end));
+      const line2 = range + (off ? ' · pauza ' + dur(off) : '') + (s.open ? '' : ' · odpr. ' + dur(s.worked));
       const PLAN_NAME = { 360:'zkrácená', 480:'ranní', 450:'odpolední', 420:'noční' };
       const shiftName = PLAN_NAME[s.plan] ? ' <span class="d-sub">· ' + PLAN_NAME[s.plan] + '</span>' : '';
       let badges;
@@ -1466,8 +1466,7 @@
         : '<span class="df ' + diffClass(s.over) + '">' + sdur(s.over) + '</span>';
       return '<div class="rec">' + editBtn + dowLabel(k) +
              '<div class="rec-main"><div class="d">' + fmtDate(k) + shiftName + '</div>' +
-             '<div class="t">odpracováno ' + dur(s.worked) + '</div>' +
-             '<div class="t">' + line3 + '</div></div>' +
+             '<div class="t">' + line2 + '</div></div>' +
              '<div class="rec-actions"><span class="rec-badges">' + badges + '</span>' + over + delBtn + '</div></div>';
     }).join('');
   }
