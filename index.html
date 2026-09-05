@@ -1449,7 +1449,7 @@
 
       const off = s.breaks + s.snack;
       const range = hhmm(s.start) + ' → ' + (s.open ? '<span class="live">běží</span>' : hhmm(s.end));
-      const line2 = range + (off ? ' · pauza ' + dur(off) : '') + (s.open ? '' : ' · odpr. ' + dur(s.worked));
+      const line2 = range + (s.open ? '' : ' · odpr. ' + dur(s.worked));
       const PLAN_NAME = { 360:'zkrácená', 480:'ranní', 450:'odpolední', 420:'noční' };
       const shiftName = PLAN_NAME[s.plan] ? ' <span class="d-sub">· ' + PLAN_NAME[s.plan] + '</span>' : '';
       let badges;
