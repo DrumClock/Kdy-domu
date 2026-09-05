@@ -1447,9 +1447,8 @@
                '<div class="rec-actions"><span class="rec-badges">' + typeBadge(s.type) + '</span>' + right + delBtn + '</div></div>';
       }
 
-      const off = s.breaks + s.snack;
       const range = hhmm(s.start) + ' → ' + (s.open ? '<span class="live">běží</span>' : hhmm(s.end));
-      const line2 = range + (s.open ? '' : ' · odpr. ' + dur(s.worked));
+      const worked = s.open ? '' : '<div class="t">odpracováno ' + dur(s.worked) + '</div>';
       const PLAN_NAME = { 360:'zkrácená', 480:'ranní', 450:'odpolední', 420:'noční' };
       const shiftName = PLAN_NAME[s.plan] ? ' <span class="d-sub">· ' + PLAN_NAME[s.plan] + '</span>' : '';
       let badges;
@@ -1466,7 +1465,7 @@
         : '<span class="df ' + diffClass(s.over) + '">' + sdur(s.over) + '</span>';
       return '<div class="rec">' + editBtn + dowLabel(k) +
              '<div class="rec-main"><div class="d">' + fmtDate(k) + shiftName + '</div>' +
-             '<div class="t">' + line2 + '</div></div>' +
+             '<div class="t">' + range + '</div>' + worked + '</div>' +
              '<div class="rec-actions"><span class="rec-badges">' + badges + '</span>' + over + delBtn + '</div></div>';
     }).join('');
   }
