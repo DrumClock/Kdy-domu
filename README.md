@@ -14,7 +14,7 @@ Jednoduchá webová appka (PWA), která spočítá, kdy můžeš odejít z prác
 
 ## Co appka umí
 
-- **Výpočet odchodu** ze zadaného začátku směny (začátek se bere z prvního Příchodu, nebo ho zadáš ručně jen pro výpočet).
+- **Výpočet odchodu** — karta na hlavní stránce se počítá automaticky z běžící směny; ťuknutím se otevře plánovač pro ruční „co kdyby" (neovlivní hlavní kartu).
 - **Pracovní doba** na jedno ťuknutí: 6 h (zkrácená) nebo klasická 8 h / 7:30 / 7:00 (ranní / odpolední / noční).
 - **Svačina** s nastavitelnou délkou a přepínačem **placená / neplacená**. Neplacená se z odpracované doby odečítá jen když je čistá práce **nad 6 h** (podle zákoníku práce).
 - **Živý odpočet** — kolik zbývá (červeně) nebo kolik je přesčas (zeleně), aktualizace každou vteřinu.
@@ -95,6 +95,8 @@ Placená pauza se počítá jako práce, takže odchod **neposouvá**. Když vý
 
 **Příklad:** začátek 7:39, směna 8 h, svačina 0:30 neplacená → odchod **16:09**.
 
+Karta „Odchod domů" na hlavní stránce se počítá **automaticky z běžící směny** (začátek z prvního Příchodu). **Ťuknutím na kartu** se otevře **plánovač** na vlastní obrazovce, kde jde ručně zadat začátek pro výpočet „co kdyby" — ruční změna se projeví **jen v plánovači**, hlavní kartu (skutečnou směnu) neovlivní. Ruční začátek se neukládá.
+
 ---
 
 ## Připomínka v kalendáři
@@ -139,7 +141,7 @@ Appka funguje jako jednoduché píchačky včetně přerušení.
 **Ovládání** — tlačítka **Příchod** (zelené) a **Odchod** (červené), nebo NFC štítky `?prichod` / `?odchod`. Pod tlačítky běží živý stav: *„V práci od 7:40 · odpracováno 2:15"* nebo *„Konec 16:10 · odpracováno 8:00 · přesčas +0:00"*.
 
 **Logika dne**
-- První **Příchod** = začátek směny (rovnou vyplní i „Začátek směny" v plánovači).
+- První **Příchod** = začátek směny (z něj se počítá karta „Odchod domů" na hlavní stránce).
 - Každá dvojice **Odchod → Příchod** uprostřed = **přerušení**.
 - Poslední **Odchod** = konec směny.
 - Odpracováno = (konec − začátek) − přerušení − neplacená svačina; přesčas = odpracováno − zvolená délka směny.
