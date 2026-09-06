@@ -1,228 +1,255 @@
-# Osobní píchačka ⏰
+# KUSBH — Klipper USB Helper
 
-Jednoduchá webová appka (PWA), která spočítá, kdy můžeš odejít z práce — podle začátku směny, délky pracovní doby a pauzy na svačinu. Ukazuje živě, kolik ti ještě **zbývá**, nebo kolik už máš **přesčas**.
+**Jazyk / Language:** 🇨🇿 **Čeština** · 🇬🇧 **English** — klikni na sekci níže pro rozbalení / click a section below to expand.
 
-**▶️ Spustit appku: [drumclock.github.io/Kdy-domu](https://drumclock.github.io/Kdy-domu/)**
+<details open>
+<summary><b>🇨🇿 Česky</b></summary>
 
-<p align="center">
-  <img src="qr.png" alt="QR kód pro instalaci" width="200">
-  <br>
-  <sub>Naskenuj foťákem a nainstaluj do telefonu</sub>
-</p>
+<br>
 
----
+> Jednoduchá pomůcka pro přenos G-code mezi USB flash diskem a Klipperem
+> a pro zálohu konfigurace Klipperu na USB. Stačí zasunout USB — o zbytek
+> se postará udev.
 
-## Co appka umí
+## ✨ Funkce
 
-- **Výpočet odchodu** — karta na hlavní stránce se počítá automaticky z běžící směny; ťuknutím se otevře plánovač pro ruční „co kdyby" (neovlivní hlavní kartu).
-- **Pracovní doba** na jedno ťuknutí: 6 h (zkrácená) nebo klasická 8 h / 7:30 / 7:00 (ranní / odpolední / noční).
-- **Svačina** s nastavitelnou délkou a přepínačem **placená / neplacená**. Neplacená se z odpracované doby odečítá jen když je čistá práce **nad 6 h** (podle zákoníku práce).
-- **Živý odpočet** — kolik zbývá (červeně) nebo kolik je přesčas (zeleně), aktualizace každou vteřinu.
-- **Přejíždění (swipe)** — vodorovné tažení přepíná mezi Hlavní obrazovkou a Historií.
-- **[Píchačky](#píchačky)** — Příchod / Odchod (i přes NFC) evidují začátek, konec, přerušení a přesčas směny.
-- **Typy dnů** — vedle běžné směny i **paragraf (§)**, **náhradní volno (NV)**, **nemoc**, **dovolená** (od–do) a **svátek**. U směny lze navíc jedním klikem doplnit **zbytek do plné směny** (§ / dovolená / NV / svátek / nemoc).
-- **Historie** po měsících s úpravou, dodatečným dopsáním a exportem do CSV.
-- **Konto přesčasů** — kumulativní banka napříč měsíci s ručním počátečním stavem; náhradní volno z ní čerpá (u zkrácené 6h směny se přesčas do konta počítá až nad 8 h). **Víkendová práce** jde celá do konta; **práce ve svátek** se počítá do odpracováno, ale ne do konta.
-- **Konto dovolené** — počáteční stav v hodinách zadaný jako snímky podle data (roční navýšení sedí i zpětně), čerpá celodenní i částečná dovolená; zobrazení v hodinách i dnech, s rezervací a zbytkem.
-- **Záloha** — kompletní export/import do JSON souboru (přenos na jiný telefon) a export do CSV pro Excel.
-- **Připomínka do kalendáře** — vytvoří v telefonu událost na čas odchodu s upozorněním (funguje i při zavřené appce a zamčeném telefonu).
-- **Zapamatování** — délka směny a nastavení svačiny se drží natrvalo.
-- **[NFC](#nfc-štítek)** — přiložením telefonu k NFC štítku píchneš příchod nebo odchod.
-- **Funguje offline** a jde nainstalovat na plochu jako běžná aplikace.
-- **QR kód** pro rychlé sdílení a instalaci na cizím telefonu.
-- **Nápověda** přímo v appce (ikona „?") — stručný přehled, jak vše používat.
+- **📥 Kopírování (COPY)** — vložíš USB s `*.gcode` → soubory se **zkopírují** do tiskové složky.
+- **📤 Přesun (MOVE)** — na USB je složka `gcode` → všechny `*.gcode` se **přesunou** z tiskárny do té složky (bez ní se nic nepřesouvá).
+- **💾 Záloha** — vložíš USB se složkou `backup` → zazálohuje se `config` a `database`
+  do podsložky s datem a časem (staré zálohy se nepřepisují).
+- **🛡️ Ochrana tisku** — když se tiskne, ostatní soubory se přenesou normálně, ale
+  právě tištěný soubor se **nikdy** nepřepíše ani neodstěhuje.
+- **💬 Hlášení** — průběh se ukazuje na displeji (`M117`) i v konzoli (`RESPOND MSG=`).
+- **🔎 Autodetekce** — cesta k `printer_data` se najde sama (pi, biqu, mks…).
 
+## 🚀 Instalace z GitHubu (ve stylu KIAUH)
 
----
+**Krok 1** — nainstaluj `git` (pokud ho ještě nemáš):
 
-## Náhledy
-
-<p align="center">
-  <img src="screenshot-app.png" alt="Hlavní obrazovka" width="230">
-  &nbsp;&nbsp;
-  <img src="screenshot-history.png" alt="Historie" width="230">
-</p>
-<p align="center">
-  <img src="screenshot-help.png" alt="Nápověda" width="230">
-  &nbsp;&nbsp;
-  <img src="screenshot-qr.png" alt="Sdílecí stránka s QR kódem" width="230">
-</p>
-
----
-
-## Instalace na mobil
-
-Otevři v prohlížeči adresu **https://drumclock.github.io/Kdy-domu/** (nebo naskenuj QR kód výše) a přidej si ji na plochu.
-
-### Android (Chrome)
-1. Otevři odkaz v **Chromu** (ne ve vestavěném prohlížeči jiné appky).
-2. Menu **⋮** vpravo nahoře → **Přidat na plochu** / **Nainstalovat aplikaci**.
-3. Potvrď. Appka se objeví na ploše s vlastní ikonou.
-
-> Tip: někdy je ikonka instalace přímo v adresním řádku.
-
-### iPhone / iPad (Safari)
-1. Otevři odkaz v **Safari**.
-2. Ťukni na tlačítko **Sdílet** (čtvereček se šipkou nahoru).
-3. Zvol **Přidat na plochu** → **Přidat**.
-
----
-
-## Instalace na PC
-
-Funguje v **Chromu** a **Microsoft Edge** (Firefox a Safari na počítači instalaci PWA nepodporují).
-
-### Google Chrome
-1. Otevři **https://drumclock.github.io/Kdy-domu/**.
-2. V adresním řádku klikni na ikonu instalace (monitor se šipkou dolů) → **Nainstalovat**.
-3. Případně: menu **⋮** → **Odesílat, ukládat a sdílet** → **Nainstalovat stránku jako aplikaci**.
-
-### Microsoft Edge
-1. Otevři tu samou adresu.
-2. Menu **…** → **Aplikace** → **Nainstalovat tento web jako aplikaci**.
-
-Po instalaci se appka spustí ve vlastním okně bez adresního řádku a získá zástupce v nabídce Start / Launchpadu.
-
----
-
-## Jak se počítá odchod
-
-```
-odchod = začátek + pracovní doba + neplacená pauza
+```bash
+sudo apt update && sudo apt install -y git
 ```
 
-Placená pauza se počítá jako práce, takže odchod **neposouvá**. Když výpočet přesáhne půlnoc, u rozpisu se zobrazí poznámka „(další den)".
+**Krok 2** — stáhni KUSBH do domovské složky:
 
-**Příklad:** začátek 7:39, směna 8 h, svačina 0:30 neplacená → odchod **16:09**.
+```bash
+git clone https://github.com/drumclock/kusbh.git
+```
 
-Karta „Odchod domů" na hlavní stránce se počítá **automaticky z běžící směny** (začátek z prvního Příchodu). **Ťuknutím na kartu** se otevře **plánovač** na vlastní obrazovce, kde jde ručně zadat začátek pro výpočet „co kdyby" — ruční změna se projeví **jen v plánovači**, hlavní kartu (skutečnou směnu) neovlivní. Ruční začátek se neukládá.
+**Krok 3** — spusť KUSBH:
 
----
+```bash
+./kusbh/kusbh.sh
+```
 
-## Připomínka v kalendáři
+**Krok 4** — teď jsi v hlavním menu. Akci vybereš zadáním jejího čísla.
 
-V rozích nahoře jsou dvě ikonky: **kalendář** (vlevo) a **QR** (vpravo). Kalendář vytvoří v telefonu událost „Odchod domů 🏠" na spočítaný čas s upozorněním — díky tomu tě telefon upozorní, i když je appka zavřená a obrazovka zamčená.
+> 💡 **Rychlá varianta** — jedním příkazem (stáhne repozitář a rovnou spustí menu):
+>
+> ```bash
+> bash <(curl -fsSL https://raw.githubusercontent.com/drumclock/kusbh/main/bootstrap.sh)
+> ```
 
-- **Android:** stáhne se soubor `odchod-domu.ics` → otevřeš ho → kalendář nabídne přidání události.
-- **iPhone:** rovnou se nabídne přidání do kalendáře.
-- **PC:** `.ics` otevřeš v Google / Outlook / Apple kalendáři.
+## 🧭 Menu (`kusbh.sh`)
 
-Upozornění je v souboru nastavené **na čas události**. Pokud ti kalendář přidá vlastní výchozí připomínku (např. Google 30 min předem), vypni ji v nastavení kalendáře (výchozí připomínky účtu).
+```text
+1) Instalovat
+2) Odinstalovat
+3) Aktualizovat  (git pull)
+4) Slozky pro zalohu
+5) Stav
+q) Konec
+```
 
----
+Skript si sám najde potřebné soubory a v případě potřeby si vyžádá heslo (`sudo`).
 
-## NFC štítek
+## 💾 Jak zálohovat
 
-<img src="nfc.png" alt="NFC" width="72" align="left">
+Na USB vytvoř složku `backup` a disk zasuň. Zálohy se ukládají takto:
 
-Appka rozumí parametrům v adrese, takže přiložením telefonu k NFC štítku rovnou píchneš příchod nebo odchod:
+```text
+backup/2025-09-04_19-33-01/
+```
 
-<br clear="left">
+Když je na USB složka `backup`, provede se **jen záloha** (kopírování/přesun G-code se přeskočí).
+Které složky se zálohují si vybereš **při instalaci** (nebo kdykoli přes
+menu → *Složky pro zálohu*). Instalátor nabídne složky, které v `printer_data`
+reálně existují; výběr se uloží do `/etc/kusbh.conf` (`BACKUP_ITEMS`).
+Výchozí je `config` + `database`.
 
-| URL na štítku | Co udělá |
-| --- | --- |
-| `https://drumclock.github.io/Kdy-domu/?prichod` | Píchne **Příchod** (začátek směny / návrat z přerušení) |
-| `https://drumclock.github.io/Kdy-domu/?odchod` | Píchne **Odchod** (přerušení / konec směny) |
+## 💬 Hlášení na displeji / v konzoli
 
-Po přiložení se píchnutí zapíše, appka aktualizuje stav a parametr se z adresy odstraní (refresh ho už nezopakuje). Ideální je jeden štítek `?prichod` u příchodu a druhý `?odchod` u odchodu.
+Po zasunutí USB uvidíš průběh, např.:
 
-**Jak štítek zapsat:** pořiď si prázdný NFC tag a v appce jako **NFC Tools** (Android) zapiš na tag zvolenou URL jako záznam typu *URL/URI*. iPhone umí NFC URL číst sám; k zápisu použij podobnou appku. Štítek pak nalep třeba ke skříňce nebo píchačkám.
+```text
+KUSBH: USB detekovan
+KUSBH: kopiruji 3 souboru
+KUSBH: presun 2 (tisk chranen)
+KUSBH: hotovo, muzes vyjmout USB
+```
 
----
+> **Pozn.:** `RESPOND MSG=` vyžaduje v konfiguraci Klipperu sekci `[respond]`.
+> Pokud ji nemáš (v konzoli by se objevilo *Unknown command RESPOND*), nastav
+> `USE_RESPOND=0`. Zpráva na displeji se po 10 s sama smaže.
 
-## Ovládání a přejíždění
+## ⚙️ Konfigurace
 
-Nahoře jsou čtyři tlačítka (kalendář, historie, QR, nápověda). Mezi **Hlavní obrazovkou** a **Historií** jde přepínat i **vodorovným tažením prstu (swipe)**, libovolným směrem. Gesto musí být hlavně vodorovné (aby nepřekáželo scrollování v historii) a nezačínat úplně u kraje obrazovky (koliduje se systémovým „zpět").
+Vše se nastavuje nahoře v souboru `mountcopy`. Cestu k `printer_data`
+nastavovat **nemusíš** — najde se automaticky.
 
-## Píchačky
+| Proměnná        | Výchozí                   | Popis                                                        |
+|-----------------|---------------------------|--------------------------------------------------------------|
+| `MOONRAKER_URL` | `http://localhost:7125`   | Adresa Moonrakeru (detekce tisku + hlášení).                 |
+| `NOTIFY`        | `1`                       | Zapne hlášení `M117`/`RESPOND`. `0` = vypnuto.               |
+| `USE_RESPOND`   | `1`                       | Posílat i do konzole (vyžaduje `[respond]`). `0` = jen `M117`. |
+| `CLEAR_AFTER`   | `10`                      | Za kolik sekund smazat displej. `0` = nemazat.               |
 
-Appka funguje jako jednoduché píchačky včetně přerušení.
+## 🔧 Ruční instalace (bez menu)
 
-**Ovládání** — tlačítka **Příchod** (zelené) a **Odchod** (červené), nebo NFC štítky `?prichod` / `?odchod`. Pod tlačítky běží živý stav: *„V práci od 7:40 · odpracováno 2:15"* nebo *„Konec 16:10 · odpracováno 8:00 · přesčas +0:00"*.
+```bash
+sudo cp 99-mountcopy.rules /etc/udev/rules.d/
+sudo cp mountcopy /usr/bin
+sudo chmod +x /usr/bin/mountcopy
+sudo udevadm control --reload-rules && sudo udevadm trigger
+```
 
-**Logika dne**
-- První **Příchod** = začátek směny (z něj se počítá karta „Odchod domů" na hlavní stránce).
-- Každá dvojice **Odchod → Příchod** uprostřed = **přerušení**.
-- Poslední **Odchod** = konec směny.
-- Odpracováno = (konec − začátek) − přerušení − neplacená svačina; přesčas = odpracováno − zvolená délka směny.
-- **Svačina** se odečítá jen když je čistá práce **nad 6 h** (zákoník práce). Do 6:00 včetně se neodečítá, od 6:01 se odečte celá (např. 6:01 → 5:31).
+## 🗑️ Ruční odinstalace
 
-**Zbytek do plné směny** — v editaci **Směny** zadáš **Příchod/Odchod** odpracované doby, a pod píchnutími je řádek ikon **Zbytek do plné směny**: **—** (nic), **§** paragraf, **☀** dovolená, **NV** náhradní volno, **★** svátek, **✚** nemoc. Když neodpracuješ plnou směnu, vybereš, čím se **schodek dopočítá do plánu**:
-- **§ / svátek / nemoc** — doplní do plánu, neutrální (netvoří přesčas, nesahá na konta).
-- **Dovolená** — doplní do plánu a **odečte hodiny z konta dovolené**.
-- **Náhradní volno** — doplní do plánu, **přičte se do odpracováno** a **čerpá z konta přesčasů**.
+```bash
+sudo rm /etc/udev/rules.d/99-mountcopy.rules
+sudo rm /usr/bin/mountcopy
+sudo udevadm control --reload-rules && sudo udevadm trigger
+```
 
-Přesčas dělá **jen práce nad plán**. Příklad (plán 6 h, práce 5:05): **§** → §0:55 doplní, přesčas 0; **NV** → odpracováno 6:00, přesčas −0:55; **bez doplnění** → přesčas −0:55 (schodek).
+## ⚠️ Upozornění
 
-**Celodenní typy** (v editaci přes „Typ dne"):
-- **Paragraf**, **Nemoc**, **Dovolená**, **Svátek** — nepočítají se do odpracováno ani přesčasu. **Dovolená a Nemoc** jdou zadat **od–do** (soboty a neděle se přeskočí).
-- **Náhradní volno (celý den)** — přičte délku směny do odpracováno a odečte z přesčasu.
+Skript sám pozná probíhající tisk (přes Moonraker) a právě tištěný soubor
+ochrání. Pokud ale **Moonraker není dostupný**, ochrana se neuplatní — potom
+platí staré doporučení: **USB během tisku raději nepoužívej**, mohlo by dojít
+k přepsání nebo smazání tištěného souboru.
 
-Tlačítka se sama zapínají/vypínají podle stavu, takže se nedá přihlásit dvakrát ani odejít bez přihlášení.
+</details>
 
-**Přes půlnoc** — noční směna se páruje správně: píchnutí po půlnoci se přiřadí k rozjeté směně, ne k novému dni.
+<details>
+<summary><b>🇬🇧 English</b></summary>
 
-**Historie** (ikona hodin nahoře uprostřed) se otevře jako panel přes celou výšku: **nahoře** přepínač měsíce (◀ ▶) se souhrnem *Odpracováno* a *Přesčas* za zvolený měsíc, **uprostřed** scrollovací seznam dní, **dole** tlačítka. Listovat jde i do budoucích měsíců (kde máš záznam, např. dovolenou).
+<br>
 
-- Každý den má vpravo barevné **ikony** podle obsahu: hodiny (práce), **§** (paragraf), **NV** (náhradní volno), sluníčko (dovolená), kalendář s fajfkou (svátek), křížek (nemoc). U složených dní se ikony skládají pod sebe.
-- **Úprava záznamu** — tužka ✎ otevře editor: **typ dne** (dlaždice s ikonami), časy, pracovní doba, svačina a **Zbytek do plné směny**.
-- **Dodatečné dopsání** — tlačítko ➕ v záhlaví (vybereš datum a typ).
-- **Počáteční stavy** konta a dovolené se zadávají tlačítkem **⚙ Počáteční stavy** na hlavní obrazovce — na vlastní stránce jako **snímky „stav k datu"** (stačí 1–2× ročně).
-- Záznamy jde jednotlivě mazat (✕). **Vymazat měsíc** smaže jen právě zobrazený měsíc.
+> A small helper to move G-code between a USB flash drive and Klipper, and to
+> back up the Klipper configuration to USB. Just plug in the drive — udev does
+> the rest.
 
-**Konto přesčasů** — karta **Konto** = kumulativní součet přesčasů do konce zobrazeného měsíce plus **počáteční stav** (tlačítko ⚙ Počáteční stavy, zadáš třeba `+12:00`, klidně i mínus). Náhradní volno z konta čerpá — a protože je součet průběžný, **NV v jednom měsíci ubere z konta našetřeného v jiném**. U **klasické směny** jde do konta celý přesčas; u **zkrácené 6h** směny se do konta počítá **jen práce nad 8 h** (plná směna) a jen ten rozdíl — práce 6–8 h ani dřívější odchod kontem nehýbou. Zobrazený „přesčas" u dne je vždy proti plánu dne. Konto může jít i do mínusu.
+## ✨ Features
 
-**Víkend a svátek** — o **víkendu (So/Ne)** appka pozná z data, že není plán, takže **celá odpracovaná doba je přesčas a jde celá do konta** (i pod 8 h). **Práci ve svátek** označíš v úpravě směny přepínačem **Práce ve svátek** — hodiny se započtou do **odpracováno**, ale **ne do přesčasu ani konta**. Nepracovní svátek zadej jako celodenní typ **Svátek** (neutrální).
+- **📥 Copy (COPY)** — insert a USB with `*.gcode` → files are **copied** into the print folder.
+- **📤 Move (MOVE)** — the USB has a `gcode` folder → all `*.gcode` are **moved** from the printer into that folder (without it, nothing is moved).
+- **💾 Backup** — insert a USB containing a `backup` folder → `config` and `database`
+  are backed up into a timestamped subfolder (old backups are never overwritten).
+- **🛡️ Print protection** — while printing, other files transfer normally, but the
+  file currently being printed is **never** overwritten or moved.
+- **💬 Notifications** — progress is shown on the display (`M117`) and console (`RESPOND MSG=`).
+- **🔎 Auto-detect** — the `printer_data` path is found automatically (pi, biqu, mks…).
 
-**Konto dovolené** — karta **Dovolená** = **počáteční stav v hodinách** (tlačítko ⚙ Počáteční stavy) − vyčerpaná dovolená; ukazuje se v **hodinách i dnech** (dny podle délky směny 6/8 h). Ubírá celodenní **Dovolená** i částečná (u směny **Zbytek do plné směny → Dovolená**). Když máš dovolenou i v pozdějších měsících, přibudou řádky **Rezervace** (kolik ještě ubyde) a **Zbytek** (co reálně zůstane).
+## 🚀 Install from GitHub (KIAUH style)
 
-**Snímky počátečních stavů** — počáteční stavy konta i dovolené se zadávají jako **snímky „stav k datu"** na stránce ⚙ Počáteční stavy. Appka pro každý měsíc vezme **nejbližší předchozí snímek** a od něj počítá. Roční navýšení dovolené (leden) tak zadáš novým snímkem a **zpětně to nerozhodí** starší měsíce.
+**Step 1** — install `git` (if you don't have it yet):
 
-**Záloha a export** (tlačítko **Záloha** v Historii → stránka Záloha):
-- **Export CSV** — přehled dnů pro Excel (`pichacky.csv`).
-- **Záloha JSON ↓** — kompletní záloha (záznamy + konto + nastavení) do `pichacky-zaloha-RRRR-MM-DD.json`.
-- **Obnovit ↑** — načte JSON a nabídne **Sloučit** (přidá záznamy) nebo **Nahradit** (přepíše vše). Ideální pro přenos na jiný telefon.
-- **Import z PDF** — firemní výpis „Časové zúčtování" (RSF) převede přímo na záznamy: vybereš PDF, nastavíš denní plán, zkontroluješ náhled (odpracováno i přesčas) a buď stáhneš JSON, nebo rovnou naimportuješ. PDF se čte přes knihovnu pdf.js (vyžaduje připojení k internetu).
+```bash
+sudo apt update && sudo apt install -y git
+```
 
-Poznámky:
-- Data jsou **jen v tvém telefonu** (`localStorage`) — osobní přehled, ne oficiální evidence pro zaměstnavatele. Přesnost odpovídá tomu, kdy píchneš.
-- Z odpracovaného času se odečítá **neplacená svačina** (podle nastavení „Svačina"). Nový den si tuto hodnotu uloží u sebe; starší dny bez uložené hodnoty se řídí aktuálním nastavením. V editaci dne jde svačinu i placená/neplacená nastavit **napevno** pro konkrétní den.
-- Přesčas se počítá proti délce směny zvolené v době píchnutí.
+**Step 2** — download KUSBH into your home directory:
 
----
+```bash
+git clone https://github.com/drumclock/kusbh.git
+```
 
-## Technické detaily
+**Step 3** — start KUSBH:
 
-Appka je čistá **PWA** bez frameworků — jeden HTML soubor s vloženým CSS a JavaScriptem, plus manifest a service worker pro offline režim. Data se ukládají lokálně v prohlížeči (`localStorage`).
+```bash
+./kusbh/kusbh.sh
+```
 
-| Soubor | Popis |
-| --- | --- |
-| `index.html` | Samotná aplikace (HTML + CSS + JS) |
-| `manifest.json` | Metadata PWA (název, ikony, barvy) |
-| `sw.js` | Service worker — offline cache |
-| `sdilet.html` | Sdílecí stránka s QR kódem a návodem |
-| `napoveda.html` | Nápověda k aplikaci |
-| `zaloha.html` | Záloha/obnova (JSON) a export CSV |
-| `pdf-import.html` | Převod firemního PDF výpisu na záznamy |
-| `stavy.html` | Počáteční stavy konta a dovolené (snímky) |
-| `qr.png` | QR kód s adresou aplikace |
-| `nfc.png` | Ikonka NFC pro README |
-| `screenshot-app.png`, `screenshot-history.png`, `screenshot-help.png`, `screenshot-qr.png` | Náhledy do README |
-| `icon-192.png`, `icon-512.png`, `icon-maskable.png` | Ikony aplikace |
+**Step 4** — you should now be in the main menu. Choose an action by typing its number.
 
-### Vlastní hosting (GitHub Pages)
-1. Nahraj soubory do kořene repozitáře.
-2. **Settings → Pages → Source: Deploy from a branch → main / (root)**.
-3. Za chvíli appka běží na `https://<uživatel>.github.io/<repo>/`.
+> 💡 **Quick alternative** — one command (downloads the repo and launches the menu):
+>
+> ```bash
+> bash <(curl -fsSL https://raw.githubusercontent.com/drumclock/kusbh/main/bootstrap.sh)
+> ```
 
-Podmínka pro instalaci PWA je **https** — to GitHub Pages zajišťuje zdarma.
+## 🧭 Menu (`kusbh.sh`)
 
----
+```text
+1) Install
+2) Uninstall
+3) Update  (git pull)
+4) Backup folders
+5) Status
+q) Quit
+```
 
-## Omezení
+## 💾 How to back up
 
-Jako webová appka **sama neumí zvukový budík na pozadí** — pípnutí přímo v appce by zaznělo jen při zapnuté appce s rozsvícenou obrazovkou. Na spolehlivé upozornění při zamčeném telefonu proto slouží **připomínka v kalendáři** (viz výše), kterou zajistí systémový kalendář.
+Create a `backup` folder on the USB drive and plug it in. Backups are stored as:
 
----
+```text
+backup/2025-09-04_19-33-01/
+```
 
-<sub>Vytvořeno jako hobby projekt. 🙂</sub>
+If a `backup` folder is present, **only** the backup runs (G-code copy/move is skipped).
+You choose which folders are backed up **during install** (or anytime via the menu →
+*Backup folders*). The installer lists the folders that actually exist in `printer_data`;
+the choice is saved to `/etc/kusbh.conf` (`BACKUP_ITEMS`). Default is `config` + `database`.
+
+## 💬 Status messages
+
+After inserting the USB you will see progress, e.g.:
+
+```text
+KUSBH: USB detekovan
+KUSBH: kopiruji 3 souboru
+KUSBH: presun 2 (tisk chranen)
+KUSBH: hotovo, muzes vyjmout USB
+```
+
+> **Note:** `RESPOND MSG=` requires the `[respond]` section in your Klipper config.
+> If you don't have it, set `USE_RESPOND=0`. The display message clears after 10 s.
+
+## ⚙️ Configuration
+
+Everything is set at the top of `mountcopy`. You do **not** need to set the
+`printer_data` path — it is auto-detected.
+
+| Variable        | Default                   | Description                                              |
+|-----------------|---------------------------|----------------------------------------------------------|
+| `MOONRAKER_URL` | `http://localhost:7125`   | Moonraker address (print detection + messages).          |
+| `NOTIFY`        | `1`                       | Enable `M117`/`RESPOND` messages. `0` = off.             |
+| `USE_RESPOND`   | `1`                       | Also print to console (needs `[respond]`). `0` = `M117` only. |
+| `CLEAR_AFTER`   | `10`                      | Seconds before clearing the display. `0` = keep.         |
+
+## 🔧 Manual install
+
+```bash
+sudo cp 99-mountcopy.rules /etc/udev/rules.d/
+sudo cp mountcopy /usr/bin
+sudo chmod +x /usr/bin/mountcopy
+sudo udevadm control --reload-rules && sudo udevadm trigger
+```
+
+## 🗑️ Manual uninstall
+
+```bash
+sudo rm /etc/udev/rules.d/99-mountcopy.rules
+sudo rm /usr/bin/mountcopy
+sudo udevadm control --reload-rules && sudo udevadm trigger
+```
+
+## ⚠️ Warning
+
+The script detects a running print (via Moonraker) and protects the printed file.
+However, if **Moonraker is unreachable** the protection cannot apply — then the old
+advice holds: **avoid using the USB drive while printing**, as the printed file
+could be overwritten or deleted.
+
+</details>
