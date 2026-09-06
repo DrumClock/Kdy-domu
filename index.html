@@ -593,7 +593,13 @@
       <span class="status-txt" id="statusTxt"></span>
     </div>
 
-    <div class="display tap" id="openPlanner" role="button" tabindex="0" aria-label="Otevřít plánovač">
+    <div class="field" id="startWrap" hidden>
+      <label for="start">Začátek pro výpočet odchodu</label>
+      <input type="time" id="start">
+      <span class="field-hint">Slouží jen k výpočtu odchodu domů — neupravuje odpíchnutou směnu.</span>
+    </div>
+
+    <div class="display">
       <div class="lbl">Odchod domů</div>
       <div class="clock" id="result" aria-live="polite">–:–</div>
       <div class="breakdown" id="breakdown"></div>
@@ -625,27 +631,6 @@
       <a class="init-btn" href="stavy.html">⚙ Počáteční stavy (konto, dovolená)</a>
     </div>
   </main>
-
-  <div class="sheet" id="plannerSheet" hidden>
-    <div class="sheet-inner">
-      <div class="sheet-head">
-        <h2>Odchod domů</h2>
-        <button type="button" class="sheet-close" id="plannerClose" aria-label="Zavřít">✕</button>
-      </div>
-      <div class="display">
-        <div class="lbl">Odchod domů</div>
-        <div class="clock" id="result2" aria-live="polite">–:–</div>
-        <div class="breakdown" id="breakdown2"></div>
-        <div class="now-lbl" id="nowLbl2"></div>
-        <div class="now" id="now2"></div>
-      </div>
-      <div class="field">
-        <label for="start">Začátek pro výpočet odchodu</label>
-        <input type="time" id="start">
-        <span class="field-hint">Když směna běží, vezme se sám z Příchodu. Slouží jen k výpočtu — neupravuje odpíchnutou směnu.</span>
-      </div>
-    </div>
-  </div>
 
   <div class="sheet" id="history" hidden>
     <div class="sheet-inner">
@@ -700,10 +685,6 @@
   const brkEl   = document.getElementById('breakdown');
   const nowEl   = document.getElementById('now');
   const nowLbl  = document.getElementById('nowLbl');
-  const resEl2  = document.getElementById('result2');
-  const brkEl2  = document.getElementById('breakdown2');
-  const nowEl2  = document.getElementById('now2');
-  const nowLbl2 = document.getElementById('nowLbl2');
   const calBtn  = document.getElementById('calBtn');
   let workMin = 480;   // ← výchozí doba v minutách (360=6h, 420=7:00, 450=7:30, 480=8h)
   let startTotal = null;  // začátek v minutách od půlnoci
@@ -724,8 +705,7 @@
   }
 
   const els1 = { res:resEl, brk:brkEl, now:nowEl, nowLbl:nowLbl };
-  const els2 = { res:resEl2, brk:brkEl2, now:nowEl2, nowLbl:nowLbl2 };
-  let mainStartTotal = null, mainEndTotal = null;
+  const startWrap = document.getElementById('startWrap');
 
   // začátek běžící směny (první Příchod), jinak null
   function autoStartHHMM(){
@@ -738,7 +718,6 @@
     return null;
   }
 
-  // spočítá kartu z daného začátku, zapíše do dané sady prvků, vrátí {start,end}
   function computeCard(startHHMM, els){
     if(!els.res) return { start:null, end:null };
     if(!startHHMM){ els.res.textContent='–:–'; els.brk.textContent=''; els.now.textContent=''; els.now.className='now'; els.nowLbl.textContent=''; return { start:null, end:null }; }
@@ -765,23 +744,19 @@
     else { els.nowLbl.textContent='Přesčas'; els.now.className='now over'; els.now.textContent='+'+hhmm; }
   }
 
-  // hlavní karta = automaticky z běžící směny
-  function calcMain(){
-    if(paidTxt) paidTxt.textContent = paidEl.checked ? '(placená → nepřičítá se)' : '(neplacená → přičítá se)';
-    const r = computeCard(autoStartHHMM(), els1);
-    mainStartTotal = r.start; mainEndTotal = r.end;
-    updateNowFor(els1, mainStartTotal, mainEndTotal);
-    refreshCalBtn();
-  }
-  // plánovač = ruční začátek (needítuje hlavní kartu)
   function calc(){
-    const r = computeCard(startEl.value || null, els2);
+    if(paidTxt) paidTxt.textContent = paidEl.checked ? '(placená → nepřičítá se)' : '(neplacená → přičítá se)';
+    const auto = autoStartHHMM();                 // běžící směna → počítej z Příchodu
+    let startHHMM;
+    if(auto){ startHHMM = auto; if(startWrap) startWrap.hidden = true; }        // směna běží → pole schovej
+    else { startHHMM = startEl.value || null; if(startWrap) startWrap.hidden = false; }  // bez směny → pole zobraz
+    const r = computeCard(startHHMM, els1);
     startTotal = r.start; endTotal = r.end;
-    updateNowFor(els2, startTotal, endTotal);
-    refreshCalBtn();
+    updateNowFor(els1, startTotal, endTotal);
+    if(calBtn) calBtn.disabled = (endTotal === null);
   }
-  function refreshCalBtn(){ if(calBtn) calBtn.disabled = (mainEndTotal === null && endTotal === null); }
-  function updateNow(){ updateNowFor(els1, mainStartTotal, mainEndTotal); updateNowFor(els2, startTotal, endTotal); }
+  const calcMain = calc;                           // zpětná kompatibilita volání
+  function updateNow(){ updateNowFor(els1, startTotal, endTotal); }
 
   segEl.addEventListener('click', e => {
     const btn = e.target.closest('button');
@@ -865,7 +840,7 @@
     // odchod jako reálné datum: dnešní půlnoc + endTotal minut (přeteče na další den samo)
     const base = new Date();
     const dep = new Date(base.getFullYear(), base.getMonth(), base.getDate(), 0, 0, 0, 0);
-    dep.setMinutes(mainEndTotal!=null?mainEndTotal:endTotal);
+    dep.setMinutes(endTotal);
     const end = new Date(dep.getTime() + 15 * 60000);
     const meta = eventMeta(dep);
 
@@ -916,7 +891,7 @@
   }
 
   calBtn.addEventListener('click', () => {
-    if(mainEndTotal===null && endTotal===null) return;
+    if(endTotal === null) return;
     const ics = buildICS();                                 // připraví jedinečný soubor + čas odchodu
     icsGoogle.href = gcalUrl(ics.dep);                      // hlavní: odkaz do Google Kalendáře (spolehlivé)
     const blob = new Blob([ics.text], { type: 'text/calendar;charset=utf-8' });
@@ -1661,12 +1636,6 @@
     } else { apply(); }
   }
   histBtn.addEventListener('click', () => { editDate=editKey=editArr=null; histMonth=null; renderHistory(); histEl.hidden = false; });
-  const plannerSheet = document.getElementById('plannerSheet');
-  const openPlanner = document.getElementById('openPlanner');
-  const plannerClose = document.getElementById('plannerClose');
-  if(openPlanner) openPlanner.addEventListener('click', () => { calcMain(); syncStartFromShift(); calc(); plannerSheet.hidden = false; });
-  if(plannerClose) plannerClose.addEventListener('click', () => { plannerSheet.hidden = true; });
-  if(plannerSheet) plannerSheet.addEventListener('click', e => { if(e.target === plannerSheet) plannerSheet.hidden = true; });
   histClose.addEventListener('click', () => { editDate=editKey=editArr=null; histEl.hidden = true; });
 
   // otevři historii, když se sem přišlo swipem z nápovědy
